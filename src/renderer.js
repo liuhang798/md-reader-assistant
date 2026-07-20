@@ -18,11 +18,91 @@ const state = {
   recentFiles: [],
   dark: localStorage.getItem('theme') === 'dark',
   fontScale: Number(localStorage.getItem('fontScale') || 1),
+  language: localStorage.getItem('language') === 'en' ? 'en' : 'zh-CN',
   searchMatches: [],
   searchIndex: 0,
   editing: false,
   dirty: false
 };
+
+const translations = {
+  'zh-CN': {
+    appName: 'MD阅读助手', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
+    toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
+    themeTitle: '切换明暗主题', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
+    library: '文档库', recentReading: '最近阅读', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
+    browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
+    welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
+    openFolder: '打开文件夹', quickOpenHint: '快速打开，也可以将文件拖到这里', revealFile: '定位文件', revealFileTitle: '在资源管理器中显示',
+    print: '打印', printTitle: '打印文档', readingEnd: '阅读结束', livePreview: '实时预览', readingEffect: '阅读效果', markdownEditorLabel: 'MARKDOWN 编辑器',
+    untitledDocument: '未命名文档', saved: '已保存', unsaved: '尚未保存', saveAs: '另存为', markdownEditorAria: 'Markdown 编辑器',
+    editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
+    toc: '本页目录', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
+    zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', printDocument: '打印文档', copy: '复制', copied: '已复制',
+    bodyFontScale: '正文字号 {percent}%', recentOpened: '最近打开', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档',
+    markdownDocument: 'Markdown 文档', removeRecentTitle: '删除最近阅读记录', removeRecentAria: '删除 {name} 的最近阅读记录',
+    discardConfirm: '当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？', previewError: '暂时无法渲染当前内容',
+    readingTime: '约 {minutes} 分钟 · {words} 字', renderFailed: 'Markdown 渲染失败', openFailed: '无法打开这个文件',
+    editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
+    folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
+    languageChanged: '界面语言已切换为简体中文'
+  },
+  en: {
+    appName: 'MD Reader Assistant', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
+    toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
+    themeTitle: 'Toggle light/dark theme', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
+    library: 'LIBRARY', recentReading: 'Recent', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
+    browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
+    welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
+    openFolder: 'Open Folder', quickOpenHint: 'Quick open, or drop a file here', revealFile: 'Show File', revealFileTitle: 'Show in File Explorer',
+    print: 'Print', printTitle: 'Print document', readingEnd: 'End of document', livePreview: 'LIVE PREVIEW', readingEffect: 'Rendered document', markdownEditorLabel: 'MARKDOWN EDITOR',
+    untitledDocument: 'Untitled document', saved: 'Saved', unsaved: 'Unsaved', saveAs: 'Save As', markdownEditorAria: 'Markdown editor',
+    editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
+    toc: 'ON THIS PAGE', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
+    zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
+    bodyFontScale: 'Reading text {percent}%', recentOpened: 'Recently opened', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents',
+    markdownDocument: 'Markdown document', removeRecentTitle: 'Remove recent record', removeRecentAria: 'Remove {name} from Recent',
+    discardConfirm: 'This document has unsaved changes.\n\nDiscard the changes and continue?', previewError: 'The current content cannot be rendered',
+    readingTime: 'About {minutes} min · {words} words', renderFailed: 'Markdown rendering failed', openFailed: 'Unable to open this file',
+    editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
+    folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
+    languageChanged: 'Interface language changed to English'
+  }
+};
+
+function t(key, values = {}) {
+  const template = translations[state.language]?.[key] ?? translations['zh-CN'][key] ?? key;
+  return Object.entries(values).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), template);
+}
+
+function applyStaticTranslations() {
+  document.documentElement.lang = state.language === 'en' ? 'en' : 'zh-CN';
+  document.querySelectorAll('[data-i18n]').forEach(element => { element.textContent = t(element.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(element => { element.innerHTML = t(element.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-title]').forEach(element => { element.title = t(element.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(element => { element.placeholder = t(element.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
+  document.querySelectorAll('[data-language]').forEach(button => button.classList.toggle('active', button.dataset.language === state.language));
+}
+
+function setLanguage(language, silent = false) {
+  state.language = language === 'en' ? 'en' : 'zh-CN';
+  localStorage.setItem('language', state.language);
+  applyStaticTranslations();
+  window.leafMD.setLanguage(state.language);
+  els.editButtonLabel.textContent = t(state.editing ? 'preview' : 'edit');
+  if (!state.currentFile) els.editorFileName.textContent = t('untitledDocument');
+  if (!state.root) els.libraryName.textContent = t('recentReading');
+  if (codeEditor) updateEditorPosition();
+  if (state.currentFile) {
+    if (state.editing) renderEditorPreview(editorContent());
+    else renderCurrentDocument();
+  } else {
+    renderFileList();
+  }
+  setDirty(state.dirty);
+  if (!silent) showToast(t('languageChanged'));
+}
 
 const els = {
   welcome: $('#welcome'), documentView: $('#documentView'), content: $('#markdownContent'),
@@ -49,7 +129,7 @@ marked.use({
       const valid = lang && hljs.getLanguage(lang);
       const highlighted = valid ? hljs.highlight(text, { language: lang }).value : hljs.highlightAuto(text).value;
       const label = lang || 'code';
-      return `<div class="code-block"><div class="code-header"><span>${label}</span><button class="copy-code" type="button">复制</button></div><pre><code class="hljs${valid ? ` language-${lang}` : ''}">${highlighted}</code></pre></div>`;
+      return `<div class="code-block"><div class="code-header"><span>${label}</span><button class="copy-code" type="button">${t('copy')}</button></div><pre><code class="hljs${valid ? ` language-${lang}` : ''}">${highlighted}</code></pre></div>`;
     }
   }
 });
@@ -168,7 +248,7 @@ function setFontScale(scale, silent = false) {
   state.fontScale = Math.max(.82, Math.min(1.35, scale));
   document.documentElement.style.setProperty('--font-scale', state.fontScale);
   localStorage.setItem('fontScale', state.fontScale);
-  if (!silent) showToast(`正文字号 ${Math.round(state.fontScale * 100)}%`);
+  if (!silent) showToast(t('bodyFontScale', { percent: Math.round(state.fontScale * 100) }));
 }
 
 function fileIcon() {
@@ -176,7 +256,7 @@ function fileIcon() {
 }
 
 function recentEntry(doc) {
-  return { path: doc.path, name: doc.name, directory: '最近打开' };
+  return { path: doc.path, name: doc.name, directory: null };
 }
 
 function addRecentDocument(doc) {
@@ -189,19 +269,21 @@ async function removeRecentRecord(filePath) {
   state.recentFiles = state.recentFiles.filter(file => file.path !== filePath);
   if (!state.root) state.files = [...state.recentFiles];
   renderFileList();
-  showToast('已从最近阅读中移除，原文件未删除');
+  showToast(t('recentRemoved'));
 }
 
 function renderFileList() {
   if (!state.files.length) {
-    els.fileList.innerHTML = '<div class="empty-list">还没有最近文档</div>';
+    els.fileList.innerHTML = `<div class="empty-list">${t('emptyRecent')}</div>`;
     return;
   }
   els.fileList.innerHTML = state.files.map(file => {
     const active = state.currentFile?.path === file.path ? ' active' : '';
-    const sub = file.directory && file.directory !== '.' ? file.directory : (file.relativePath ? 'Markdown 文档' : '最近打开');
+    const sub = state.root
+      ? (file.directory && file.directory !== '.' ? file.directory : t('markdownDocument'))
+      : t('recentOpened');
     const removeButton = !state.root
-      ? `<button class="recent-remove" data-path="${encodeURIComponent(file.path)}" title="删除最近阅读记录" aria-label="删除 ${escapeHtml(file.name)} 的最近阅读记录"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg></button>`
+      ? `<button class="recent-remove" data-path="${encodeURIComponent(file.path)}" title="${t('removeRecentTitle')}" aria-label="${escapeHtml(t('removeRecentAria', { name: file.name }))}"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg></button>`
       : '';
     return `<div class="file-row"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"><span class="file-icon">${fileIcon()}</span><span class="file-copy"><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
   }).join('');
@@ -264,21 +346,21 @@ function updateActiveToc() {
 }
 
 function updateWindowTitle() {
-  const name = state.currentFile?.name || 'MD阅读助手';
-  document.title = `${state.dirty ? '● ' : ''}${name} · MD阅读助手`;
+  const name = state.currentFile?.name || t('appName');
+  document.title = `${state.dirty ? '● ' : ''}${name} · ${t('appName')}`;
 }
 
 function setDirty(dirty) {
   state.dirty = Boolean(dirty);
   window.leafMD.setDirty(state.dirty);
-  els.editorSaveState.textContent = state.dirty ? '尚未保存' : '已保存';
+  els.editorSaveState.textContent = t(state.dirty ? 'unsaved' : 'saved');
   els.editorSaveState.classList.toggle('dirty', state.dirty);
   updateWindowTitle();
 }
 
 function maybeDiscardChanges() {
   if (!state.dirty) return true;
-  return window.confirm('当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？');
+  return window.confirm(t('discardConfirm'));
 }
 
 function renderMarkdownTo(container, doc, content) {
@@ -299,7 +381,7 @@ function renderEditorPreview(content = state.currentFile?.content || '') {
   try {
     renderMarkdownTo(els.editorPreview, state.currentFile, content);
   } catch (error) {
-    els.editorPreview.innerHTML = '<p class="preview-error">暂时无法渲染当前内容</p>';
+    els.editorPreview.innerHTML = `<p class="preview-error">${t('previewError')}</p>`;
     console.error(error);
   }
 }
@@ -314,11 +396,14 @@ function renderCurrentDocument() {
     const latinWords = (doc.content.replace(/[\u3400-\u9fff\uf900-\ufaff]/g, ' ').match(/[\p{L}\p{N}]+/gu) || []).length;
     const words = cjkCount + latinWords;
     const minutes = Math.max(1, Math.ceil(words / 300));
-    els.readingTime.textContent = `约 ${minutes} 分钟 · ${words.toLocaleString()} 字`;
+    els.readingTime.textContent = t('readingTime', {
+      minutes,
+      words: words.toLocaleString(state.language === 'en' ? 'en-US' : 'zh-CN')
+    });
     renderToc();
     renderFileList();
   } catch (error) {
-    showToast('Markdown 渲染失败');
+    showToast(t('renderFailed'));
     console.error(error);
   }
 }
@@ -337,7 +422,7 @@ function displayDocument(doc) {
   els.editButton.disabled = false;
   els.saveButton.disabled = false;
   els.editButton.classList.remove('active');
-  els.editButtonLabel.textContent = '编辑';
+  els.editButtonLabel.textContent = t('edit');
   renderCurrentDocument();
   setDirty(false);
   $('.reader-pane').scrollTo({ top: 0 });
@@ -348,7 +433,7 @@ async function loadFile(filePath) {
   try {
     displayDocument(await window.leafMD.readFile(filePath));
   } catch (error) {
-    showToast('无法打开这个文件');
+    showToast(t('openFailed'));
     console.error(error);
   }
 }
@@ -357,7 +442,7 @@ function updateEditorPosition() {
   if (!codeEditor) return;
   const cursor = codeEditor.state.selection.main.head;
   const line = codeEditor.state.doc.lineAt(cursor);
-  els.editorPosition.textContent = `第 ${line.number} 行，第 ${cursor - line.from + 1} 列`;
+  els.editorPosition.textContent = t('editorPosition', { line: line.number, column: cursor - line.from + 1 });
 }
 
 function toggleEditor(forceEditing) {
@@ -371,7 +456,7 @@ function toggleEditor(forceEditing) {
     els.tocPanel.classList.add('hidden');
     els.backToTop.classList.remove('visible');
     els.editButton.classList.add('active');
-    els.editButtonLabel.textContent = '预览';
+    els.editButtonLabel.textContent = t('preview');
     focusCodeEditor();
     updateEditorPosition();
   } else {
@@ -380,7 +465,7 @@ function toggleEditor(forceEditing) {
     els.editorView.classList.add('hidden');
     els.documentView.classList.remove('hidden');
     els.editButton.classList.remove('active');
-    els.editButtonLabel.textContent = '编辑';
+    els.editButtonLabel.textContent = t('edit');
     $('.reader-pane').scrollTo({ top: 0 });
   }
 }
@@ -399,13 +484,13 @@ async function saveDocument(saveAs = false) {
     renderEditorPreview(saved.content);
     els.editorFileName.textContent = saved.name;
     if (!state.files.some(file => file.path === saved.path)) {
-      state.files.unshift({ path: saved.path, name: saved.name, directory: '最近打开' });
+      state.files.unshift({ path: saved.path, name: saved.name, directory: null });
     }
     renderFileList();
     setDirty(false);
-    showToast(saveAs ? '文档已另存为' : '文档已保存');
+    showToast(t(saveAs ? 'saveAsDone' : 'saveDone'));
   } catch (error) {
-    showToast('保存失败，请检查文件权限');
+    showToast(t('saveFailed'));
     console.error(error);
   }
 }
@@ -414,8 +499,8 @@ function bindDocumentActions(container = els.content) {
   container.querySelectorAll('.copy-code').forEach(button => button.addEventListener('click', async () => {
     const code = button.closest('.code-block').querySelector('code').textContent;
     await navigator.clipboard.writeText(code);
-    button.textContent = '已复制';
-    setTimeout(() => button.textContent = '复制', 1200);
+    button.textContent = t('copied');
+    setTimeout(() => button.textContent = t('copy'), 1200);
   }));
   container.querySelectorAll('a').forEach(link => link.addEventListener('click', event => {
     const href = link.getAttribute('href') || '';
@@ -431,7 +516,7 @@ async function openFile() {
   const doc = await window.leafMD.openFile();
   if (doc) {
     state.root = null;
-    els.libraryName.textContent = '最近阅读';
+    els.libraryName.textContent = t('recentReading');
     displayDocument(doc);
   }
 }
@@ -448,7 +533,7 @@ async function openFolder() {
     try {
       displayDocument(await window.leafMD.readFile(folder.files[0].path));
     } catch {
-      showToast('无法打开文件夹中的文档');
+      showToast(t('folderOpenFailed'));
     }
   }
 }
@@ -531,10 +616,11 @@ async function initialize() {
   setTheme(state.dark);
   setFontScale(state.fontScale, true);
   const prefs = await window.leafMD.getPreferences();
+  setLanguage(prefs.language || state.language, true);
   state.recentFiles = (prefs.recentFiles || []).map(filePath => ({
     path: filePath,
     name: filePath.split(/[\\/]/).pop(),
-    directory: '最近打开'
+    directory: null
   }));
   state.files = [...state.recentFiles];
   renderFileList();
@@ -573,13 +659,16 @@ $('#moreButton').addEventListener('click', event => {
   els.moreMenu.classList.toggle('hidden');
 });
 els.moreMenu.addEventListener('click', event => {
-  const action = event.target.closest('button')?.dataset.action;
+  const button = event.target.closest('button');
+  const action = button?.dataset.action;
+  const language = button?.dataset.language;
+  if (language) setLanguage(language);
   if (action === 'zoom-in') setFontScale(state.fontScale + .08);
   if (action === 'zoom-out') setFontScale(state.fontScale - .08);
   if (action === 'zoom-reset') setFontScale(1);
   if (action === 'default-app') {
     window.leafMD.openDefaultApps();
-    showToast('请在“按文件类型指定默认应用”中选择 .md');
+    showToast(t('defaultAppHint'));
   }
   if (action === 'print') {
     if (state.editing) toggleEditor(false);
@@ -616,13 +705,13 @@ document.addEventListener('drop', async event => {
   if (!file) return;
   const filePath = window.leafMD.pathForFile(file);
   if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
-  else showToast('请拖入 Markdown 或文本文件');
+  else showToast(t('dropUnsupported'));
 });
 
 initializeCodeEditor();
 initialize();
 window.leafMD.onOpenFile(doc => {
   state.root = null;
-  els.libraryName.textContent = '最近阅读';
+  els.libraryName.textContent = t('recentReading');
   displayDocument(doc);
 });

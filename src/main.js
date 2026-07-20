@@ -5,6 +5,28 @@ const path = require('path');
 let mainWindow;
 let documentDirty = false;
 let forceClose = false;
+let appLanguage = 'zh-CN';
+
+const mainTranslations = {
+  'zh-CN': {
+    appName: 'MD阅读助手', unsavedTitle: '尚未保存', openUnsavedMessage: '当前文档有尚未保存的更改。',
+    openUnsavedDetail: '打开另一个文档将丢失这些更改。', continueEditing: '继续编辑', discardAndOpen: '不保存并打开',
+    openError: '无法打开文档', exitUnsavedMessage: '文档中的更改尚未保存。', exitUnsavedDetail: '确定要退出并放弃这些更改吗？',
+    discardAndExit: '不保存并退出', openMarkdown: '打开 Markdown 文档', markdownDocument: 'Markdown 文档', textFile: '文本文件', allFiles: '所有文件',
+    openFolder: '打开文档文件夹', saveAsMarkdown: '另存为 Markdown 文档', newDocument: '新建文档.md'
+  },
+  en: {
+    appName: 'MD Reader Assistant', unsavedTitle: 'Unsaved Changes', openUnsavedMessage: 'The current document has unsaved changes.',
+    openUnsavedDetail: 'Opening another document will discard these changes.', continueEditing: 'Continue Editing', discardAndOpen: 'Discard and Open',
+    openError: 'Unable to Open Document', exitUnsavedMessage: 'The document has unsaved changes.', exitUnsavedDetail: 'Exit and discard these changes?',
+    discardAndExit: 'Discard and Exit', openMarkdown: 'Open Markdown Document', markdownDocument: 'Markdown Document', textFile: 'Text File', allFiles: 'All Files',
+    openFolder: 'Open Document Folder', saveAsMarkdown: 'Save Markdown Document As', newDocument: 'New document.md'
+  }
+};
+
+function mainT(key) {
+  return mainTranslations[appLanguage]?.[key] || mainTranslations['zh-CN'][key] || key;
+}
 
 const markdownExtensions = new Set(['.md', '.markdown', '.mdown', '.mkd', '.txt']);
 const automatedCapture = Boolean(process.env.LEAFMD_CAPTURE_PATH);
@@ -26,9 +48,17 @@ function preferencesPath() {
 
 async function getPreferences() {
   try {
-    return JSON.parse(await fs.readFile(preferencesPath(), 'utf8'));
+    const prefs = JSON.parse(await fs.readFile(preferencesPath(), 'utf8'));
+    if (automatedCapture && process.env.LEAFMD_CAPTURE_LANGUAGE) {
+      prefs.language = process.env.LEAFMD_CAPTURE_LANGUAGE === 'en' ? 'en' : 'zh-CN';
+    }
+    return prefs;
   } catch {
-    return { recentFiles: [], lastFile: null };
+    return {
+      recentFiles: [],
+      lastFile: null,
+      language: automatedCapture && process.env.LEAFMD_CAPTURE_LANGUAGE === 'en' ? 'en' : 'zh-CN'
+    };
   }
 }
 
@@ -78,10 +108,10 @@ async function openPathInWindow(filePath) {
   if (documentDirty) {
     const result = await dialog.showMessageBox(mainWindow, {
       type: 'warning',
-      title: '尚未保存',
-      message: '当前文档有尚未保存的更改。',
-      detail: '打开另一个文档将丢失这些更改。',
-      buttons: ['继续编辑', '不保存并打开'],
+      title: mainT('unsavedTitle'),
+      message: mainT('openUnsavedMessage'),
+      detail: mainT('openUnsavedDetail'),
+      buttons: [mainT('continueEditing'), mainT('discardAndOpen')],
       defaultId: 0,
       cancelId: 0,
       noLink: true
@@ -96,7 +126,7 @@ async function openPathInWindow(filePath) {
     mainWindow.show();
     mainWindow.focus();
   } catch (error) {
-    dialog.showErrorBox('无法打开文档', error.message);
+    dialog.showErrorBox(mainT('openError'), error.message);
   }
 }
 
@@ -138,7 +168,7 @@ function createWindow() {
     minHeight: 620,
     show: false,
     backgroundColor: '#f6f4ef',
-    title: 'MD阅读助手',
+    title: mainT('appName'),
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     titleBarStyle: 'hidden',
     titleBarOverlay: {
@@ -159,6 +189,14 @@ function createWindow() {
   mainWindow.webContents.once('did-finish-load', async () => {
     if (process.env.LEAFMD_CAPTURE_PATH) {
       setTimeout(async () => {
+        if (process.env.LEAFMD_CAPTURE_CLICK_LANGUAGE) {
+          const language = process.env.LEAFMD_CAPTURE_CLICK_LANGUAGE === 'en' ? 'en' : 'zh-CN';
+          await mainWindow.webContents.executeJavaScript(`document.querySelector('[data-language="${language}"]')?.click()`);
+        }
+        if (process.env.LEAFMD_CAPTURE_MENU === '1') {
+          await mainWindow.webContents.executeJavaScript("document.querySelector('#moreMenu')?.classList.remove('hidden')");
+        }
+        await new Promise(resolve => setTimeout(resolve, 120));
         const image = await mainWindow.webContents.capturePage();
         await fs.writeFile(process.env.LEAFMD_CAPTURE_PATH, image.toPNG());
         forceClose = true;
@@ -175,10 +213,10 @@ function createWindow() {
     event.preventDefault();
     dialog.showMessageBox(mainWindow, {
       type: 'warning',
-      title: '尚未保存',
-      message: '文档中的更改尚未保存。',
-      detail: '确定要退出并放弃这些更改吗？',
-      buttons: ['继续编辑', '不保存并退出'],
+      title: mainT('unsavedTitle'),
+      message: mainT('exitUnsavedMessage'),
+      detail: mainT('exitUnsavedDetail'),
+      buttons: [mainT('continueEditing'), mainT('discardAndExit')],
       defaultId: 0,
       cancelId: 0,
       noLink: true
@@ -204,15 +242,17 @@ if (!automatedCapture) app.on('second-instance', (_event, argv) => {
   }
 });
 
-if (hasSingleInstanceLock) app.whenReady().then(() => {
+if (hasSingleInstanceLock) app.whenReady().then(async () => {
+  const savedPreferences = await getPreferences();
+  appLanguage = savedPreferences.language === 'en' ? 'en' : 'zh-CN';
   ipcMain.handle('dialog:open-file', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: '打开 Markdown 文档',
+      title: mainT('openMarkdown'),
       properties: ['openFile'],
       filters: [
-        { name: 'Markdown 文档', extensions: ['md', 'markdown', 'mdown', 'mkd'] },
-        { name: '文本文件', extensions: ['txt'] },
-        { name: '所有文件', extensions: ['*'] }
+        { name: mainT('markdownDocument'), extensions: ['md', 'markdown', 'mdown', 'mkd'] },
+        { name: mainT('textFile'), extensions: ['txt'] },
+        { name: mainT('allFiles'), extensions: ['*'] }
       ]
     });
     if (result.canceled || !result.filePaths[0]) return null;
@@ -221,7 +261,7 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
 
   ipcMain.handle('dialog:open-folder', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: '打开文档文件夹',
+      title: mainT('openFolder'),
       properties: ['openDirectory']
     });
     if (result.canceled || !result.filePaths[0]) return null;
@@ -233,11 +273,11 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
   ipcMain.handle('file:save', async (_event, filePath, content) => writeMarkdown(filePath, content));
   ipcMain.handle('file:save-as', async (_event, currentPath, content) => {
     const result = await dialog.showSaveDialog(mainWindow, {
-      title: '另存为 Markdown 文档',
-      defaultPath: currentPath || '新建文档.md',
+      title: mainT('saveAsMarkdown'),
+      defaultPath: currentPath || mainT('newDocument'),
       filters: [
-        { name: 'Markdown 文档', extensions: ['md'] },
-        { name: '文本文件', extensions: ['txt'] }
+        { name: mainT('markdownDocument'), extensions: ['md'] },
+        { name: mainT('textFile'), extensions: ['txt'] }
       ]
     });
     if (result.canceled || !result.filePath) return null;
@@ -277,6 +317,13 @@ if (hasSingleInstanceLock) app.whenReady().then(() => {
       symbolColor: dark ? '#e7e7df' : '#4b5349',
       height: 52
     });
+  });
+  ipcMain.handle('app:set-language', async (_event, language) => {
+    appLanguage = language === 'en' ? 'en' : 'zh-CN';
+    const prefs = await getPreferences();
+    prefs.language = appLanguage;
+    await savePreferences(prefs);
+    return appLanguage;
   });
 
   createWindow();

@@ -1,7 +1,7 @@
 {
   "name": "leafmd",
   "productName": "MD阅读助手",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "美观易用的 Windows Markdown 阅读与编辑工具",
   "main": "src/main.js",
   "author": "MD阅读助手",

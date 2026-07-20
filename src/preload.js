@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('leafMD', {
   openDefaultApps: () => ipcRenderer.invoke('app:open-default-apps'),
   print: () => ipcRenderer.invoke('app:print'),
   setTheme: dark => ipcRenderer.invoke('app:set-theme', dark),
+  setLanguage: language => ipcRenderer.invoke('app:set-language', language),
   pathForFile: file => webUtils.getPathForFile(file),
   onOpenFile: callback => ipcRenderer.on('file:open-from-main', (_event, doc) => callback(doc))
 });

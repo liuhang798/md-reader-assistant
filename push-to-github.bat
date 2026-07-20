@@ -1,15 +1,16 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-title MD Reader Assistant - Push to GitHub
+title MD Reader Assistant - Automatic GitHub Push
 cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
 set "BRANCH=main"
+set "COMMIT_MSG=Automatic update - MD Reader Assistant"
 
 echo.
 echo ========================================
-echo   MD Reader Assistant - GitHub Push
+echo   MD Reader Assistant - Automatic Push
 echo ========================================
 echo   Project: %CD%
 echo   Remote : %REPO_URL%
@@ -24,42 +25,12 @@ if errorlevel 1 (
 )
 
 if not exist ".git" (
-    echo [1/6] Initializing the Git repository...
+    echo [1/8] Initializing the Git repository...
     git init
     if errorlevel 1 goto :failed
 ) else (
-    echo [1/6] Git repository already initialized.
+    echo [1/8] Git repository already initialized.
 )
-
-echo [2/6] Checking Git author information...
-set "GIT_USER="
-set "GIT_EMAIL="
-for /f "delims=" %%I in ('git config user.name 2^>nul') do set "GIT_USER=%%I"
-for /f "delims=" %%I in ('git config user.email 2^>nul') do set "GIT_EMAIL=%%I"
-
-if not defined GIT_USER (
-    set /p "GIT_USER=Enter your GitHub username: "
-    if not defined GIT_USER (
-        echo [ERROR] Username cannot be empty.
-        goto :failed
-    )
-    git config user.name "!GIT_USER!"
-    if errorlevel 1 goto :failed
-)
-
-if not defined GIT_EMAIL (
-    set /p "GIT_EMAIL=Enter your GitHub email: "
-    if not defined GIT_EMAIL (
-        echo [ERROR] Email cannot be empty.
-        goto :failed
-    )
-    git config user.email "!GIT_EMAIL!"
-    if errorlevel 1 goto :failed
-)
-
-echo [3/6] Configuring the main branch and remote...
-git branch -M "%BRANCH%"
-if errorlevel 1 goto :failed
 
 git remote get-url origin >nul 2>&1
 if errorlevel 1 (
@@ -69,25 +40,57 @@ if errorlevel 1 (
 )
 if errorlevel 1 goto :failed
 
-echo [4/6] Staging project files...
+echo [2/8] Configuring Git author information...
+git config user.name >nul 2>&1
+if errorlevel 1 git config user.name "liuhang798"
+git config user.email >nul 2>&1
+if errorlevel 1 git config user.email "liuhang798@users.noreply.github.com"
+
+echo [3/8] Configuring the main branch...
+git branch -M "%BRANCH%"
+if errorlevel 1 goto :failed
+
+echo [4/8] Fetching the latest GitHub history...
+git fetch origin "%BRANCH%"
+if errorlevel 1 goto :push_failed
+
+git rev-parse --verify HEAD >nul 2>&1
+if errorlevel 1 (
+    echo [5/8] Connecting this folder to the GitHub history...
+    git reset --mixed "origin/%BRANCH%"
+    if errorlevel 1 goto :failed
+) else (
+    git merge-base HEAD "origin/%BRANCH%" >nul 2>&1
+    if errorlevel 1 (
+        echo [5/8] Repairing unrelated local and GitHub histories...
+        git reset --soft "origin/%BRANCH%"
+        if errorlevel 1 goto :failed
+    ) else (
+        git merge-base --is-ancestor "origin/%BRANCH%" HEAD >nul 2>&1
+        if errorlevel 1 (
+            echo [5/8] Applying local work on top of the latest GitHub version...
+            git rebase --autostash "origin/%BRANCH%"
+            if errorlevel 1 goto :failed
+        ) else (
+            echo [5/8] Local history is ready.
+        )
+    )
+)
+
+echo [6/8] Staging project files...
 git add .
 if errorlevel 1 goto :failed
 
 git diff --cached --quiet
 if errorlevel 1 (
-    set "COMMIT_MSG=%~1"
-    if not defined COMMIT_MSG set /p "COMMIT_MSG=Commit message [Update MD Reader Assistant]: "
-    if not defined COMMIT_MSG set "COMMIT_MSG=Update MD Reader Assistant"
-
-    echo [5/6] Creating commit: !COMMIT_MSG!
-    git commit -m "!COMMIT_MSG!"
+    echo [7/8] Creating an automatic commit...
+    git commit -m "%COMMIT_MSG%"
     if errorlevel 1 goto :failed
 ) else (
-    echo [5/6] No new changes to commit.
+    echo [7/8] No new changes to commit.
 )
 
-echo [6/6] Pushing to GitHub...
-echo Complete the GitHub sign-in if a browser window appears.
+echo [8/8] Pushing to GitHub...
 git push -u origin "%BRANCH%"
 if errorlevel 1 goto :push_failed
 
@@ -96,21 +99,17 @@ echo ========================================
 echo   Push completed successfully.
 echo   https://github.com/liuhang798/md-reader-assistant
 echo ========================================
-echo.
-pause
+timeout /t 3 /nobreak >nul
 exit /b 0
 
 :push_failed
 echo.
 echo [ERROR] GitHub push failed.
-echo If the remote repository already contains a README, run:
-echo git pull --rebase origin main
-echo Resolve any conflicts, then run this script again.
+echo Check your network connection or GitHub sign-in and run this file again.
 goto :failed
 
 :failed
 echo.
-echo The operation did not complete. Review the message above and retry.
-echo.
-pause
+echo The operation did not complete. This window will close in 10 seconds.
+timeout /t 10 /nobreak >nul
 exit /b 1
