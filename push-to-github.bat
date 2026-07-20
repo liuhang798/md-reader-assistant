@@ -99,7 +99,7 @@ echo ========================================
 echo   Push completed successfully.
 echo   https://github.com/liuhang798/md-reader-assistant
 echo ========================================
-timeout /t 3 /nobreak >nul
+ping 127.0.0.1 -n 4 >nul
 exit /b 0
 
 :push_failed
@@ -111,5 +111,5 @@ goto :failed
 :failed
 echo.
 echo The operation did not complete. This window will close in 10 seconds.
-timeout /t 10 /nobreak >nul
+ping 127.0.0.1 -n 11 >nul
 exit /b 1
