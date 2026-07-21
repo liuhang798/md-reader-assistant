@@ -2,6 +2,19 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.2.2] - 2026-07-21
+
+### Changed
+
+- Adopted native left-side macOS window controls, application menus, system fonts, and Command shortcuts while preserving the Windows interface.
+- Standardized GitHub Release titles and downloadable asset names as `md-reader-assistant 2.2.2` and ASCII-safe platform filenames.
+- Aligned GitHub Actions with Go 1.25 used by the project.
+
+### Fixed
+
+- Removed the Windows-style title-bar controls from macOS builds.
+- Existing Releases now replace legacy `MD.-...` assets with consistently named packages.
+
 ## [2.2.1] - 2026-07-21
 
 ### Added
@@ -24,3 +37,4 @@ All notable changes to MD Reader Assistant are documented here.
 - Desktop shortcuts are recreated with a versioned icon path to avoid stale Windows icon caching.
 
 [2.2.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.1
+[2.2.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.2

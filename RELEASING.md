@@ -32,8 +32,8 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 Push the source changes, then create a tag that exactly matches `wails.json`:
 
 ```bash
-git tag -a v2.2.1 -m "MD Reader Assistant v2.2.1"
-git push origin v2.2.1
+git tag -a v2.2.2 -m "MD Reader Assistant v2.2.2"
+git push origin v2.2.2
 ```
 
 The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, and uploads them to the corresponding GitHub Release.
@@ -44,7 +44,7 @@ If a platform build fails after the tag and Release have already been created:
 
 1. Fix and push the workflow or source changes to `main`.
 2. Open **Actions → Build and Release → Run workflow**.
-3. Keep the branch set to `main` and enter the existing tag, such as `v2.2.1`.
+3. Keep the branch set to `main` and enter the existing tag, such as `v2.2.2`.
 4. Run the workflow. Successful assets are uploaded to the existing Release and files with the same names are replaced.
 
 The manual tag must exactly match the version in `wails.json`.

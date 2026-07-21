@@ -28,7 +28,7 @@
 !define INFO_PROJECTNAME    "md-reader-assistant"
 !define INFO_COMPANYNAME    "LeafMD Open Source"
 !define INFO_PRODUCTNAME    "MD阅读助手"
-!define INFO_PRODUCTVERSION "2.2.1"
+!define INFO_PRODUCTVERSION "2.2.2"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
@@ -77,7 +77,7 @@ ManifestDPIAware true
 #!finalize 'signtool --file "%1"'
 
 Name "${INFO_PRODUCTNAME}"
-OutFile "..\..\bin\MDReaderAssistant-Setup-${INFO_PRODUCTVERSION}-${ARCH}.exe" # Keep the Windows build path ASCII-safe for CI.
+OutFile "..\..\bin\md-reader-assistant-${INFO_PRODUCTVERSION}-windows-${ARCH}.exe" # Keep release filenames ASCII-safe for CI.
 !ifdef WAILS_INSTALL_SCOPE
   !if "${WAILS_INSTALL_SCOPE}" == "user"
     InstallDir "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"

@@ -12,7 +12,9 @@
 
 ## Download and install
 
-Download the latest package for your platform from [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest). On Windows, run `MD阅读助手-安装程序-version-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut and register Markdown file associations.
+Download the latest package for your platform from [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest). On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut and register Markdown file associations.
+
+The macOS build uses native left-side window controls and application menus, including standard Command shortcuts.
 
 ## Highlights
 
@@ -101,7 +103,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.2.1` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.2.2` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

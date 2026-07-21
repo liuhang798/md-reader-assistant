@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23.x"
+          go-version: "1.25.x"
           cache: true
       - uses: actions/setup-node@v4
         with:
@@ -85,14 +85,14 @@ jobs:
             Pop-Location
           }
 
-          $installer = "build/bin/MDReaderAssistant-Setup-$env:APP_VERSION-amd64.exe"
+          $installer = "build/bin/md-reader-assistant-$env:APP_VERSION-windows-amd64.exe"
           if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
             Get-ChildItem build/bin -Recurse | Format-Table FullName, Length
             throw "Expected NSIS installer was not found: $installer"
           }
 
           $releaseDir = New-Item -ItemType Directory -Force build/bin/release
-          $target = Join-Path $releaseDir.FullName "MDReaderAssistant-Setup-$env:APP_VERSION-amd64.exe"
+          $target = Join-Path $releaseDir.FullName "md-reader-assistant-$env:APP_VERSION-windows-amd64.exe"
           Copy-Item -LiteralPath $installer -Destination $target -Force
           Get-Item -LiteralPath $target | Format-Table FullName, Length
       - uses: actions/upload-artifact@v4
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23.x"
+          go-version: "1.25.x"
           cache: true
       - uses: actions/setup-node@v4
         with:
@@ -140,7 +140,7 @@ jobs:
 
           release_dir="build/bin/release"
           staging_dir="$(mktemp -d)"
-          output_path="${release_dir}/MD阅读助手-${APP_VERSION}-macos-universal.dmg"
+          output_path="${release_dir}/md-reader-assistant-${APP_VERSION}-macos-universal.dmg"
           mkdir -p "${release_dir}"
           cp -R "${app_path}" "${staging_dir}/MD阅读助手.app"
           ln -s /Applications "${staging_dir}/Applications"
@@ -175,7 +175,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23.x"
+          go-version: "1.25.x"
           cache: true
       - uses: actions/setup-node@v4
         with:
@@ -208,7 +208,7 @@ jobs:
           sed "s/@VERSION@/${APP_VERSION}/g" packaging/linux/control > package-root/DEBIAN/control
           install -m 755 packaging/linux/postinst package-root/DEBIAN/postinst
           install -m 755 packaging/linux/postrm package-root/DEBIAN/postrm
-          dpkg-deb --build package-root "build/bin/MD阅读助手-${APP_VERSION}-linux-amd64.deb"
+          dpkg-deb --build package-root "build/bin/md-reader-assistant-${APP_VERSION}-linux-amd64.deb"
 
           mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/512x512/apps
           install -m 755 build/bin/md-reader-assistant AppDir/usr/bin/md-reader-assistant
@@ -217,13 +217,13 @@ jobs:
           install -m 644 build/appicon.png AppDir/md-reader-assistant.png
           curl -L --fail -o appimagetool.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool.AppImage
-          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir "build/bin/MD阅读助手-${APP_VERSION}-linux-x86_64.AppImage"
+          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir "build/bin/md-reader-assistant-${APP_VERSION}-linux-x86_64.AppImage"
       - uses: actions/upload-artifact@v4
         with:
           name: md-reader-assistant-linux-x64
           path: |
-            build/bin/MD阅读助手-*-linux-amd64.deb
-            build/bin/MD阅读助手-*-linux-x86_64.AppImage
+            build/bin/md-reader-assistant-*-linux-amd64.deb
+            build/bin/md-reader-assistant-*-linux-x86_64.AppImage
           if-no-files-found: error
 
   release:
@@ -241,13 +241,18 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           version="${RELEASE_TAG#v}"
-          windows_asset="release-assets/MDReaderAssistant-Setup-${version}-amd64.exe"
-          if [[ -f "${windows_asset}" ]]; then
-            mv "${windows_asset}" "release-assets/MD阅读助手-安装程序-${version}-amd64.exe"
-          fi
-
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release edit "${RELEASE_TAG}" --title "md-reader-assistant ${version}"
             gh release upload "${RELEASE_TAG}" release-assets/* --clobber
+
+            mapfile -t existing_assets < <(gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name')
+            for asset in "${existing_assets[@]}"; do
+              case "${asset}" in
+                MD.*|MD阅读助手-*|MDReaderAssistant-Setup-*)
+                  gh release delete-asset "${RELEASE_TAG}" "${asset}" --yes
+                  ;;
+              esac
+            done
           else
-            gh release create "${RELEASE_TAG}" release-assets/* --generate-notes --title "MD阅读助手 ${RELEASE_TAG}"
+            gh release create "${RELEASE_TAG}" release-assets/* --generate-notes --title "md-reader-assistant ${version}"
           fi

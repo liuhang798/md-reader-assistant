@@ -3,8 +3,10 @@ package main
 import (
 	"embed"
 	"fmt"
+	goruntime "runtime"
 
 	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
@@ -16,13 +18,21 @@ var assets embed.FS
 
 func main() {
 	app := NewApp()
+	var applicationMenu *menu.Menu
+	if goruntime.GOOS == "darwin" {
+		applicationMenu = menu.NewMenu()
+		applicationMenu.Append(menu.AppMenu())
+		applicationMenu.Append(menu.EditMenu())
+	}
+
 	err := wails.Run(&options.App{
 		Title:            appNameZH,
 		Width:            1440,
 		Height:           920,
 		MinWidth:         920,
 		MinHeight:        620,
-		Frameless:        true,
+		Frameless:        goruntime.GOOS != "darwin",
+		Menu:             applicationMenu,
 		AssetServer:      &assetserver.Options{Assets: assets},
 		BackgroundColour: &options.RGBA{R: 246, G: 244, B: 239, A: 255},
 		OnStartup:        app.startup,

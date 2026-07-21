@@ -12,7 +12,9 @@
 
 ## 下载与安装
 
-前往 [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest) 下载对应系统的最新版本。Windows 用户运行 `MD阅读助手-安装程序-版本-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式和 Markdown 文件关联。
+前往 [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest) 下载对应系统的最新版本。Windows 用户运行 `md-reader-assistant-版本-windows-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式和 Markdown 文件关联。
+
+macOS 版本使用系统原生左侧窗口控制按钮与应用菜单，并支持标准 Command 快捷键。
 
 ## 主要功能
 
@@ -95,7 +97,7 @@ npm run build
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-推送 `v2.2.1` 等版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包并发布到 GitHub Releases。客户端会根据仓库的最新稳定 Release 提醒更新。
+推送 `v2.2.2` 等版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包并发布到 GitHub Releases。客户端会根据仓库的最新稳定 Release 提醒更新。
 
 ## 项目文档
 

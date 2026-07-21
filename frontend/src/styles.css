@@ -103,6 +103,19 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .window-control:hover { background: color-mix(in srgb, var(--text) 9%, transparent); }
 .window-control.close:hover { background: #c42b1c; color: #fff; }
 .window-control svg { width: 12px; height: 12px; stroke-width: 1.1; }
+
+/* macOS owns its title-bar controls and application menu. Keep web content clear
+   of the native traffic lights while retaining the shared toolbar and styling. */
+:root[data-platform="darwin"] body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+}
+:root[data-platform="darwin"] .titlebar {
+  padding-left: 84px;
+  padding-right: 20px;
+}
+:root[data-platform="darwin"] .window-controls {
+  display: none;
+}
 .toolbar-button, .icon-button, .small-icon, .text-button { border: 0; cursor: pointer; background: transparent; }
 .toolbar-button { height: 34px; padding: 0 14px; border-radius: 9px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
 .toolbar-button svg { width: 17px; }
