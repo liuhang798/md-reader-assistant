@@ -127,11 +127,30 @@ Section
 
     File "/oname=MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" "..\icon.ico"
 
+    # 2.2.2 could leave a public shortcut because its CI rebuild omitted the
+    # user execution-level define. Try to remove both locations. If Windows
+    # does not permit deleting the public link, keep it and do not create a
+    # second per-user link.
     SetShellVarContext current
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
-    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" 0
-    CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" 0
+    SetShellVarContext all
+    Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
+    Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+
+    IfFileExists "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" publicStartMenuRemains createUserStartMenu
+    createUserStartMenu:
+        SetShellVarContext current
+        CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" 0
+    publicStartMenuRemains:
+
+    SetShellVarContext all
+    IfFileExists "$DESKTOP\${INFO_PRODUCTNAME}.lnk" publicDesktopRemains createUserDesktop
+    createUserDesktop:
+        SetShellVarContext current
+        CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" 0
+    publicDesktopRemains:
+        SetShellVarContext current
     System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'
 
     !insertmacro wails.associateFiles
@@ -150,6 +169,10 @@ Section "uninstall"
     SetShellVarContext current
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+    SetShellVarContext all
+    Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
+    Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+    SetShellVarContext current
 
     !insertmacro wails.unassociateFiles
     !insertmacro wails.unassociateCustomProtocols
