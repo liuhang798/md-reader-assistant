@@ -77,7 +77,7 @@ ManifestDPIAware true
 #!finalize 'signtool --file "%1"'
 
 Name "${INFO_PRODUCTNAME}"
-OutFile "..\..\bin\MD阅读助手-安装程序-${INFO_PRODUCTVERSION}-${ARCH}.exe" # Name of the installer's file.
+OutFile "..\..\bin\MDReaderAssistant-Setup-${INFO_PRODUCTVERSION}-${ARCH}.exe" # Keep the Windows build path ASCII-safe for CI.
 !ifdef WAILS_INSTALL_SCOPE
   !if "${WAILS_INSTALL_SCOPE}" == "user"
     InstallDir "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"

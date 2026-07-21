@@ -57,19 +57,15 @@ jobs:
       - name: Prepare Windows release asset
         shell: pwsh
         run: |
-          $installer = Get-ChildItem build/bin -File -Filter *.exe |
-            Where-Object { $_.Name -ne "MDReaderAssistant.exe" } |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
-
-          if (-not $installer) {
+          $installer = "build/bin/MDReaderAssistant-Setup-$env:APP_VERSION-amd64.exe"
+          if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
             Get-ChildItem build/bin -Recurse | Format-Table FullName, Length
-            throw "The NSIS installer was not found in build/bin"
+            throw "Expected NSIS installer was not found: $installer"
           }
 
           $releaseDir = New-Item -ItemType Directory -Force build/bin/release
-          $target = Join-Path $releaseDir.FullName "MD阅读助手-安装程序-$env:APP_VERSION-amd64.exe"
-          Copy-Item -LiteralPath $installer.FullName -Destination $target -Force
+          $target = Join-Path $releaseDir.FullName "MDReaderAssistant-Setup-$env:APP_VERSION-amd64.exe"
+          Copy-Item -LiteralPath $installer -Destination $target -Force
           Get-Item -LiteralPath $target | Format-Table FullName, Length
       - uses: actions/upload-artifact@v4
         with:
@@ -216,6 +212,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
+          version="${RELEASE_TAG#v}"
+          windows_asset="release-assets/MDReaderAssistant-Setup-${version}-amd64.exe"
+          if [[ -f "${windows_asset}" ]]; then
+            mv "${windows_asset}" "release-assets/MD阅读助手-安装程序-${version}-amd64.exe"
+          fi
+
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
             gh release upload "${RELEASE_TAG}" release-assets/* --clobber
           else
