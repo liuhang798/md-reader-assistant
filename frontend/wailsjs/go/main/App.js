@@ -26,6 +26,10 @@ export function ListFolder(arg1) {
   return window['go']['main']['App']['ListFolder'](arg1);
 }
 
+export function NewFile() {
+  return window['go']['main']['App']['NewFile']();
+}
+
 export function OpenDefaultApps() {
   return window['go']['main']['App']['OpenDefaultApps']();
 }
@@ -50,6 +54,10 @@ export function ReadFile(arg1) {
   return window['go']['main']['App']['ReadFile'](arg1);
 }
 
+export function ReadImageData(arg1, arg2) {
+  return window['go']['main']['App']['ReadImageData'](arg1, arg2);
+}
+
 export function RemoveRecent(arg1) {
   return window['go']['main']['App']['RemoveRecent'](arg1);
 }
@@ -66,6 +74,10 @@ export function SaveFile(arg1, arg2) {
   return window['go']['main']['App']['SaveFile'](arg1, arg2);
 }
 
+export function SelectImage(arg1) {
+  return window['go']['main']['App']['SelectImage'](arg1);
+}
+
 export function SetDirty(arg1) {
   return window['go']['main']['App']['SetDirty'](arg1);
 }
@@ -80,4 +92,8 @@ export function SetTheme(arg1) {
 
 export function ShowInFolder(arg1) {
   return window['go']['main']['App']['ShowInFolder'](arg1);
+}
+
+export function SnoozeUpdates(arg1) {
+  return window['go']['main']['App']['SnoozeUpdates'](arg1);
 }

@@ -5,8 +5,9 @@ export namespace main {
 	    name: string;
 	    directory: string;
 	    content: string;
-	    modifiedAt: string;
-	    size: number;
+        modifiedAt: string;
+        size: number;
+        replacedPath?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Document(source);
@@ -18,8 +19,9 @@ export namespace main {
 	        this.name = source["name"];
 	        this.directory = source["directory"];
 	        this.content = source["content"];
-	        this.modifiedAt = source["modifiedAt"];
-	        this.size = source["size"];
+            this.modifiedAt = source["modifiedAt"];
+            this.size = source["size"];
+            this.replacedPath = source["replacedPath"];
 	    }
 	}
 	export class FolderFile {
@@ -76,9 +78,11 @@ export namespace main {
 	}
 	export class Preferences {
 	    recentFiles: string[];
+	    draftFiles?: string[];
 	    lastFile?: string;
 	    language: string;
 	    lastUpdateCheck?: string;
+	    suppressUpdateUntil?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Preferences(source);
@@ -87,13 +91,16 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.recentFiles = source["recentFiles"];
+	        this.draftFiles = source["draftFiles"];
 	        this.lastFile = source["lastFile"];
 	        this.language = source["language"];
 	        this.lastUpdateCheck = source["lastUpdateCheck"];
+	        this.suppressUpdateUntil = source["suppressUpdateUntil"];
 	    }
 	}
 	export class UpdateInfo {
 	    checked: boolean;
+	    suppressed: boolean;
 	    available: boolean;
 	    currentVersion: string;
 	    latestVersion: string;
@@ -109,6 +116,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.checked = source["checked"];
+	        this.suppressed = source["suppressed"];
 	        this.available = source["available"];
 	        this.currentVersion = source["currentVersion"];
 	        this.latestVersion = source["latestVersion"];
@@ -120,4 +128,3 @@ export namespace main {
 	}
 
 }
-

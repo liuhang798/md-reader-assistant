@@ -28,7 +28,7 @@
 !define INFO_PROJECTNAME    "md-reader-assistant"
 !define INFO_COMPANYNAME    "LeafMD Open Source"
 !define INFO_PRODUCTNAME    "MD阅读助手"
-!define INFO_PRODUCTVERSION "2.2.2"
+!define INFO_PRODUCTVERSION "2.2.3"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
@@ -93,8 +93,31 @@ Function .onInit
    !insertmacro wails.checkArchitecture
 FunctionEnd
 
+# Electron releases and early Wails installers used different uninstall keys
+# or installation scopes. Remove only stale entries with this exact product
+# name so Windows shows a single installed application after an upgrade.
+Function RemoveLegacyUninstallEntries
+    SetRegView 64
+    StrCpy $0 0
+    legacyHKCU:
+        EnumRegKey $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall" $0
+        StrCmp $1 "" legacyCleanupDone
+        StrCmp $1 "${UNINST_KEY_NAME}" legacyHKCUNext
+        ReadRegStr $2 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\$1" "DisplayName"
+        StrCmp $2 "${INFO_PRODUCTNAME}" 0 legacyHKCUNext
+        DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\$1"
+        Goto legacyHKCU
+    legacyHKCUNext:
+        IntOp $0 $0 + 1
+        Goto legacyHKCU
+    legacyCleanupDone:
+        SetRegView 64
+FunctionEnd
+
 Section
     !insertmacro wails.setShellContext
+
+    Call RemoveLegacyUninstallEntries
 
     !insertmacro wails.webview2runtime
 
@@ -104,6 +127,7 @@ Section
 
     File "/oname=MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" "..\icon.ico"
 
+    SetShellVarContext current
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" 0
@@ -123,6 +147,7 @@ Section "uninstall"
 
     RMDir /r $INSTDIR
 
+    SetShellVarContext current
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
 

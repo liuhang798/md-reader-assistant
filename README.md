@@ -16,19 +16,35 @@ Download the latest package for your platform from [GitHub Releases](https://git
 
 The macOS build uses native left-side window controls and application menus, including standard Command shortcuts.
 
+MD Reader Assistant is an ultra-light cross-platform Markdown reader and editor built with Go, Wails, native JavaScript and Vite. The Windows installer is only about **7 MB**, while Windows, macOS and Linux share the same focused reading and editing experience.
+
+## What's new in 2.2.3
+
+- A complete Markdown formatting toolbar with keyboard shortcuts, table creation and local image insertion.
+- New documents open directly in the editor and autosave every 10 seconds without a location prompt.
+- Save As removes the auto-created draft and its Recent entry, including when the draft is reopened after an app restart; existing documents are never deleted.
+- A Resource Explorer joins Recent in the sidebar for browsing Markdown folders.
+- Safer per-document undo history prevents undo from erasing the content originally loaded from disk.
+- Local absolute and relative image paths now render reliably through the Go backend.
+- Update notifications can be paused for 30 days while manual checks remain available.
+- The Windows installer now performs an in-place upgrade and removes duplicate app entries or shortcuts left by older installers.
+
 ## Highlights
 
 - Read and edit Markdown with the same calm, polished interface.
 - Split editing mode: live preview on the left, syntax-highlighted editor on the right.
+- Formatting toolbar for headings, quotes, bold, italic, links, ordered/unordered/task lists, tables, images, inline code and code blocks, including `Ctrl/Cmd + B`, `Ctrl/Cmd + I` and `Ctrl/Cmd + K`.
+- Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
+- Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Clickable table of contents, active section tracking, search, print and back-to-top.
 - Recent documents update immediately and individual records can be removed.
 - Simplified Chinese and English interface with persistent language selection.
 - Light/dark themes and adjustable reading font size.
-- Open folders, browse Markdown collections and drag files into the window.
+- Switch the left sidebar between Recent and a refreshable resource explorer for Markdown folders.
 - Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.
 - Single-instance file opening and unsaved-change protection.
 - A new split reading/editing brand icon with transparent rounded corners and no white square canvas, plus an About screen with the author email and a direct repository link.
-- A daily background check for the latest stable GitHub Release, plus manual checks from Settings, release notes, and one-click access to the download page.
+- Automatic checks for the latest stable GitHub Release, with release notes, one-click access to downloads, manual checks, and a 30-day reminder pause.
 
 ## Screenshots
 
@@ -44,7 +60,7 @@ The macOS build uses native left-side window controls and application menus, inc
 
 ## Go + Wails v2
 
-Version 2.0 and later replace Electron with Go and Wails while retaining the existing HTML/CSS interface and CodeMirror editor. The current Windows installer is about 8.3 MB, compared with about 90 MB for the previous Electron build.
+Version 2.0 and later replace Electron with Go and Wails while retaining the existing HTML/CSS interface and CodeMirror editor. The current Windows installer is about **7 MB**, compared with about 90 MB for the previous Electron build.
 
 - Backend: Go 1.23+
 - Desktop framework: Wails 2.13
@@ -62,6 +78,8 @@ Version 2.0 and later replace Electron with Go and Wails while retaining the exi
 - `build/`: application icons and platform build configuration.
 - `packaging/`: Linux desktop integration and package metadata.
 - `scripts/`: repeatable project asset-maintenance scripts.
+
+New Markdown documents are created immediately beside the installed application. If that location is read-only, the app silently uses `Documents/MD Reader Assistant`. Saving a new document under another name removes its auto-created draft and duplicate Recent entry. Local images referenced by absolute or relative paths are loaded securely through the Go backend for reliable previewing.
 
 ## Downloads
 
@@ -103,7 +121,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.2.2` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.2.3` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

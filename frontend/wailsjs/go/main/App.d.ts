@@ -14,6 +14,8 @@ export function GetStartupMode():Promise<string>;
 
 export function ListFolder(arg1:string):Promise<main.FolderResult>;
 
+export function NewFile():Promise<main.Document>;
+
 export function OpenDefaultApps():Promise<void>;
 
 export function OpenExternal(arg1:string):Promise<void>;
@@ -26,6 +28,8 @@ export function Print():Promise<void>;
 
 export function ReadFile(arg1:string):Promise<main.Document>;
 
+export function ReadImageData(arg1:string,arg2:string):Promise<string>;
+
 export function RemoveRecent(arg1:string):Promise<main.Preferences>;
 
 export function RequestQuit():Promise<boolean>;
@@ -34,6 +38,8 @@ export function SaveAs(arg1:string,arg2:string):Promise<main.Document>;
 
 export function SaveFile(arg1:string,arg2:string):Promise<main.Document>;
 
+export function SelectImage(arg1:string):Promise<string>;
+
 export function SetDirty(arg1:boolean):Promise<void>;
 
 export function SetLanguage(arg1:string):Promise<string>;
@@ -41,3 +47,5 @@ export function SetLanguage(arg1:string):Promise<string>;
 export function SetTheme(arg1:boolean):Promise<void>;
 
 export function ShowInFolder(arg1:string):Promise<void>;
+
+export function SnoozeUpdates(arg1:number):Promise<void>;

@@ -15,7 +15,11 @@
       <span data-i18n="appName">MD阅读助手</span>
     </div>
     <div class="toolbar no-drag">
-      <button id="openFileButton" class="toolbar-button primary" data-i18n-title="openFileTitle" title="打开文件 (Ctrl+O)">
+      <button id="newFileButton" class="toolbar-button primary" data-i18n-title="newFileTitle" title="新建 Markdown 文件 (Ctrl+N)">
+        <svg viewBox="0 0 24 24"><path d="M6 3.5h8l4 4v13H6v-17Z"/><path d="M14 3.5v4h4M12 11v6M9 14h6"/></svg>
+        <span data-i18n="newDocumentButton">新建文档</span>
+      </button>
+      <button id="openFileButton" class="toolbar-button mode-button" data-i18n-title="openFileTitle" title="打开文件 (Ctrl+O)">
         <svg viewBox="0 0 24 24"><path d="M4 19V7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v10H4Z"/><path d="M4 11h16"/></svg>
         <span data-i18n="openDocument">打开文档</span>
       </button>
@@ -73,6 +77,13 @@
         </div>
         <button id="collapseSidebar" class="small-icon" data-i18n-title="collapseSidebar" title="收起侧栏">
           <svg viewBox="0 0 24 24"><path d="m14 7-5 5 5 5"/></svg>
+        </button>
+      </div>
+      <div class="sidebar-tabs" role="tablist" data-i18n-aria-label="libraryViews">
+        <button id="recentTab" class="sidebar-tab active" type="button" role="tab" aria-selected="true" data-i18n="recentReading">最近阅读</button>
+        <button id="explorerTab" class="sidebar-tab" type="button" role="tab" aria-selected="false" data-i18n="resourceExplorer">资源浏览器</button>
+        <button id="refreshExplorer" class="small-icon hidden" type="button" data-i18n-title="refreshExplorer" title="刷新资源浏览器">
+          <svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M18.2 16a8 8 0 1 1 .5-8.4L20 12"/></svg>
         </button>
       </div>
       <div id="fileList" class="file-list"></div>
@@ -145,6 +156,30 @@
               <button id="saveAsButton" class="text-button" data-i18n="saveAs">另存为</button>
             </div>
           </div>
+          <div id="editorFormatBar" class="editor-format-bar" role="toolbar" data-i18n-aria-label="formatToolbar">
+            <button id="editorUndoButton" type="button" data-i18n-title="undoTitle" title="撤回 (Ctrl+Z)" disabled><svg viewBox="0 0 24 24"><path d="m9 8-5 4 5 4"/><path d="M5 12h8a6 6 0 0 1 6 6"/></svg></button>
+            <span class="format-divider"></span>
+            <select id="headingSelect" data-i18n-title="heading" title="标题">
+              <option value="" data-i18n="paragraph">正文</option>
+              <option value="# " data-i18n="heading1">标题 1</option>
+              <option value="## " data-i18n="heading2">标题 2</option>
+              <option value="### " data-i18n="heading3">标题 3</option>
+            </select>
+            <span class="format-divider"></span>
+            <button type="button" data-format="bold" data-i18n-title="boldTitle" title="加粗 (Ctrl+B)"><strong>B</strong></button>
+            <button type="button" data-format="italic" data-i18n-title="italicTitle" title="斜体 (Ctrl+I)"><em>I</em></button>
+            <button type="button" data-format="link" data-i18n-title="linkTitle" title="插入链接 (Ctrl+K)"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2"/></svg></button>
+            <button type="button" data-format="inline-code" data-i18n-title="inlineCode" title="行内代码"><span class="code-label">&lt;/&gt;</span></button>
+            <button type="button" data-format="code-block" data-i18n-title="codeBlock" title="代码块"><svg viewBox="0 0 24 24"><path d="m8 9-3 3 3 3m8-6 3 3-3 3M14 5l-4 14"/></svg></button>
+            <span class="format-divider"></span>
+            <button type="button" data-format="quote" data-i18n-title="quote" title="引用"><svg viewBox="0 0 24 24"><path d="M6 17h4v-5H6V8h5M14 17h4v-5h-4V8h5"/></svg></button>
+            <button type="button" data-format="unordered-list" data-i18n-title="unorderedList" title="无序列表"><svg viewBox="0 0 24 24"><circle cx="5" cy="7" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="17" r="1"/><path d="M9 7h10M9 12h10M9 17h10"/></svg></button>
+            <button type="button" data-format="ordered-list" data-i18n-title="orderedList" title="有序列表"><span class="ordered-list-label">1.</span></button>
+            <button type="button" data-format="task-list" data-i18n-title="taskList" title="任务列表"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="5" height="5" rx="1"/><path d="m5 6.5 1 1 2-2M11 6.5h9M4 15h4v4H4zM11 17h9"/></svg></button>
+            <span class="format-divider"></span>
+            <button type="button" data-format="table" data-i18n-title="insertTable" title="插入表格"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16"/></svg></button>
+            <button type="button" data-format="image" data-i18n-title="insertImage" title="插入图片"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 2-2 6 5"/></svg></button>
+          </div>
           <div id="markdownEditor" data-i18n-aria-label="markdownEditorAria" aria-label="Markdown 编辑器"></div>
           <div class="editor-footer">
             <span id="editorPosition">第 1 行，第 1 列</span>
@@ -184,7 +219,7 @@
     <button data-action="print"><span class="menu-label" data-i18n="printDocument">打印文档</span> <span>Ctrl P</span></button>
     <hr>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span> <span>GitHub</span></button>
-    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.2.2</span></button>
+    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.2.3</span></button>
   </div>
 
   <div id="aboutDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
@@ -197,7 +232,7 @@
         <div>
           <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
           <h2 id="aboutTitle" data-i18n="appName">MD阅读助手</h2>
-          <span class="about-version" data-i18n="aboutVersion">版本 2.2.2</span>
+          <span class="about-version" data-i18n="aboutVersion">版本 2.2.3</span>
         </div>
       </div>
       <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。</p>
@@ -234,9 +269,9 @@
         </div>
       </div>
       <div class="update-versions" aria-label="Version change">
-        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.2.2</strong></span>
+        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.2.3</strong></span>
         <svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
-        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.2.2</strong></span>
+        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.2.3</strong></span>
       </div>
       <div class="release-notes-panel">
         <strong data-i18n="releaseNotes">更新说明</strong>
@@ -244,7 +279,27 @@
       </div>
       <div class="update-footer">
         <button id="updateLater" class="large-button secondary" type="button" data-i18n="remindLater">稍后提醒</button>
+        <button id="updateSnooze" class="large-button secondary" type="button" data-i18n="snooze30Days">30 天内不再提醒</button>
         <button id="openUpdatePage" class="large-button primary" type="button" data-i18n="openDownloadPage">打开下载页面</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="tableDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="tableDialogTitle">
+    <section class="table-dialog">
+      <button id="closeTableDialog" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <span class="eyebrow" data-i18n="markdownTool">MARKDOWN 工具</span>
+      <h2 id="tableDialogTitle" data-i18n="insertTable">插入表格</h2>
+      <p data-i18n="tableDialogHint">选择表格的行数和列数，表头占第一行。</p>
+      <div class="table-size-fields">
+        <label><span data-i18n="rows">行数</span><input id="tableRows" type="number" min="2" max="20" value="3"></label>
+        <label><span data-i18n="columns">列数</span><input id="tableColumns" type="number" min="1" max="12" value="3"></label>
+      </div>
+      <div class="table-dialog-actions">
+        <button id="cancelTable" class="large-button secondary" type="button" data-i18n="cancel">取消</button>
+        <button id="confirmTable" class="large-button primary" type="button" data-i18n="insert">插入</button>
       </div>
     </section>
   </div>

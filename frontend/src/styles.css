@@ -150,6 +150,11 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .sidebar-heading h2 { margin: 5px 0 0; font-size: 18px; letter-spacing: -.3px; }
 .small-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: var(--muted); }
 .small-icon svg { width: 17px; }
+.sidebar-tabs { min-width: 229px; display: grid; grid-template-columns: 1fr 1fr 30px; align-items: center; gap: 4px; margin: -4px 5px 12px; padding: 4px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 58%, transparent); }
+.sidebar-tab { height: 30px; padding: 0 7px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; white-space: nowrap; }
+.sidebar-tab:hover { color: var(--text); }
+.sidebar-tab.active { color: var(--green-deep); background: var(--paper-strong); box-shadow: 0 2px 7px rgba(43, 52, 45, .07); font-weight: 650; }
+.sidebar-tabs .small-icon { width: 30px; height: 30px; }
 .file-list { flex: 1; overflow: auto; padding: 1px 0; min-width: 229px; }
 .empty-list { padding: 30px 10px; color: var(--faint); text-align: center; font-size: 13px; }
 .file-row { position: relative; margin-bottom: 3px; }
@@ -221,6 +226,8 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-wid
 .markdown-body li::marker { color: var(--green); }
 .markdown-body hr { border: 0; height: 1px; background: var(--line); margin: 2.6em 0; }
 .markdown-body img { display: block; max-width: 100%; margin: 2em auto; border-radius: 10px; box-shadow: var(--shadow); }
+.markdown-body img.local-image-loading { min-width: 180px; min-height: 72px; background: linear-gradient(90deg, var(--panel), var(--paper-strong), var(--panel)); box-shadow: none; }
+.markdown-body img.local-image-error { min-width: 180px; min-height: 48px; padding: 12px; border: 1px dashed var(--line); background: var(--panel); box-shadow: none; }
 .markdown-body table { width: 100%; border-collapse: collapse; margin: 1.8em 0; font-family: "Segoe UI", sans-serif; font-size: .88em; }
 .markdown-body th, .markdown-body td { padding: 10px 13px; border: 1px solid var(--line); text-align: left; }
 .markdown-body th { background: var(--panel); font-weight: 650; }
@@ -251,6 +258,17 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-wid
 .editor-header strong { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .editor-status { display: flex; align-items: center; gap: 7px; color: var(--faint); font-size: 11px; }
 .editor-status .dirty { color: #b17b4b; }
+.editor-format-bar { min-height: 43px; display: flex; align-items: center; gap: 3px; padding: 5px 12px; overflow-x: auto; overflow-y: hidden; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 42%, var(--paper)); scrollbar-width: thin; }
+.editor-format-bar button, .editor-format-bar select { flex: 0 0 auto; height: 31px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; }
+.editor-format-bar button { min-width: 31px; padding: 0 7px; display: grid; place-items: center; }
+.editor-format-bar button:hover, .editor-format-bar select:hover, .editor-format-bar button:focus-visible, .editor-format-bar select:focus-visible { color: var(--green-deep); background: var(--green-soft); outline: none; }
+.editor-format-bar button:disabled { opacity: .34; cursor: default; background: transparent; color: var(--faint); }
+.editor-format-bar button svg { width: 17px; height: 17px; }
+.editor-format-bar select { max-width: 92px; padding: 0 8px; font-size: 11px; outline: none; }
+.editor-format-bar select option { color: var(--text); background: var(--paper-strong); }
+.format-divider { width: 1px; height: 20px; flex: 0 0 1px; margin: 0 3px; background: var(--line); }
+.code-label { font-family: "Cascadia Code", Consolas, monospace; font-size: 10px; font-weight: 700; }
+.ordered-list-label { font-family: "Segoe UI", sans-serif; font-size: 12px; font-weight: 700; }
 .editor-preview-scroll { flex: 1; min-height: 0; overflow: auto; }
 .editor-preview-content { max-width: 700px; margin: 0 auto; padding: 34px 42px 90px; font-size: calc(15px * var(--font-scale)); }
 .editor-preview-content h1 { font-size: calc(30px * var(--font-scale)); }
@@ -354,7 +372,16 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .release-notes-content li { margin: 3px 0; }
 .release-notes-content a { color: var(--green-deep); text-underline-offset: 2px; }
 .update-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
-.update-footer .large-button { min-width: 120px; height: 40px; }
+.update-footer .large-button { min-width: 112px; height: 40px; padding: 0 14px; }
+.table-dialog { position: relative; width: min(430px, 100%); padding: 30px; border: 1px solid color-mix(in srgb, var(--line) 82%, var(--green)); border-radius: 18px; background: var(--paper-strong); box-shadow: 0 30px 90px rgba(18, 25, 20, .28); animation: dialog-rise .2s ease-out; }
+.table-dialog h2 { margin: 7px 0 8px; font-size: 23px; }
+.table-dialog > p { margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.table-size-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.table-size-fields label { display: flex; flex-direction: column; gap: 7px; color: var(--muted); font-size: 11px; }
+.table-size-fields input { height: 42px; width: 100%; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; outline: none; color: var(--text); background: var(--panel); }
+.table-size-fields input:focus { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent); }
+.table-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+.table-dialog-actions .large-button { min-width: 92px; height: 39px; }
 body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; }
 @keyframes dialog-fade { from { opacity: 0; } }
 @keyframes dialog-rise { from { opacity: 0; transform: translateY(8px) scale(.985); } }
@@ -375,6 +402,12 @@ body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; 
   .breadcrumb span { display: none; }
   .brand > span:last-child { max-width: 86px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .toolbar-button.mode-button span { display: none; }
+}
+
+@media (max-width: 720px) {
+  .editor-preview-pane { display: none; }
+  .update-footer { flex-wrap: wrap; }
+  .update-footer .large-button { flex: 1 1 140px; }
 }
 
 @media print {

@@ -1,18 +1,152 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestCreateNewMarkdownFileUsesFirstWritableDirectory(t *testing.T) {
+	first := filepath.Join(t.TempDir(), "install")
+	fallback := filepath.Join(t.TempDir(), "documents")
+	now := time.Date(2026, 7, 21, 12, 34, 56, 0, time.Local)
+	filePath, err := createNewMarkdownFile([]string{first, fallback}, "New document", now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Dir(filePath) != first {
+		t.Fatalf("created document in %q, want %q", filepath.Dir(filePath), first)
+	}
+	if filepath.Base(filePath) != "New document-20260721-123456.md" {
+		t.Fatalf("unexpected generated name: %q", filepath.Base(filePath))
+	}
+
+	secondPath, err := createNewMarkdownFile([]string{first}, "New document", now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Base(secondPath) != "New document-20260721-123456-2.md" {
+		t.Fatalf("collision did not get a unique suffix: %q", filepath.Base(secondPath))
+	}
+}
+
+func TestReplaceDraftRemovesTemporaryFileAndRecentRecord(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	draftPath := filepath.Join(root, "New document-20260721-123456.md")
+	savedPath := filepath.Join(root, "final.md")
+	if err := os.WriteFile(draftPath, []byte("draft"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(savedPath, []byte("final"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(savedPath); err != nil {
+		t.Fatal(err)
+	}
+	app.markDraft(draftPath)
+	prefsBeforeRestart, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefsBeforeRestart.DraftFiles) != 1 || prefsBeforeRestart.DraftFiles[0] != draftPath {
+		t.Fatalf("draft was not persisted: %#v", prefsBeforeRestart.DraftFiles)
+	}
+
+	// Simulate closing and reopening the application before Save As.
+	app = &App{language: "zh-CN", preferencesOverride: app.preferencesOverride}
+	app.restoreDrafts(prefsBeforeRestart.DraftFiles)
+
+	replacedPath, err := app.replaceDraft(draftPath, savedPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if replacedPath != draftPath {
+		t.Fatalf("replaced path = %q, want %q", replacedPath, draftPath)
+	}
+	if _, err := os.Stat(draftPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("temporary draft was not removed: %v", err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefs.RecentFiles) != 1 || prefs.RecentFiles[0] != savedPath {
+		t.Fatalf("unexpected recent records after replacement: %#v", prefs.RecentFiles)
+	}
+	if len(prefs.DraftFiles) != 0 {
+		t.Fatalf("draft record was not cleared: %#v", prefs.DraftFiles)
+	}
+
+	regularPath := filepath.Join(root, "existing.md")
+	if err := os.WriteFile(regularPath, []byte("keep"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if replaced, err := app.replaceDraft(regularPath, savedPath); err != nil || replaced != "" {
+		t.Fatalf("ordinary document was treated as a draft: replaced=%q err=%v", replaced, err)
+	}
+	if _, err := os.Stat(regularPath); err != nil {
+		t.Fatalf("ordinary document was removed: %v", err)
+	}
+}
+
+func TestReadImageDataSupportsRelativeLocalImages(t *testing.T) {
+	root := t.TempDir()
+	pngBytes, err := base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+	if err != nil {
+		t.Fatal(err)
+	}
+	imagePath := filepath.Join(root, "preview image.png")
+	if err := os.WriteFile(imagePath, pngBytes, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	dataURL, err := testApp(t).ReadImageData("preview%20image.png", root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(dataURL, "data:image/png;base64,") {
+		t.Fatalf("unexpected image data URL prefix: %.40q", dataURL)
+	}
+}
 
 func testApp(t *testing.T) *App {
 	t.Helper()
 	return &App{
 		language:            "zh-CN",
 		preferencesOverride: filepath.Join(t.TempDir(), "preferences.json"),
+	}
+}
+
+func TestSnoozeUpdatesSuppressesAutomaticChecks(t *testing.T) {
+	app := testApp(t)
+	if err := app.SnoozeUpdates(30); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	until, err := time.Parse(time.RFC3339, prefs.SuppressUpdateUntil)
+	if err != nil {
+		t.Fatalf("invalid suppression timestamp %q: %v", prefs.SuppressUpdateUntil, err)
+	}
+	if until.Before(time.Now().Add(29 * 24 * time.Hour)) {
+		t.Fatalf("suppression period is too short: %s", until)
+	}
+	info, err := app.CheckForUpdates(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.Suppressed || info.Checked {
+		t.Fatalf("automatic update check was not suppressed: %#v", info)
 	}
 }
 

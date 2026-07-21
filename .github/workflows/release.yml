@@ -77,7 +77,7 @@ jobs:
 
           Push-Location build/windows/installer
           try {
-            & $makensis "-DWAILS_INSTALL_SCOPE=user" "-DARG_WAILS_AMD64_BINARY=..\..\bin\MDReaderAssistant.exe" "project.nsi"
+            & $makensis "-DWAILS_INSTALL_SCOPE=user" "-DREQUEST_EXECUTION_LEVEL=user" "-DARG_WAILS_AMD64_BINARY=..\..\bin\MDReaderAssistant.exe" "project.nsi"
             if ($LASTEXITCODE -ne 0) {
               throw "NSIS exited with code $LASTEXITCODE"
             }

@@ -16,6 +16,7 @@ const latestReleaseAPI = "https://api.github.com/repos/liuhang798/md-reader-assi
 
 type UpdateInfo struct {
 	Checked        bool   `json:"checked"`
+	Suppressed     bool   `json:"suppressed"`
 	Available      bool   `json:"available"`
 	CurrentVersion string `json:"currentVersion"`
 	LatestVersion  string `json:"latestVersion"`
@@ -37,8 +38,17 @@ type githubRelease struct {
 
 // CheckForUpdates checks the latest stable GitHub Release. The frontend calls
 // this once at startup and may call it again when the user requests a check.
-func (a *App) CheckForUpdates(_ bool) (UpdateInfo, error) {
+func (a *App) CheckForUpdates(force bool) (UpdateInfo, error) {
 	result := UpdateInfo{CurrentVersion: appVersion}
+	if !force {
+		prefs, err := a.readPreferences()
+		if err == nil && prefs.SuppressUpdateUntil != "" {
+			if until, parseErr := time.Parse(time.RFC3339, prefs.SuppressUpdateUntil); parseErr == nil && time.Now().Before(until) {
+				result.Suppressed = true
+				return result, nil
+			}
+		}
+	}
 	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, latestReleaseAPI, nil)
 	if err != nil {
 		return result, err
@@ -88,6 +98,21 @@ func (a *App) CheckForUpdates(_ bool) (UpdateInfo, error) {
 		return result, err
 	}
 	return result, nil
+}
+
+// SnoozeUpdates suppresses automatic prompts. Manual update checks always
+// bypass this preference.
+func (a *App) SnoozeUpdates(days int) error {
+	if days < 1 {
+		days = 1
+	}
+	if days > 365 {
+		days = 365
+	}
+	_, err := a.updatePreferences(func(prefs *Preferences) {
+		prefs.SuppressUpdateUntil = time.Now().Add(time.Duration(days) * 24 * time.Hour).UTC().Format(time.RFC3339)
+	})
+	return err
 }
 
 func normaliseVersion(version string) string {

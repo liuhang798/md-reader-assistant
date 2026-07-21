@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -22,7 +25,7 @@ import (
 const (
 	appNameZH  = "MD阅读助手"
 	appNameEN  = "MD Reader Assistant"
-	appVersion = "2.2.2"
+	appVersion = "2.2.3"
 	maxRecent  = 10
 )
 
@@ -31,12 +34,13 @@ var markdownExtensions = map[string]bool{
 }
 
 type Document struct {
-	Path       string `json:"path"`
-	Name       string `json:"name"`
-	Directory  string `json:"directory"`
-	Content    string `json:"content"`
-	ModifiedAt string `json:"modifiedAt"`
-	Size       int64  `json:"size"`
+	Path         string `json:"path"`
+	Name         string `json:"name"`
+	Directory    string `json:"directory"`
+	Content      string `json:"content"`
+	ModifiedAt   string `json:"modifiedAt"`
+	Size         int64  `json:"size"`
+	ReplacedPath string `json:"replacedPath,omitempty"`
 }
 
 type FolderFile struct {
@@ -53,16 +57,20 @@ type FolderResult struct {
 }
 
 type Preferences struct {
-	RecentFiles     []string `json:"recentFiles"`
-	LastFile        string   `json:"lastFile,omitempty"`
-	Language        string   `json:"language"`
-	LastUpdateCheck string   `json:"lastUpdateCheck,omitempty"`
+	RecentFiles         []string `json:"recentFiles"`
+	DraftFiles          []string `json:"draftFiles,omitempty"`
+	LastFile            string   `json:"lastFile,omitempty"`
+	Language            string   `json:"language"`
+	LastUpdateCheck     string   `json:"lastUpdateCheck,omitempty"`
+	SuppressUpdateUntil string   `json:"suppressUpdateUntil,omitempty"`
 }
 
 type App struct {
 	ctx                 context.Context
 	mu                  sync.RWMutex
 	preferencesMu       sync.Mutex
+	draftsMu            sync.Mutex
+	draftFiles          map[string]bool
 	dirty               bool
 	language            string
 	initialFile         string
@@ -70,13 +78,14 @@ type App struct {
 }
 
 func NewApp() *App {
-	return &App{language: "zh-CN", initialFile: findMarkdownArgument(os.Args)}
+	return &App{language: "zh-CN", initialFile: findMarkdownArgument(os.Args), draftFiles: make(map[string]bool)}
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	prefs, _ := a.readPreferences()
 	a.language = normaliseLanguage(prefs.Language)
+	a.restoreDrafts(prefs.DraftFiles)
 }
 
 func (a *App) beforeClose(ctx context.Context) bool {
@@ -121,7 +130,7 @@ func (a *App) preferencePath() string {
 }
 
 func defaultPreferences() Preferences {
-	return Preferences{RecentFiles: []string{}, Language: "zh-CN"}
+	return Preferences{RecentFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN"}
 }
 
 func normaliseLanguage(language string) string {
@@ -152,6 +161,9 @@ func (a *App) readPreferencesUnlocked() (Preferences, error) {
 	prefs.Language = normaliseLanguage(prefs.Language)
 	if prefs.RecentFiles == nil {
 		prefs.RecentFiles = []string{}
+	}
+	if prefs.DraftFiles == nil {
+		prefs.DraftFiles = []string{}
 	}
 	return prefs, nil
 }
@@ -241,6 +253,247 @@ func (a *App) OpenFile() (*Document, error) {
 	return a.ReadFile(filePath)
 }
 
+// NewFile creates the document silently beside the application. Installed
+// copies use a per-user directory, but a Documents fallback keeps this safe
+// for portable/read-only installations as well.
+func (a *App) NewFile() (*Document, error) {
+	directories := make([]string, 0, 3)
+	if executable, err := os.Executable(); err == nil {
+		directories = append(directories, filepath.Dir(executable))
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		directories = append(directories, filepath.Join(home, "Documents", appNameEN))
+	}
+	if config, err := os.UserConfigDir(); err == nil {
+		directories = append(directories, filepath.Join(config, appNameEN, "Documents"))
+	}
+	baseName := strings.TrimSuffix(a.text("newDocument"), filepath.Ext(a.text("newDocument")))
+	filePath, err := createNewMarkdownFile(directories, baseName, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	a.markDraft(filePath)
+	return a.readDocument(filePath, true)
+}
+
+func (a *App) markDraft(filePath string) {
+	filePath = filepath.Clean(filePath)
+	a.draftsMu.Lock()
+	if a.draftFiles == nil {
+		a.draftFiles = make(map[string]bool)
+	}
+	a.draftFiles[draftPathKey(filePath)] = true
+	a.draftsMu.Unlock()
+	_, _ = a.updatePreferences(func(prefs *Preferences) {
+		for _, item := range prefs.DraftFiles {
+			if draftPathKey(item) == draftPathKey(filePath) {
+				return
+			}
+		}
+		prefs.DraftFiles = append(prefs.DraftFiles, filePath)
+	})
+}
+
+func (a *App) restoreDrafts(draftFiles []string) {
+	a.draftsMu.Lock()
+	defer a.draftsMu.Unlock()
+	if a.draftFiles == nil {
+		a.draftFiles = make(map[string]bool)
+	}
+	for _, filePath := range draftFiles {
+		if strings.TrimSpace(filePath) != "" {
+			a.draftFiles[draftPathKey(filePath)] = true
+		}
+	}
+}
+
+func draftPathKey(filePath string) string {
+	cleaned := filepath.Clean(filePath)
+	if goruntime.GOOS == "windows" {
+		return strings.ToLower(cleaned)
+	}
+	return cleaned
+}
+
+func (a *App) replaceDraft(originalPath, savedPath string) (string, error) {
+	originalPath = filepath.Clean(originalPath)
+	savedPath = filepath.Clean(savedPath)
+	samePath := originalPath == savedPath
+	if goruntime.GOOS == "windows" {
+		samePath = strings.EqualFold(originalPath, savedPath)
+	}
+	if originalPath == "." || savedPath == "." || samePath {
+		return "", nil
+	}
+
+	a.draftsMu.Lock()
+	key := draftPathKey(originalPath)
+	isDraft := a.draftFiles[key]
+	a.draftsMu.Unlock()
+	if !isDraft {
+		return "", nil
+	}
+	if err := os.Remove(originalPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return "", err
+	}
+	_, preferencesErr := a.updatePreferences(func(prefs *Preferences) {
+		recent := make([]string, 0, len(prefs.RecentFiles))
+		for _, item := range prefs.RecentFiles {
+			if draftPathKey(item) != key {
+				recent = append(recent, item)
+			}
+		}
+		prefs.RecentFiles = recent
+		drafts := make([]string, 0, len(prefs.DraftFiles))
+		for _, item := range prefs.DraftFiles {
+			if draftPathKey(item) != key {
+				drafts = append(drafts, item)
+			}
+		}
+		prefs.DraftFiles = drafts
+		if draftPathKey(prefs.LastFile) == key {
+			prefs.LastFile = ""
+			if len(recent) > 0 {
+				prefs.LastFile = recent[0]
+			}
+		}
+	})
+	a.draftsMu.Lock()
+	delete(a.draftFiles, key)
+	a.draftsMu.Unlock()
+	return originalPath, preferencesErr
+}
+
+func createNewMarkdownFile(directories []string, baseName string, now time.Time) (string, error) {
+	baseName = strings.TrimSpace(baseName)
+	if baseName == "" {
+		baseName = "New document"
+	}
+	stamp := now.Format("20060102-150405")
+	var lastErr error
+	seen := make(map[string]bool)
+	for _, directory := range directories {
+		directory = filepath.Clean(strings.TrimSpace(directory))
+		key := strings.ToLower(directory)
+		if directory == "." || seen[key] {
+			continue
+		}
+		seen[key] = true
+		if err := os.MkdirAll(directory, 0o755); err != nil {
+			lastErr = err
+			continue
+		}
+		for suffix := 0; suffix < 100; suffix++ {
+			name := fmt.Sprintf("%s-%s.md", baseName, stamp)
+			if suffix > 0 {
+				name = fmt.Sprintf("%s-%s-%d.md", baseName, stamp, suffix+1)
+			}
+			filePath := filepath.Join(directory, name)
+			file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+			if errors.Is(err, os.ErrExist) {
+				continue
+			}
+			if err != nil {
+				lastErr = err
+				break
+			}
+			if err := file.Close(); err != nil {
+				_ = os.Remove(filePath)
+				lastErr = err
+				break
+			}
+			return filePath, nil
+		}
+	}
+	if lastErr == nil {
+		lastErr = errors.New("no writable document directory")
+	}
+	return "", fmt.Errorf("create Markdown document: %w", lastErr)
+}
+
+// SelectImage returns a Markdown-friendly path. When possible it is relative
+// to the document, keeping the Markdown file portable.
+func (a *App) SelectImage(currentFile string) (string, error) {
+	imagePath, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
+		Title: a.text("selectImage"),
+		Filters: []wailsruntime.FileFilter{
+			{DisplayName: a.text("imageFile"), Pattern: "*.png;*.jpg;*.jpeg;*.gif;*.webp;*.svg;*.bmp"},
+			{DisplayName: a.text("allFiles"), Pattern: "*.*"},
+		},
+	})
+	if err != nil || imagePath == "" {
+		return "", err
+	}
+	result := filepath.Clean(imagePath)
+	if strings.TrimSpace(currentFile) != "" {
+		if relative, relativeErr := filepath.Rel(filepath.Dir(filepath.Clean(currentFile)), result); relativeErr == nil {
+			result = relative
+		}
+	}
+	return filepath.ToSlash(result), nil
+}
+
+// ReadImageData reads local images for the WebView. Direct file:// access is
+// blocked by WebView security rules, so previews use a data URL instead.
+func (a *App) ReadImageData(imagePath, documentDirectory string) (string, error) {
+	resolved, err := resolveLocalImagePath(imagePath, documentDirectory)
+	if err != nil {
+		return "", err
+	}
+	info, err := os.Stat(resolved)
+	if err != nil {
+		return "", err
+	}
+	if info.IsDir() {
+		return "", errors.New("image path is a directory")
+	}
+	const maxImageSize = int64(25 * 1024 * 1024)
+	if info.Size() > maxImageSize {
+		return "", errors.New("image exceeds the 25 MB preview limit")
+	}
+	data, err := os.ReadFile(resolved)
+	if err != nil {
+		return "", err
+	}
+	contentType := mime.TypeByExtension(strings.ToLower(filepath.Ext(resolved)))
+	if contentType == "" {
+		contentType = http.DetectContentType(data)
+	}
+	contentType = strings.Split(contentType, ";")[0]
+	if !strings.HasPrefix(contentType, "image/") {
+		return "", errors.New("selected file is not a supported image")
+	}
+	return "data:" + contentType + ";base64," + base64.StdEncoding.EncodeToString(data), nil
+}
+
+func resolveLocalImagePath(imagePath, documentDirectory string) (string, error) {
+	imagePath = strings.TrimSpace(imagePath)
+	if imagePath == "" {
+		return "", errors.New("image path is empty")
+	}
+	if parsed, err := url.Parse(imagePath); err == nil && strings.EqualFold(parsed.Scheme, "file") {
+		imagePath, err = url.PathUnescape(parsed.Path)
+		if err != nil {
+			return "", err
+		}
+		if goruntime.GOOS == "windows" && len(imagePath) >= 3 && imagePath[0] == '/' && imagePath[2] == ':' {
+			imagePath = imagePath[1:]
+		}
+	} else if strings.Contains(imagePath, "://") {
+		return "", errors.New("only local images can be read")
+	} else if unescaped, err := url.PathUnescape(imagePath); err == nil {
+		imagePath = unescaped
+	}
+	imagePath = filepath.FromSlash(imagePath)
+	if !filepath.IsAbs(imagePath) {
+		if strings.TrimSpace(documentDirectory) == "" {
+			return "", errors.New("document directory is empty")
+		}
+		imagePath = filepath.Join(documentDirectory, imagePath)
+	}
+	return filepath.Abs(filepath.Clean(imagePath))
+}
+
 func (a *App) OpenFolder() (*FolderResult, error) {
 	root, err := wailsruntime.OpenDirectoryDialog(a.ctx, wailsruntime.OpenDialogOptions{Title: a.text("openFolder")})
 	if err != nil || root == "" {
@@ -279,7 +532,14 @@ func (a *App) SaveAs(currentPath, content string) (*Document, error) {
 	if err != nil || filePath == "" {
 		return nil, err
 	}
-	return a.SaveFile(filePath, content)
+	saved, err := a.SaveFile(filePath, content)
+	if err != nil {
+		return nil, err
+	}
+	if replacedPath, _ := a.replaceDraft(currentPath, saved.Path); replacedPath != "" {
+		saved.ReplacedPath = replacedPath
+	}
+	return saved, nil
 }
 
 func (a *App) SetDirty(dirty bool) {
@@ -466,14 +726,16 @@ func (a *App) text(key string) string {
 			"exitUnsavedMessage": "文档中的更改尚未保存。确定要退出并放弃这些更改吗？", "continueEditing": "继续编辑",
 			"discardAndOpen": "不保存并打开", "discardAndExit": "不保存并退出", "openMarkdown": "打开 Markdown 文档",
 			"markdownDocument": "Markdown 文档", "textFile": "文本文件", "allFiles": "所有文件", "openFolder": "打开文档文件夹",
-			"saveAsMarkdown": "另存为 Markdown 文档", "newDocument": "新建文档.md",
+			"saveAsMarkdown": "另存为 Markdown 文档", "newDocument": "新建文档.md", "newMarkdown": "新建 Markdown 文档",
+			"selectImage": "选择要插入的图片", "imageFile": "图片文件",
 		},
 		"en": {
 			"unsavedTitle": "Unsaved Changes", "openUnsavedMessage": "The current document has unsaved changes. Opening another document will discard them.",
 			"exitUnsavedMessage": "The document has unsaved changes. Exit and discard them?", "continueEditing": "Continue Editing",
 			"discardAndOpen": "Discard and Open", "discardAndExit": "Discard and Exit", "openMarkdown": "Open Markdown Document",
 			"markdownDocument": "Markdown Document", "textFile": "Text File", "allFiles": "All Files", "openFolder": "Open Document Folder",
-			"saveAsMarkdown": "Save Markdown Document As", "newDocument": "New document.md",
+			"saveAsMarkdown": "Save Markdown Document As", "newDocument": "New document.md", "newMarkdown": "New Markdown Document",
+			"selectImage": "Choose an image to insert", "imageFile": "Image files",
 		},
 	}
 	if value := translations[a.language][key]; value != "" {

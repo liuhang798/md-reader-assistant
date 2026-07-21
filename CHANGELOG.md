@@ -2,6 +2,36 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.2.3] - 2026-07-21
+
+### 简体中文
+
+- 新增 Markdown 格式工具栏：标题、引用、加粗、斜体、链接、有序/无序列表、任务列表、表格、图片、行内代码和代码块。
+- 新增 `Ctrl/Cmd + B`、`Ctrl/Cmd + I`、`Ctrl/Cmd + K` 编辑快捷键。
+- 新增 Markdown 文件创建功能，无需选择目录即可在安装目录自动创建并进入编辑；安装目录不可写时会自动回退到用户“文档”目录。
+- 编辑状态下每 10 秒自动保存，并避免保存期间继续输入造成内容覆盖。
+- 左侧文档库新增“最近阅读 / 资源浏览器”双视图及资源列表刷新功能。
+- 更新弹窗新增“30 天内不再提醒”，手动检查更新不受该设置影响。
+- 调整顶部主操作样式：“新建文档”改为绿色主按钮，“打开文档”改为无背景按钮。
+- 编辑工具栏新增撤回按钮；每次打开文档都会建立独立撤回历史，`Ctrl/Cmd + Z` 最多只能回到文档刚打开时的原始内容。
+- 修复本地图片预览失败：改由 Go 后端安全读取绝对路径和相对路径图片，不再依赖被 WebView 限制的 `file://` 地址。
+- 修复新建文档“另存为”后出现两条最近阅读记录；另存成功后会删除自动创建的临时草稿及其记录，草稿标记在软件重启后仍然有效。
+- 修复升级安装后 Windows 可能出现两个“MD阅读助手”应用或快捷方式的问题；安装范围统一为当前用户，安装器会清理旧 Electron/早期版本遗留的重复卸载项和快捷方式。
+
+### English
+
+- Added a Markdown formatting toolbar for headings, quotes, bold, italic, links, ordered/unordered/task lists, tables, images, inline code and code blocks.
+- Added `Ctrl/Cmd + B`, `Ctrl/Cmd + I` and `Ctrl/Cmd + K` editor shortcuts.
+- Added Markdown file creation without a location prompt: files are created beside the application, with a silent fallback to the user's Documents directory when needed.
+- Added 10-second autosave while editing, without overwriting changes made during an in-flight save.
+- Added Recent and Resource Explorer views to the sidebar, including explorer refresh.
+- Added a 30-day update reminder pause; manual update checks always remain available.
+- Promoted New Document to the primary toolbar action and changed Open Document to a background-free secondary action.
+- Added an Undo toolbar button and per-document history isolation, so `Ctrl/Cmd + Z` stops at the content originally loaded for that document.
+- Fixed local image previews by loading image files through the Go backend instead of blocked `file://` URLs.
+- Fixed duplicate Recent entries after saving a newly created document under another name; the auto-created draft and its record are removed after a successful Save As, even after restarting the app.
+- Fixed duplicate Windows app entries or shortcuts after upgrading by consistently using per-user installation and cleaning stale uninstall records and shortcuts left by Electron or early installers.
+
 ## [2.2.2] - 2026-07-21
 
 ### 简体中文
@@ -49,3 +79,4 @@ All notable changes to MD Reader Assistant are documented here.
 
 [2.2.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.1
 [2.2.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.2
+[2.2.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.3
