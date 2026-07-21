@@ -80,7 +80,7 @@ button, input { font: inherit; }
 button { color: inherit; }
 svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .hidden { display: none !important; }
-.no-drag, button, input { -webkit-app-region: no-drag; }
+.no-drag, button, input { -webkit-app-region: no-drag; --wails-draggable: no-drag; }
 
 .titlebar {
   height: 52px;
@@ -91,12 +91,18 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   background: var(--bg);
   border-bottom: 1px solid var(--line);
   -webkit-app-region: drag;
-  padding: 0 146px 0 20px;
+  --wails-draggable: drag;
+  padding: 0 138px 0 20px;
 }
 .brand { display: flex; gap: 10px; align-items: center; font-weight: 680; letter-spacing: -.2px; }
-.brand-mark { width: 26px; height: 26px; display: grid; place-items: center; background: var(--green-deep); color: white; border-radius: 8px 8px 8px 3px; }
-.brand-mark svg { width: 17px; stroke: none; fill: currentColor; }
+.brand-mark { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 7px rgba(37, 54, 41, .16); }
+.brand-mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .toolbar { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.window-controls { position: absolute; top: 0; right: 0; height: 51px; display: flex; align-items: stretch; }
+.window-control { width: 46px; height: 51px; border: 0; border-radius: 0; background: transparent; display: grid; place-items: center; color: var(--muted); cursor: default; }
+.window-control:hover { background: color-mix(in srgb, var(--text) 9%, transparent); }
+.window-control.close:hover { background: #c42b1c; color: #fff; }
+.window-control svg { width: 12px; height: 12px; stroke-width: 1.1; }
 .toolbar-button, .icon-button, .small-icon, .text-button { border: 0; cursor: pointer; background: transparent; }
 .toolbar-button { height: 34px; padding: 0 14px; border-radius: 9px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
 .toolbar-button svg { width: 17px; }
@@ -289,6 +295,49 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .popover .language-option.active { background: var(--green-soft); color: var(--green-deep); font-weight: 650; }
 .popover .language-option.active .language-check { opacity: 1; }
 .popover hr { border: 0; height: 1px; background: var(--line); margin: 5px; }
+.dialog-backdrop { position: fixed; z-index: 150; inset: 0; display: grid; place-items: center; padding: 30px; background: rgba(20, 25, 21, .42); backdrop-filter: blur(8px); animation: dialog-fade .16s ease-out; }
+.about-dialog { position: relative; width: min(540px, 100%); padding: 34px; border: 1px solid color-mix(in srgb, var(--line) 82%, var(--green)); border-radius: 20px; background: var(--paper-strong); box-shadow: 0 30px 90px rgba(18, 25, 20, .28); animation: dialog-rise .2s ease-out; }
+.about-close { position: absolute; top: 17px; right: 17px; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; }
+.about-close:hover, .about-close:focus-visible { color: var(--green-deep); background: var(--green-soft); outline: none; }
+.about-close svg { width: 17px; height: 17px; }
+.about-brand { display: flex; align-items: center; gap: 18px; padding-right: 40px; }
+.about-brand > img { width: 78px; height: 78px; flex: 0 0 78px; object-fit: cover; border-radius: 18px; box-shadow: 0 10px 28px rgba(47, 66, 51, .18); }
+.about-brand h2 { margin: 5px 0 4px; font-size: 25px; letter-spacing: -.5px; }
+.about-version { color: var(--muted); font-size: 12px; }
+.about-description { margin: 25px 0 22px; color: var(--muted); font-size: 14px; line-height: 1.8; user-select: text; }
+.about-details { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: color-mix(in srgb, var(--panel) 48%, transparent); }
+.about-detail { min-height: 65px; display: flex; align-items: center; gap: 12px; padding: 11px 14px; color: var(--text); text-decoration: none; cursor: pointer; transition: background .15s ease; }
+.about-detail + .about-detail { border-top: 1px solid var(--line); }
+.about-detail:hover, .about-detail:focus-visible { background: var(--green-soft); outline: none; }
+.about-detail-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 10px; color: var(--green-deep); background: var(--paper-strong); box-shadow: 0 2px 8px rgba(42, 56, 45, .06); }
+.about-detail-icon svg { width: 18px; height: 18px; }
+.about-detail > span:nth-child(2) { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: 4px; }
+.about-detail small { color: var(--faint); font-size: 10px; letter-spacing: .2px; }
+.about-detail strong { overflow: hidden; color: var(--green-deep); font-size: 12.5px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
+.about-arrow { width: 16px; height: 16px; flex: 0 0 16px; color: var(--faint); }
+.about-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 24px; }
+.about-footer > span { color: var(--faint); font-size: 11px; }
+.about-footer .large-button { min-width: 92px; height: 38px; }
+.update-dialog { width: min(580px, 100%); }
+.update-brand { display: flex; align-items: center; gap: 16px; padding-right: 42px; }
+.update-brand img { width: 64px; height: 64px; flex: 0 0 64px; border-radius: 15px; box-shadow: 0 10px 25px rgba(47, 66, 51, .16); }
+.update-brand h2 { margin: 4px 0 3px; font-size: 24px; letter-spacing: -.45px; }
+.update-brand p { margin: 0; color: var(--muted); font-size: 12px; }
+.update-versions { display: grid; grid-template-columns: 1fr 34px 1fr; align-items: center; gap: 12px; margin: 25px 0 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 13px; background: color-mix(in srgb, var(--panel) 55%, transparent); }
+.update-versions > span { display: flex; flex-direction: column; gap: 4px; }
+.update-versions small { color: var(--faint); font-size: 10px; }
+.update-versions strong { color: var(--muted); font-size: 16px; letter-spacing: .2px; }
+.update-versions .latest { text-align: right; }
+.update-versions .latest strong { color: var(--green-deep); }
+.update-versions svg { width: 22px; height: 22px; color: var(--faint); }
+.release-notes-panel { padding: 16px; border-radius: 13px; background: var(--green-soft); }
+.release-notes-panel > strong { display: block; margin-bottom: 9px; color: var(--green-deep); font-size: 12px; }
+.release-notes-panel p { max-height: 190px; margin: 0; overflow: auto; color: var(--muted); font-size: 13px; line-height: 1.75; white-space: pre-wrap; user-select: text; }
+.update-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.update-footer .large-button { min-width: 120px; height: 40px; }
+body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; }
+@keyframes dialog-fade { from { opacity: 0; } }
+@keyframes dialog-rise { from { opacity: 0; transform: translateY(8px) scale(.985); } }
 .toast { position: fixed; z-index: 110; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 9px 16px; border-radius: 9px; background: color-mix(in srgb, var(--text) 92%, transparent); color: var(--paper); box-shadow: var(--shadow); font-size: 12px; }
 
 ::-webkit-scrollbar { width: 11px; height: 11px; }
@@ -309,7 +358,7 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 }
 
 @media print {
-  .titlebar, .sidebar, .toc-panel, .document-meta, .article-footer, .rail-button, .editor-view, .back-to-top { display: none !important; }
+  .titlebar, .sidebar, .toc-panel, .document-meta, .article-footer, .rail-button, .editor-view, .back-to-top, .window-controls { display: none !important; }
   html, body, .app-shell, .reader-pane { height: auto; overflow: visible; background: white; color: black; }
   .document-view { max-width: none; padding: 0; }
   .markdown-body { font-size: 11pt; color: black; }

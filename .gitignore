@@ -1,31 +1,25 @@
-# Dependencies
-node_modules/
+# Dependencies and generated frontend output
+frontend/node_modules/
+frontend/dist/
+frontend/package.json.md5
 
-# Generated bundles and installers
-dist/
-release/
+# Compiled desktop applications and installers
+build/bin/
+*.exe
+*.app
+*.dmg
+*.AppImage
+*.deb
+*.rpm
 
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment files
-.env
-.env.*
-
-# Editor settings
-.vscode/
+# Local tooling, IDE and operating-system files
 .idea/
-
-# Operating system files
+.vscode/
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# Temporary files
+*.log
 *.tmp
-*.temp
-*.bak
-~$*
+
+# Local test and coverage output
+coverage/
+*.coverprofile

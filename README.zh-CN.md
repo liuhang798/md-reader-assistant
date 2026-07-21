@@ -1,118 +1,110 @@
 <div align="center">
-  <img src="build/icon.png" width="88" alt="MD阅读助手图标">
+  <img src="build/appicon.png" width="96" alt="MD阅读助手图标">
   <h1>MD阅读助手</h1>
-  <p>美观易用的 Windows 本地 Markdown 阅读、实时预览与语法高亮编辑器。</p>
+  <p>美观、专注、跨平台的 Markdown 阅读与编辑工具。</p>
   <p><a href="README.md">English</a> · <strong>简体中文</strong></p>
+  <p>
+    <a href="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml"><img src="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml/badge.svg" alt="构建状态"></a>
+    <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/md-reader-assistant" alt="最新版本"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/md-reader-assistant" alt="MIT 许可证"></a>
+  </p>
 </div>
 
----
+## 下载与安装
+
+前往 [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest) 下载对应系统的最新版本。Windows 用户运行 `MD阅读助手-安装程序-版本-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式和 Markdown 文件关联。
+
+## 主要功能
+
+- 美观舒适的 Markdown 阅读与编辑界面。
+- 左侧实时预览、右侧 Markdown 语法高亮编辑。
+- 点击目录定位章节、当前章节跟随、文档搜索、打印和回到顶部。
+- 打开文档后立即进入最近阅读，并可单独删除阅读记录。
+- 简体中文和 English 界面切换，并自动记忆语言选择。
+- 明暗主题和阅读字号调节。
+- 打开文档文件夹、集中浏览 Markdown，并支持拖入文件。
+- 原生打开/保存窗口，关联 `.md`、`.markdown`、`.mdown`、`.mkd` 文件。
+- 单实例打开文件和未保存修改保护。
+- 全新分栏阅读/编辑品牌图标，采用透明圆角边缘、无白色方底；“关于”页面包含作者邮箱和可直达的开源仓库。
+- 启动时每日自动检查一次 GitHub Releases；发现新版本后可查看更新说明并直接打开下载页面，设置菜单也支持手动检查。
 
 ## 项目截图
 
-### 欢迎首页
+| 首页 | 阅读界面 |
+|---|---|
+| ![首页](screenshots/01-home.png) | ![阅读界面](screenshots/02-reader.png) |
 
-![MD阅读助手欢迎首页](screenshots/01-home.png)
+![左右分栏编辑](screenshots/03-split-editor.png)
 
-### Markdown 阅读模式
+![关于页面](screenshots/04-about.png)
 
-![MD阅读助手 Markdown 阅读模式](screenshots/02-reader.png)
+![发现新版本](screenshots/05-update-available.png)
 
-### 左侧实时预览、右侧语法高亮编辑
+## Go + Wails 2.0
 
-![MD阅读助手分栏编辑模式](screenshots/03-split-editor.png)
+2.0 版本开始使用 Go 和 Wails 替换 Electron，同时保留现有 HTML/CSS 界面和 CodeMirror 编辑器。当前 Windows 安装包约为 **8.3 MB**，原 Electron 安装包约为 90 MB。
 
-### 简体中文与 English 界面
-
-![MD阅读助手界面语言选择](screenshots/05-language-switch.png)
-
-## 功能特色
-
-- 打开 `.md`、`.markdown`、`.mdown`、`.mkd` 和 `.txt` 文档
-- 打开文件夹并集中浏览其中的 Markdown 文件
-- 最近阅读即时更新，可移除记录而不删除原始文件
-- GitHub 风格 Markdown、表格、任务列表、引用和代码高亮
-- 右侧章节目录点击定位、滚动跟随和当前章节高亮
-- CodeMirror 编辑器：行号、折叠、语法高亮、自动换行和编辑器内搜索
-- 左侧实时预览、右侧源码编辑，输入后自动刷新预览
-- 简体中文与 English 即时切换，并自动记住语言选择
-- 保存、另存为和未保存退出保护
-- 明暗主题、阅读字号调整、文档内搜索和打印
-- 长文阅读进度、预计阅读时间及“回到顶部”按钮
-- Windows 安装向导、桌面快捷方式和 Markdown 文件关联
-
-## 技术栈
-
-- JavaScript：应用逻辑与 Electron 主进程、渲染进程
-- HTML + CSS：Windows 桌面界面与阅读排版
-- Electron + Node.js：桌面运行环境和本地文件访问
-- CodeMirror：Markdown 语法高亮编辑器
-- Marked、DOMPurify、highlight.js：Markdown 渲染、安全处理与代码高亮
-- electron-builder + NSIS：生成 Windows 分步安装程序和文件关联
-
-## 系统要求
-
-- Windows 10 或 Windows 11，64 位
-- Node.js 20 或更高版本（仅源码开发需要）
-
-## 本地开发
-
-```powershell
-npm install
-npm run dev
-```
-
-## 构建 Windows 安装程序
-
-```powershell
-npm run build
-```
-
-构建产物位于 `release` 目录，例如：
-
-```text
-MD阅读助手-安装程序-1.4.0-x64.exe
-```
-
-## 界面语言
-
-点击右上角的 **更多选项（⋯）**，在“界面语言”中选择 **简体中文** 或 **English**。界面文案与 Windows 文件对话框会立即切换，并在下次启动时自动恢复所选语言。
-
-## 快捷键
-
-| 快捷键 | 功能 |
-| --- | --- |
-| `Ctrl + O` | 打开文档 |
-| `Ctrl + Shift + O` | 打开文件夹 |
-| `Ctrl + E` | 切换阅读/编辑模式 |
-| `Ctrl + S` | 保存 |
-| `Ctrl + Shift + S` | 另存为 |
-| `Ctrl + F` | 搜索 |
-| `Ctrl + P` | 打印 |
-| `Ctrl + 0` | 恢复默认字号 |
+- 后端：Go 1.23+
+- 桌面框架：Wails 2.13
+- 前端：HTML、CSS、JavaScript、Vite
+- Markdown：marked、DOMPurify、highlight.js
+- 编辑器：CodeMirror 6
+- Windows 安装：NSIS
 
 ## 项目结构
 
-```text
-MD阅读助手/
-├─ src/                 Electron 主进程、预加载脚本和界面源码
-├─ scripts/             应用图标生成脚本
-├─ build/               应用图标资源
-├─ screenshots/         项目截图
-├─ package.json         项目与打包配置
-├─ package-lock.json    依赖锁定文件
-├─ LICENSE              MIT 开源许可证
-├─ README.md            英文项目说明
-└─ README.zh-CN.md      简体中文项目说明
+- `main.go`：Wails 应用启动与窗口配置。
+- `app.go`：文档、文件夹、最近阅读、偏好设置及桌面系统能力。
+- `updates.go`：GitHub Releases 更新检查与版本比较。
+- `frontend/`：Markdown 阅读器、CodeMirror 编辑器和双语界面。
+- `build/`：应用图标及各平台构建配置。
+- `packaging/`：Linux 桌面集成与软件包元数据。
+- `scripts/`：可重复执行的项目资源维护脚本。
+
+## 多平台版本
+
+发布版本标签后，GitHub Actions 会自动生成：
+
+- Windows x64：分步安装的 NSIS 安装程序
+- macOS Universal：同时支持 Intel 和 Apple Silicon 的 DMG
+- Linux x64：DEB 和 AppImage
+
+当前开发版本尚未配置付费代码签名证书，因此 Windows 可能出现 SmartScreen 提醒，macOS 可能出现 Gatekeeper 提醒。
+
+## 本地开发
+
+需要安装 Go 1.23+、Node.js 22+、Wails 2.13，以及 Wails 对应平台的系统依赖。
+
+```bash
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
+wails dev
 ```
 
-## 隐私
+运行测试：
 
-文档读取、编辑、搜索和渲染均在本地完成，应用不会主动上传文档内容。
+```bash
+go test ./...
+cd frontend
+npm install
+npm run build
+```
 
-## 参与贡献
+生成 Windows 安装包：
 
-欢迎提交 Issue 和 Pull Request。提交代码前，请确保 `npm run build:renderer` 能够正常完成，并说明修改目的和验证方式。
+```bash
+wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
+```
 
-## 开源许可
+推送 `v2.2.1` 等版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包并发布到 GitHub Releases。客户端会根据仓库的最新稳定 Release 提醒更新。
 
-本项目采用 [MIT License](LICENSE)。
+## 项目文档
+
+- [更新记录](CHANGELOG.md)
+- [贡献指南](CONTRIBUTING.md)
+- [安全策略](SECURITY.md)
+- [发布指南](RELEASING.md)
+- [设计验收记录](design-qa.md)
+
+## 开源协议
+
+[MIT](LICENSE)

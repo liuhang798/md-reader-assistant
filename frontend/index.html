@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self';">
   <title data-i18n="appName">MD阅读助手</title>
-  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="titlebar">
     <div class="brand" data-i18n-aria-label="appName" aria-label="MD阅读助手">
       <span class="brand-mark">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.7 4.3C13.2 4.1 7.8 6.5 5.4 11.1c-1.1 2.1-1.2 4.2-.6 5.9 3.5-4.3 7.3-6.5 11.6-7.6-4 1.8-7.4 4.5-10.2 8.4 2.1.5 4.4.1 6.5-1.3 4.4-2.9 6.4-7.4 7-12.2Z"/></svg>
+        <img src="/src/assets/images/app-logo.png" alt="">
       </span>
       <span data-i18n="appName">MD阅读助手</span>
     </div>
@@ -41,6 +40,17 @@
       </button>
       <button id="moreButton" class="icon-button" data-i18n-title="moreTitle" title="更多选项">
         <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+      </button>
+    </div>
+    <div class="window-controls no-drag" aria-label="Window controls">
+      <button id="windowMinimise" class="window-control" title="Minimise" aria-label="Minimise">
+        <svg viewBox="0 0 12 12"><path d="M2 7.5h8"/></svg>
+      </button>
+      <button id="windowMaximise" class="window-control" title="Maximise" aria-label="Maximise">
+        <svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7"/></svg>
+      </button>
+      <button id="windowClose" class="window-control close" title="Close" aria-label="Close">
+        <svg viewBox="0 0 12 12"><path d="m2.5 2.5 7 7m0-7-7 7"/></svg>
       </button>
     </div>
   </header>
@@ -172,9 +182,74 @@
     <button data-action="zoom-reset"><span class="menu-label" data-i18n="zoomReset">恢复字号</span> <span>Ctrl 0</span></button>
     <hr>
     <button data-action="print"><span class="menu-label" data-i18n="printDocument">打印文档</span> <span>Ctrl P</span></button>
+    <hr>
+    <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span> <span>GitHub</span></button>
+    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.2.1</span></button>
+  </div>
+
+  <div id="aboutDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <section class="about-dialog">
+      <button id="closeAbout" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="about-brand">
+        <img src="/src/assets/images/app-logo.png" alt="">
+        <div>
+          <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
+          <h2 id="aboutTitle" data-i18n="appName">MD阅读助手</h2>
+          <span class="about-version" data-i18n="aboutVersion">版本 2.2.1</span>
+        </div>
+      </div>
+      <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。</p>
+      <div class="about-details">
+        <a class="about-detail" href="mailto:lh805798@163.com" data-external="mailto:lh805798@163.com">
+          <span class="about-detail-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4.5 7 7.5 6 7.5-6"/></svg></span>
+          <span><small data-i18n="authorEmail">作者邮箱</small><strong>lh805798@163.com</strong></span>
+          <svg class="about-arrow" viewBox="0 0 24 24"><path d="M9 18 15 12 9 6"/></svg>
+        </a>
+        <a class="about-detail" href="https://github.com/liuhang798/md-reader-assistant" data-external="https://github.com/liuhang798/md-reader-assistant">
+          <span class="about-detail-icon"><svg viewBox="0 0 24 24"><path d="M9 19c-4.5 1.5-4.5-2.5-6-3m12 5v-3.9c0-1.1.1-1.8-.5-2.5 2.8-.3 5.7-1.4 5.7-6.2A4.9 4.9 0 0 0 19 5c.1-.4.6-1.8-.1-3.5 0 0-1.1-.4-3.8 1.3a13 13 0 0 0-6.2 0C6.2 1.1 5.1 1.5 5.1 1.5 4.4 3.2 4.9 4.6 5 5a4.9 4.9 0 0 0-1.2 3.4c0 4.8 2.9 5.9 5.7 6.2-.5.6-.6 1.2-.5 2.5V21"/></svg></span>
+          <span><small data-i18n="openSourceAddress">开源地址</small><strong>liuhang798/md-reader-assistant</strong></span>
+          <svg class="about-arrow" viewBox="0 0 24 24"><path d="M9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+      <div class="about-footer">
+        <span data-i18n="aboutLicense">基于 MIT 许可证开源</span>
+        <button id="aboutDone" class="large-button primary" type="button" data-i18n="done">完成</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="updateDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="updateTitle">
+    <section class="about-dialog update-dialog">
+      <button id="closeUpdate" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="update-brand">
+        <img src="/src/assets/images/app-logo.png" alt="">
+        <div>
+          <span class="eyebrow" data-i18n="updateAvailableLabel">软件更新</span>
+          <h2 id="updateTitle" data-i18n="updateAvailable">发现新版本</h2>
+          <p id="updateReleaseName"></p>
+        </div>
+      </div>
+      <div class="update-versions" aria-label="Version change">
+        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.2.1</strong></span>
+        <svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.2.1</strong></span>
+      </div>
+      <div class="release-notes-panel">
+        <strong data-i18n="releaseNotes">更新说明</strong>
+        <p id="releaseNotes"></p>
+      </div>
+      <div class="update-footer">
+        <button id="updateLater" class="large-button secondary" type="button" data-i18n="remindLater">稍后提醒</button>
+        <button id="openUpdatePage" class="large-button primary" type="button" data-i18n="openDownloadPage">打开下载页面</button>
+      </div>
+    </section>
   </div>
 
   <div id="toast" class="toast hidden"></div>
-  <script src="../dist/renderer.js"></script>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>

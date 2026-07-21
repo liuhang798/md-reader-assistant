@@ -1,0 +1,50 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "md-reader-assistant",
+  "outputfilename": "MDReaderAssistant",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "柳航",
+    "email": "liuhang798@users.noreply.github.com"
+  },
+  "info": {
+    "companyName": "LeafMD Open Source",
+    "productName": "MD阅读助手",
+    "productVersion": "2.2.1",
+    "copyright": "Copyright © 2026 柳航",
+    "comments": "A beautiful cross-platform Markdown reader and editor built with Go and Wails.",
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown Document",
+        "description": "Markdown 文档",
+        "iconName": "mdFileIcon",
+        "role": "Editor"
+      },
+      {
+        "ext": "markdown",
+        "name": "Markdown Document",
+        "description": "Markdown 文档",
+        "iconName": "mdFileIcon",
+        "role": "Editor"
+      },
+      {
+        "ext": "mdown",
+        "name": "Markdown Document",
+        "description": "Markdown 文档",
+        "iconName": "mdFileIcon",
+        "role": "Editor"
+      },
+      {
+        "ext": "mkd",
+        "name": "Markdown Document",
+        "description": "Markdown 文档",
+        "iconName": "mdFileIcon",
+        "role": "Editor"
+      }
+    ]
+  }
+}

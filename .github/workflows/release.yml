@@ -1,0 +1,168 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+  WAILS_VERSION: "v2.13.0"
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Resolve and validate version
+        shell: pwsh
+        run: |
+          $version = (Get-Content wails.json -Raw | ConvertFrom-Json).info.productVersion
+          if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME does not match application version v$version"
+          }
+          "APP_VERSION=$version" >> $env:GITHUB_ENV
+      - name: Install Wails and NSIS
+        shell: pwsh
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@${env:WAILS_VERSION}
+          choco install nsis --yes --no-progress
+      - name: Build Windows installer
+        shell: pwsh
+        run: wails build -clean -platform windows/amd64 -o MDReaderAssistant.exe -nsis -installscope user -webview2 embed -trimpath -nocolour
+      - uses: actions/upload-artifact@v4
+        with:
+          name: md-reader-assistant-windows-x64
+          path: build/bin/MD阅读助手-安装程序-*-amd64.exe
+          if-no-files-found: error
+
+  macos:
+    name: macOS Universal
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Resolve and validate version
+        shell: bash
+        run: |
+          version="$(node -p "require('./wails.json').info.productVersion")"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" != "v${version}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match application version v${version}" >&2
+            exit 1
+          fi
+          echo "APP_VERSION=${version}" >> "${GITHUB_ENV}"
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+      - name: Build universal macOS application
+        run: wails build -clean -platform darwin/universal -o MDReaderAssistant -trimpath -nocolour
+      - name: Create DMG
+        run: hdiutil create -volname "MD阅读助手" -srcfolder build/bin/MDReaderAssistant.app -ov -format UDZO "build/bin/MD阅读助手-${APP_VERSION}-macos-universal.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: md-reader-assistant-macos-universal
+          path: build/bin/MD阅读助手-*-macos-universal.dmg
+          if-no-files-found: error
+
+  linux:
+    name: Linux x64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Resolve and validate version
+        shell: bash
+        run: |
+          version="$(node -p "require('./wails.json').info.productVersion")"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" != "v${version}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match application version v${version}" >&2
+            exit 1
+          fi
+          echo "APP_VERSION=${version}" >> "${GITHUB_ENV}"
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+          go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+      - name: Build Linux executable
+        run: wails build -clean -platform linux/amd64 -o md-reader-assistant -tags webkit2_41 -trimpath -nocolour
+      - name: Build DEB and AppImage packages
+        run: |
+          mkdir -p package-root/DEBIAN package-root/usr/bin package-root/usr/share/applications package-root/usr/share/icons/hicolor/512x512/apps package-root/usr/share/mime/packages
+          install -m 755 build/bin/md-reader-assistant package-root/usr/bin/md-reader-assistant
+          install -m 644 packaging/linux/md-reader-assistant.desktop package-root/usr/share/applications/md-reader-assistant.desktop
+          install -m 644 packaging/linux/md-reader-assistant.xml package-root/usr/share/mime/packages/md-reader-assistant.xml
+          install -m 644 build/appicon.png package-root/usr/share/icons/hicolor/512x512/apps/md-reader-assistant.png
+          sed "s/@VERSION@/${APP_VERSION}/g" packaging/linux/control > package-root/DEBIAN/control
+          install -m 755 packaging/linux/postinst package-root/DEBIAN/postinst
+          install -m 755 packaging/linux/postrm package-root/DEBIAN/postrm
+          dpkg-deb --build package-root "build/bin/MD阅读助手-${APP_VERSION}-linux-amd64.deb"
+
+          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/512x512/apps
+          install -m 755 build/bin/md-reader-assistant AppDir/usr/bin/md-reader-assistant
+          install -m 755 packaging/linux/AppRun AppDir/AppRun
+          install -m 644 packaging/linux/md-reader-assistant.desktop AppDir/md-reader-assistant.desktop
+          install -m 644 build/appicon.png AppDir/md-reader-assistant.png
+          curl -L --fail -o appimagetool.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool.AppImage
+          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir "build/bin/MD阅读助手-${APP_VERSION}-linux-x86_64.AppImage"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: md-reader-assistant-linux-x64
+          path: |
+            build/bin/MD阅读助手-*-linux-amd64.deb
+            build/bin/MD阅读助手-*-linux-x86_64.AppImage
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" release-assets/* --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" release-assets/* --generate-notes --title "MD阅读助手 ${GITHUB_REF_NAME}"
+          fi

@@ -1,118 +1,116 @@
 <div align="center">
-  <img src="build/icon.png" width="88" alt="MD Reader Assistant icon">
+  <img src="build/appicon.png" width="96" alt="MD Reader Assistant icon">
   <h1>MD Reader Assistant</h1>
-  <p>A beautiful local Markdown reader with live preview and syntax-highlighted editing for Windows.</p>
+  <p>A beautiful, focused, cross-platform Markdown reader and editor.</p>
   <p><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
+  <p>
+    <a href="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml"><img src="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml/badge.svg" alt="Build status"></a>
+    <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/md-reader-assistant" alt="Latest release"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/md-reader-assistant" alt="MIT License"></a>
+  </p>
 </div>
 
----
+## Download and install
+
+Download the latest package for your platform from [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest). On Windows, run `MD阅读助手-安装程序-version-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut and register Markdown file associations.
+
+## Highlights
+
+- Read and edit Markdown with the same calm, polished interface.
+- Split editing mode: live preview on the left, syntax-highlighted editor on the right.
+- Clickable table of contents, active section tracking, search, print and back-to-top.
+- Recent documents update immediately and individual records can be removed.
+- Simplified Chinese and English interface with persistent language selection.
+- Light/dark themes and adjustable reading font size.
+- Open folders, browse Markdown collections and drag files into the window.
+- Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.
+- Single-instance file opening and unsaved-change protection.
+- A new split reading/editing brand icon with transparent rounded corners and no white square canvas, plus an About screen with the author email and a direct repository link.
+- A daily background check for the latest stable GitHub Release, plus manual checks from Settings, release notes, and one-click access to the download page.
 
 ## Screenshots
 
-### Welcome
-
-![Welcome screen](screenshots/01-home.png)
-
-### Markdown Reader
-
-![Markdown reader](screenshots/02-reader.png)
-
-### Live Preview and Syntax-Highlighted Editor
+| Home | Reader |
+|---|---|
+| ![Home](screenshots/01-home.png) | ![Reader](screenshots/02-reader.png) |
 
 ![Split editor](screenshots/03-split-editor.png)
 
-### English and Simplified Chinese Interface
+![About screen](screenshots/04-about.png)
 
-![Interface language selector](screenshots/05-language-switch.png)
+![Update available](screenshots/05-update-available.png)
 
-## Features
+## Go + Wails v2
 
-- Open `.md`, `.markdown`, `.mdown`, `.mkd`, and `.txt` documents
-- Browse Markdown files from an entire folder
-- Update recent documents immediately and remove history entries without deleting files
-- GitHub-flavored Markdown, tables, task lists, blockquotes, and code highlighting
-- Clickable document outline with scroll tracking and active-section highlighting
-- CodeMirror editor with line numbers, folding, syntax highlighting, wrapping, and search
-- Live preview on the left and source editing on the right
-- Switch between English and Simplified Chinese instantly; the selection is remembered
-- Save, Save As, and unsaved-change protection
-- Light and dark themes, adjustable reading size, in-document search, and printing
-- Reading progress, estimated reading time, and a back-to-top button
-- Guided Windows installer, desktop shortcut, and Markdown file associations
+Version 2.0 and later replace Electron with Go and Wails while retaining the existing HTML/CSS interface and CodeMirror editor. The current Windows installer is about 8.3 MB, compared with about 90 MB for the previous Electron build.
 
-## Technology Stack
+- Backend: Go 1.23+
+- Desktop framework: Wails 2.13
+- Frontend: HTML, CSS, JavaScript and Vite
+- Markdown: marked, DOMPurify and highlight.js
+- Editor: CodeMirror 6
+- Windows installer: NSIS
 
-- JavaScript for application logic and Electron processes
-- HTML and CSS for the Windows desktop UI and reading layout
-- Electron and Node.js for the desktop runtime and local file access
-- CodeMirror for syntax-highlighted Markdown editing
-- Marked, DOMPurify, and highlight.js for rendering, sanitization, and code highlighting
-- electron-builder and NSIS for the guided Windows installer and file associations
+## Project structure
 
-## Requirements
+- `main.go`: Wails startup and window configuration.
+- `app.go`: documents, folders, recent files, preferences, and desktop integration.
+- `updates.go`: GitHub Releases checks and version comparison.
+- `frontend/`: Markdown reader, CodeMirror editor, and bilingual interface.
+- `build/`: application icons and platform build configuration.
+- `packaging/`: Linux desktop integration and package metadata.
+- `scripts/`: repeatable project asset-maintenance scripts.
 
-- 64-bit Windows 10 or Windows 11
-- Node.js 20 or later for source development
+## Downloads
+
+Tagged releases are built automatically for:
+
+- Windows x64: step-by-step NSIS installer
+- macOS Universal: Intel and Apple Silicon DMG
+- Linux x64: DEB and AppImage
+
+Unsigned development builds may trigger Windows SmartScreen or macOS Gatekeeper warnings. Production signing certificates are not included in this repository.
 
 ## Development
 
-```powershell
-npm install
-npm run dev
+Requirements: Go 1.23+, Node.js 22+, Wails 2.13 and the platform dependencies listed by Wails.
+
+```bash
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
+wails dev
 ```
 
-## Build the Windows Installer
+Run tests:
 
-```powershell
+```bash
+go test ./...
+cd frontend
+npm install
 npm run build
 ```
 
-Build artifacts are written to the `release` directory, for example:
+Build on the current platform:
 
-```text
-MD阅读助手-安装程序-1.4.0-x64.exe
+```bash
+wails build -clean -trimpath
 ```
 
-## Interface Language
+Build the Windows installer:
 
-Open the **More options (⋯)** menu in the top-right corner, then choose **English** or **简体中文** under **Interface language**. The interface and native file dialogs update immediately, and the selection is restored the next time the app starts.
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-| --- | --- |
-| `Ctrl + O` | Open document |
-| `Ctrl + Shift + O` | Open folder |
-| `Ctrl + E` | Toggle reader/editor mode |
-| `Ctrl + S` | Save |
-| `Ctrl + Shift + S` | Save As |
-| `Ctrl + F` | Search |
-| `Ctrl + P` | Print |
-| `Ctrl + 0` | Reset text size |
-
-## Project Structure
-
-```text
-MD Reader Assistant/
-├─ src/                 Electron main process, preload, and UI source
-├─ scripts/             Application icon generator
-├─ build/               Application icon assets
-├─ screenshots/         Project screenshots
-├─ package.json         Project and packaging configuration
-├─ package-lock.json    Dependency lockfile
-├─ LICENSE              MIT license
-├─ README.md            English documentation
-└─ README.zh-CN.md      Simplified Chinese documentation
+```bash
+wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-## Privacy
+Push a tag such as `v2.2.1` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
-Documents are read, edited, searched, and rendered locally. The application does not upload document content.
+## Project documentation
 
-## Contributing
-
-Issues and pull requests are welcome. Before submitting code, make sure `npm run build:renderer` completes successfully and describe the purpose of the change and how it was verified.
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Release guide](RELEASING.md)
+- [Design QA](design-qa.md)
 
 ## License
 
-This project is released under the [MIT License](LICENSE).
+[MIT](LICENSE)

@@ -1,0 +1,10 @@
+Package: md-reader-assistant
+Version: @VERSION@
+Section: editors
+Priority: optional
+Architecture: amd64
+Maintainer: 柳航 <liuhang798@users.noreply.github.com>
+Depends: libgtk-3-0, libwebkit2gtk-4.1-0
+Homepage: https://github.com/liuhang798/md-reader-assistant
+Description: A beautiful cross-platform Markdown reader and editor
+ MD阅读助手支持 Markdown 阅读、编辑、实时预览、目录导航和语法高亮。
