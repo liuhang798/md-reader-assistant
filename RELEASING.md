@@ -12,6 +12,8 @@ Keep the version synchronized in:
 
 Update `CHANGELOG.md` and both README files for user-visible changes.
 
+Every release must have a matching `## [version]` section in `CHANGELOG.md`. The release workflow automatically uses that section for both the GitHub Release page and the in-app update dialog.
+
 ## 2. Verify locally
 
 ```bash

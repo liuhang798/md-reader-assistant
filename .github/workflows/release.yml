@@ -231,10 +231,22 @@ jobs:
     needs: [windows, macos, linux]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
           merge-multiple: true
+      - name: Prepare release notes
+        run: |
+          version="${RELEASE_TAG#v}"
+          awk -v heading="## [${version}]" '
+            index($0, heading) == 1 { capture = 1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' CHANGELOG.md > release-notes.md
+          if [[ ! -s release-notes.md ]]; then
+            printf 'md-reader-assistant %s\n\nSee the repository changelog for details.\n' "${version}" > release-notes.md
+          fi
       - name: Publish release assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -242,7 +254,7 @@ jobs:
         run: |
           version="${RELEASE_TAG#v}"
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            gh release edit "${RELEASE_TAG}" --title "md-reader-assistant ${version}"
+            gh release edit "${RELEASE_TAG}" --title "md-reader-assistant ${version}" --notes-file release-notes.md
             gh release upload "${RELEASE_TAG}" release-assets/* --clobber
 
             mapfile -t existing_assets < <(gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name')
@@ -254,5 +266,5 @@ jobs:
               esac
             done
           else
-            gh release create "${RELEASE_TAG}" release-assets/* --generate-notes --title "md-reader-assistant ${version}"
+            gh release create "${RELEASE_TAG}" release-assets/* --notes-file release-notes.md --title "md-reader-assistant ${version}"
           fi

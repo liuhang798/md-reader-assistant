@@ -110,7 +110,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
 }
 :root[data-platform="darwin"] .titlebar {
-  padding-left: 84px;
+  padding-left: 112px;
   padding-right: 20px;
 }
 :root[data-platform="darwin"] .window-controls {
@@ -345,7 +345,14 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .update-versions svg { width: 22px; height: 22px; color: var(--faint); }
 .release-notes-panel { padding: 16px; border-radius: 13px; background: var(--green-soft); }
 .release-notes-panel > strong { display: block; margin-bottom: 9px; color: var(--green-deep); font-size: 12px; }
-.release-notes-panel p { max-height: 190px; margin: 0; overflow: auto; color: var(--muted); font-size: 13px; line-height: 1.75; white-space: pre-wrap; user-select: text; }
+.release-notes-content { max-height: 190px; overflow: auto; color: var(--muted); font-size: 13px; line-height: 1.7; user-select: text; }
+.release-notes-content > :first-child { margin-top: 0; }
+.release-notes-content > :last-child { margin-bottom: 0; }
+.release-notes-content h1, .release-notes-content h2, .release-notes-content h3 { margin: 14px 0 6px; color: var(--green-deep); font-size: 13px; }
+.release-notes-content p { margin: 0 0 8px; }
+.release-notes-content ul { margin: 4px 0 10px; padding-left: 20px; }
+.release-notes-content li { margin: 3px 0; }
+.release-notes-content a { color: var(--green-deep); text-underline-offset: 2px; }
 .update-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .update-footer .large-button { min-width: 120px; height: 40px; }
 body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; }

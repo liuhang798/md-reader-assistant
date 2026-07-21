@@ -12,10 +12,7 @@ import (
 	"time"
 )
 
-const (
-	latestReleaseAPI    = "https://api.github.com/repos/liuhang798/md-reader-assistant/releases/latest"
-	updateCheckInterval = 24 * time.Hour
-)
+const latestReleaseAPI = "https://api.github.com/repos/liuhang798/md-reader-assistant/releases/latest"
 
 type UpdateInfo struct {
 	Checked        bool   `json:"checked"`
@@ -38,20 +35,10 @@ type githubRelease struct {
 	Prerelease  bool   `json:"prerelease"`
 }
 
-// CheckForUpdates checks the latest stable GitHub Release. Automatic checks are
-// limited to once every 24 hours; a manual check can bypass that interval.
-func (a *App) CheckForUpdates(force bool) (UpdateInfo, error) {
+// CheckForUpdates checks the latest stable GitHub Release. The frontend calls
+// this once at startup and may call it again when the user requests a check.
+func (a *App) CheckForUpdates(_ bool) (UpdateInfo, error) {
 	result := UpdateInfo{CurrentVersion: appVersion}
-	prefs, err := a.readPreferences()
-	if err != nil {
-		return result, err
-	}
-	if !force && prefs.LastUpdateCheck != "" {
-		if checkedAt, parseErr := time.Parse(time.RFC3339, prefs.LastUpdateCheck); parseErr == nil && time.Since(checkedAt) < updateCheckInterval {
-			return result, nil
-		}
-	}
-
 	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, latestReleaseAPI, nil)
 	if err != nil {
 		return result, err

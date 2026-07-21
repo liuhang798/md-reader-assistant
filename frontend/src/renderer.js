@@ -642,7 +642,15 @@ function openUpdateDialog(info) {
   $('#currentVersion').textContent = info.currentVersion || '2.2.2';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
-  $('#releaseNotes').textContent = (info.releaseNotes || t('noReleaseNotes')).slice(0, 5000);
+  const notesElement = $('#releaseNotes');
+  const releaseNotes = (info.releaseNotes || t('noReleaseNotes')).slice(0, 5000);
+  notesElement.innerHTML = DOMPurify.sanitize(marked.parse(releaseNotes));
+  notesElement.querySelectorAll('a').forEach(link => link.addEventListener('click', event => {
+    const href = link.getAttribute('href') || '';
+    if (!/^https?:\/\//i.test(href)) return;
+    event.preventDefault();
+    window.leafMD.openExternal(href);
+  }));
   els.updateDialog.classList.remove('hidden');
   document.body.classList.add('dialog-open');
   requestAnimationFrame(() => $('#openUpdatePage').focus());
