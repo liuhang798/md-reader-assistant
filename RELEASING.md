@@ -38,6 +38,17 @@ git push origin v2.2.1
 
 The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, and uploads them to the corresponding GitHub Release.
 
+### Rebuild an existing Release
+
+If a platform build fails after the tag and Release have already been created:
+
+1. Fix and push the workflow or source changes to `main`.
+2. Open **Actions → Build and Release → Run workflow**.
+3. Keep the branch set to `main` and enter the existing tag, such as `v2.2.1`.
+4. Run the workflow. Successful assets are uploaded to the existing Release and files with the same names are replaced.
+
+The manual tag must exactly match the version in `wails.json`.
+
 ## 4. Verify the release
 
 - Confirm all platform assets are present.
