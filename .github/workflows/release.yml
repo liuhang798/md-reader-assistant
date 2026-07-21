@@ -63,9 +63,21 @@ jobs:
             throw "Expected Windows application binary was not found: $binary"
           }
 
+          $makensisCandidates = @(
+            (Get-Command makensis.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1),
+            "${env:ProgramFiles(x86)}\NSIS\makensis.exe",
+            "$env:ProgramFiles\NSIS\makensis.exe",
+            "$env:ChocolateyInstall\bin\makensis.exe"
+          ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) }
+          $makensis = $makensisCandidates | Select-Object -First 1
+          if (-not $makensis) {
+            throw "makensis.exe was not found after installing NSIS"
+          }
+          Write-Host "Using NSIS compiler: $makensis"
+
           Push-Location build/windows/installer
           try {
-            & makensis.exe "-DWAILS_INSTALL_SCOPE=user" "-DARG_WAILS_AMD64_BINARY=..\..\bin\MDReaderAssistant.exe" "project.nsi"
+            & $makensis "-DWAILS_INSTALL_SCOPE=user" "-DARG_WAILS_AMD64_BINARY=..\..\bin\MDReaderAssistant.exe" "project.nsi"
             if ($LASTEXITCODE -ne 0) {
               throw "NSIS exited with code $LASTEXITCODE"
             }
