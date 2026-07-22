@@ -19,7 +19,6 @@ build/bin/
 Thumbs.db
 *.log
 *.tmp
-.site-publish/
 
 # Local test and coverage output
 coverage/

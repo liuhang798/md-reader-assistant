@@ -5,6 +5,7 @@ import { basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { undo, undoDepth } from '@codemirror/commands';
+import { openSearchPanel } from '@codemirror/search';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { markdown } from '@codemirror/lang-markdown';
 import { tags } from '@lezer/highlight';
@@ -23,6 +24,8 @@ const state = {
   dark: localStorage.getItem('theme') === 'dark',
   fontScale: Number(localStorage.getItem('fontScale') || 1),
   language: localStorage.getItem('language') === 'en' ? 'en' : 'zh-CN',
+  sidebarWidth: Number(localStorage.getItem('sidebarWidth') || 258),
+  tocWidth: Number(localStorage.getItem('tocWidth') || 205),
   searchMatches: [],
   searchIndex: 0,
   editing: false,
@@ -60,7 +63,8 @@ const translations = {
     remindLater: '稍后提醒', snooze30Days: '30 天内不再提醒', updateSnoozed: '未来 30 天不再自动提醒更新', openDownloadPage: '打开下载页面', alreadyLatest: '当前已是最新版本', updateCheckFailed: '检查更新失败，请稍后重试',
     formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3',
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
-    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试'
+    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试',
+    resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度'
   },
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
@@ -89,7 +93,8 @@ const translations = {
     remindLater: 'Remind me later', snooze30Days: 'Don’t remind me for 30 days', updateSnoozed: 'Automatic update reminders paused for 30 days', openDownloadPage: 'Open download page', alreadyLatest: 'You’re using the latest version', updateCheckFailed: 'Unable to check for updates. Try again later.',
     formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3',
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
-    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.'
+    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.',
+    resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline'
   }
 };
 
@@ -133,7 +138,7 @@ const els = {
   welcome: $('#welcome'), documentView: $('#documentView'), content: $('#markdownContent'),
   fileList: $('#fileList'), libraryName: $('#libraryName'), tocPanel: $('#tocPanel'), toc: $('#toc'),
   breadcrumb: $('#breadcrumb'), readingTime: $('#readingTime'), progressBar: $('#progressBar'),
-  sidebar: $('#sidebar'), expandSidebar: $('#expandSidebar'), searchBar: $('#searchBar'),
+  appShell: $('.app-shell'), sidebar: $('#sidebar'), expandSidebar: $('#expandSidebar'), sidebarResizer: $('#sidebarResizer'), tocResizer: $('#tocResizer'), searchBar: $('#searchBar'),
   searchInput: $('#searchInput'), searchCount: $('#searchCount'), dropOverlay: $('#dropOverlay'),
   moreMenu: $('#moreMenu'), toast: $('#toast'), editorView: $('#editorView'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
@@ -332,6 +337,7 @@ function initializeCodeEditor() {
     { key: 'Mod-s', run: () => { saveDocument(false); return true; } },
     { key: 'Mod-Shift-s', run: () => { saveDocument(true); return true; } },
     { key: 'Mod-e', run: () => { toggleEditor(false); return true; } },
+    { key: 'Mod-f', run: view => openSearchPanel(view) },
     { key: 'Mod-b', run: () => runFormatCommand('bold') },
     { key: 'Mod-i', run: () => runFormatCommand('italic') },
     { key: 'Mod-k', run: () => runFormatCommand('link') }
@@ -495,6 +501,7 @@ function renderToc() {
   headings.forEach((heading, index) => heading.id = slugify(heading.textContent, index));
   els.toc.innerHTML = headings.map(heading => `<a href="#${heading.id}" data-target="${heading.id}" class="level-${heading.tagName.slice(1)}">${escapeHtml(heading.textContent)}</a>`).join('');
   els.tocPanel.classList.toggle('hidden', headings.length < 2);
+  updatePaneResizerVisibility();
   els.toc.querySelectorAll('a').forEach(link => link.addEventListener('click', event => {
     event.preventDefault();
     const heading = document.getElementById(link.dataset.target);
@@ -669,6 +676,7 @@ function toggleEditor(forceEditing) {
     els.documentView.classList.add('hidden');
     els.editorView.classList.remove('hidden');
     els.tocPanel.classList.add('hidden');
+    updatePaneResizerVisibility();
     els.backToTop.classList.remove('visible');
     els.editButton.classList.add('active');
     els.editButtonLabel.textContent = t('preview');
@@ -681,6 +689,7 @@ function toggleEditor(forceEditing) {
     els.documentView.classList.remove('hidden');
     els.editButton.classList.remove('active');
     els.editButtonLabel.textContent = t('edit');
+    updatePaneResizerVisibility();
     $('.reader-pane').scrollTo({ top: 0 });
   }
 }
@@ -769,7 +778,12 @@ async function openFolder() {
 
 function openSearch() {
   if (!state.currentFile) return;
-  if (state.editing) toggleEditor(false);
+  if (state.editing) {
+    els.searchBar.classList.add('hidden');
+    clearSearchHighlights();
+    openSearchPanel(codeEditor);
+    return;
+  }
   els.searchBar.classList.remove('hidden');
   els.searchInput.focus();
   els.searchInput.select();
@@ -839,6 +853,95 @@ function goToSearch(delta) {
 function toggleSidebar(collapsed) {
   els.sidebar.classList.toggle('collapsed', collapsed);
   els.expandSidebar.classList.toggle('hidden', !collapsed);
+  updatePaneResizerVisibility();
+}
+
+const panelSizeLimits = {
+  sidebar: { min: 210, max: 420, fallback: 258 },
+  toc: { min: 170, max: 360, fallback: 205 }
+};
+
+function clampPanelWidth(value, limits) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return limits.fallback;
+  return Math.min(limits.max, Math.max(limits.min, Math.round(parsed)));
+}
+
+function applyPaneWidths() {
+  state.sidebarWidth = clampPanelWidth(state.sidebarWidth, panelSizeLimits.sidebar);
+  state.tocWidth = clampPanelWidth(state.tocWidth, panelSizeLimits.toc);
+  document.documentElement.style.setProperty('--sidebar-width', `${state.sidebarWidth}px`);
+  document.documentElement.style.setProperty('--toc-width', `${state.tocWidth}px`);
+  els.sidebarResizer?.setAttribute('aria-valuenow', String(state.sidebarWidth));
+  els.tocResizer?.setAttribute('aria-valuenow', String(state.tocWidth));
+}
+
+function updatePaneResizerVisibility() {
+  if (!els.sidebarResizer || !els.tocResizer) return;
+  els.sidebarResizer.classList.toggle('hidden', els.sidebar.classList.contains('collapsed'));
+  els.tocResizer.classList.toggle('hidden', state.editing || els.tocPanel.classList.contains('hidden'));
+}
+
+function persistPaneWidth(panelName) {
+  const storageKey = panelName === 'sidebar' ? 'sidebarWidth' : 'tocWidth';
+  localStorage.setItem(storageKey, String(state[storageKey]));
+}
+
+function maximumPaneWidth(panelName) {
+  const limits = panelSizeLimits[panelName];
+  const otherWidth = panelName === 'sidebar'
+    ? (getComputedStyle(els.tocResizer).display === 'none' ? 0 : state.tocWidth + 7)
+    : (getComputedStyle(els.sidebarResizer).display === 'none' ? 0 : state.sidebarWidth + 7);
+  return Math.max(limits.min, Math.min(limits.max, els.appShell.clientWidth - otherWidth - 427));
+}
+
+function setPaneWidth(panelName, width, persist = false) {
+  const limits = panelSizeLimits[panelName];
+  const storageKey = panelName === 'sidebar' ? 'sidebarWidth' : 'tocWidth';
+  state[storageKey] = Math.min(maximumPaneWidth(panelName), clampPanelWidth(width, limits));
+  applyPaneWidths();
+  if (persist) persistPaneWidth(panelName);
+}
+
+function initializePaneResizers() {
+  applyPaneWidths();
+  updatePaneResizerVisibility();
+  const configure = (handle, panelName, direction) => {
+    if (!handle) return;
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || handle.classList.contains('hidden')) return;
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = panelName === 'sidebar' ? state.sidebarWidth : state.tocWidth;
+      handle.setPointerCapture?.(event.pointerId);
+      handle.classList.add('active');
+      document.body.classList.add('resizing-panes');
+      const move = moveEvent => {
+        const delta = direction === 1 ? moveEvent.clientX - startX : startX - moveEvent.clientX;
+        setPaneWidth(panelName, startWidth + delta);
+      };
+      const finish = () => {
+        handle.classList.remove('active');
+        document.body.classList.remove('resizing-panes');
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', finish);
+        handle.removeEventListener('pointercancel', finish);
+        persistPaneWidth(panelName);
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', finish);
+      handle.addEventListener('pointercancel', finish);
+    });
+    handle.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      const change = (event.key === 'ArrowRight' ? 10 : -10) * direction;
+      const current = panelName === 'sidebar' ? state.sidebarWidth : state.tocWidth;
+      setPaneWidth(panelName, current + change, true);
+    });
+  };
+  configure(els.sidebarResizer, 'sidebar', 1);
+  configure(els.tocResizer, 'toc', -1);
 }
 
 function openAbout() {
@@ -1102,6 +1205,7 @@ window.leafMD.onFileDrop(paths => {
 });
 
 initializeCodeEditor();
+initializePaneResizers();
 initialize();
 setInterval(() => {
   if (state.editing && state.dirty && state.currentFile?.path && !state.saving) saveDocument(false, { auto: true, silent: true });

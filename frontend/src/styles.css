@@ -1,5 +1,7 @@
 :root {
   --font-scale: 1;
+  --sidebar-width: 258px;
+  --toc-width: 205px;
   --bg: #f6f4ef;
   --panel: #efeee9;
   --paper: #fbfaf7;
@@ -134,10 +136,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 
 .app-shell { height: calc(100vh - 52px); display: flex; position: relative; }
 .sidebar {
-  width: 258px;
-  flex: 0 0 258px;
+  width: var(--sidebar-width);
+  flex: 0 0 var(--sidebar-width);
   background: var(--panel);
-  border-right: 1px solid var(--line);
   padding: 28px 14px 18px;
   display: flex;
   flex-direction: column;
@@ -145,6 +146,11 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   transition: width .2s ease, flex-basis .2s ease, padding .2s ease;
 }
 .sidebar.collapsed { width: 0; flex-basis: 0; padding-left: 0; padding-right: 0; border: 0; }
+.pane-resizer { position: relative; z-index: 8; flex: 0 0 7px; width: 7px; cursor: col-resize; touch-action: none; outline: none; background: transparent; }
+.pane-resizer::before { content: ""; position: absolute; inset: 0 3px; background: var(--line); transition: inset .14s ease, background .14s ease; }
+.pane-resizer:hover::before, .pane-resizer:focus-visible::before, .pane-resizer.active::before { inset: 0 2px; background: var(--green); }
+body.resizing-panes, body.resizing-panes * { cursor: col-resize !important; user-select: none !important; }
+body.resizing-panes .sidebar, body.resizing-panes .toc-panel { transition: none; }
 .sidebar-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 8px 18px; min-width: 225px; }
 .eyebrow { display: block; color: var(--faint); font-size: 10px; font-weight: 750; letter-spacing: 1.4px; text-transform: uppercase; }
 .sidebar-heading h2 { margin: 5px 0 0; font-size: 18px; letter-spacing: -.3px; }
@@ -292,7 +298,7 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-wid
 .back-to-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 
-.toc-panel { width: 205px; flex: 0 0 205px; background: var(--paper); border-left: 1px solid var(--line); padding: 42px 22px 24px; overflow-x: hidden; overflow-y: auto; }
+.toc-panel { width: var(--toc-width); flex: 0 0 var(--toc-width); background: var(--paper); padding: 42px 22px 24px; overflow-x: hidden; overflow-y: auto; }
 .toc { display: flex; flex-direction: column; margin-top: 15px; }
 .toc a { color: var(--muted); text-decoration: none; font-size: 11.5px; line-height: 1.4; padding: 6px 3px 6px 10px; border-left: 2px solid var(--line); transition: color .15s, border .15s, background .15s; overflow-wrap: anywhere; border-radius: 0 6px 6px 0; }
 .toc a.level-2 { padding-left: 15px; }
@@ -403,12 +409,13 @@ body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; 
 ::-webkit-scrollbar-track { background: transparent; }
 
 @media (max-width: 1120px) {
-  .toc-panel { display: none; }
+  .toc-panel, .toc-resizer { display: none; }
   .document-view { max-width: 790px; }
   .back-to-top { right: 24px; }
 }
 @media (max-width: 900px) {
   .sidebar { width: 220px; flex-basis: 220px; }
+  .sidebar-resizer { display: none; }
   .document-view { padding-left: 42px; padding-right: 42px; }
   .breadcrumb span { display: none; }
   .brand > span:last-child { max-width: 86px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

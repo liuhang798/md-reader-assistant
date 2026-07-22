@@ -63,12 +63,14 @@ The macOS build uses native left-side window controls and application menus, inc
 - Split editing mode: live preview on the left, syntax-highlighted editor on the right.
 - Formatting toolbar for headings, quotes, bold, italic, links, ordered/unordered/task lists, tables, images, inline code and code blocks, including `Ctrl/Cmd + B`, `Ctrl/Cmd + I` and `Ctrl/Cmd + K`.
 - Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
+- `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls the editor to the selected result.
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Clickable table of contents, active section tracking, search, print and back-to-top.
 - Recent documents update immediately and individual records can be removed.
 - Simplified Chinese and English interface with persistent language selection.
 - Light/dark themes and adjustable reading font size.
 - Switch the left sidebar between Recent and a refreshable resource explorer for Markdown folders.
+- Drag the library and document-outline dividers to customize panel widths; the layout is remembered locally.
 - Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.
 - Single-instance file opening and unsaved-change protection.
 - A new split reading/editing brand icon with transparent rounded corners and no white square canvas, plus an About screen with the author email and a direct repository link.

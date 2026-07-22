@@ -4,6 +4,8 @@
 
 **https://liuhang798.github.io/**
 
+官网采用独立仓库维护，与桌面客户端项目分开提交、构建和发布。
+
 网站使用 React、Vite 和原生 CSS 构建，通过 GitHub Actions 自动发布到 GitHub Pages。
 
 ## 搜索引擎优化

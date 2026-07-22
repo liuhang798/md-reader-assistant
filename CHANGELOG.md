@@ -2,6 +2,18 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [Unreleased]
+
+### 简体中文
+
+- 修复编辑模式下 `Ctrl/Cmd + F` 会切换到预览页的问题；现在会保持在源码编辑器中查找、高亮并滚动定位匹配内容。
+- 左侧文档库和右侧本页目录新增可拖动分隔条，调整后的宽度会在下次启动时自动恢复。
+
+### English
+
+- Fixed `Ctrl/Cmd + F` leaving the source editor for preview mode; editor search now stays in place, highlights matches and scrolls to the selected result.
+- Added draggable dividers for the library and document outline, with panel widths restored on the next launch.
+
 ## [2.2.3] - 2026-07-21
 
 ### 简体中文
