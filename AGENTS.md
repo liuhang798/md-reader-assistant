@@ -6,7 +6,7 @@
 
 - 项目名称：MD阅读助手 / MD Reader Assistant
 - 仓库：`https://github.com/liuhang798/md-reader-assistant`
-- 当前版本：`2.2.3`
+- 当前版本：`2.2.4`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
 - 支持平台：Windows x64、macOS Universal、Linux x64
@@ -309,7 +309,7 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 - `build/windows/installer/project.nsi`
 - `CHANGELOG.md`、`README.md`、`README.zh-CN.md`、`RELEASING.md`
 
-标签必须与版本完全一致，例如 `v2.2.3`。`.github/workflows/release.yml` 会：
+标签必须与版本完全一致，例如 `v2.2.4`。`.github/workflows/release.yml` 会：
 
 1. 验证标签与 `wails.json`。
 2. 构建 Windows x64 安装程序。

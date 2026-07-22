@@ -2,10 +2,10 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';
 import { basicSetup } from 'codemirror';
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { undo, undoDepth } from '@codemirror/commands';
-import { openSearchPanel } from '@codemirror/search';
+import { closeSearchPanel, openSearchPanel, searchPanelOpen } from '@codemirror/search';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { markdown } from '@codemirror/lang-markdown';
 import { tags } from '@lezer/highlight';
@@ -13,6 +13,7 @@ import { tags } from '@lezer/highlight';
 const $ = selector => document.querySelector(selector);
 let codeEditor;
 let editorExtensions = [];
+const editorLanguage = new Compartment();
 let suppressEditorChanges = false;
 const state = {
   currentFile: null,
@@ -20,7 +21,7 @@ const state = {
   files: [],
   explorerFiles: [],
   recentFiles: [],
-  sidebarMode: 'recent',
+  sidebarMode: localStorage.getItem('sidebarMode') === 'explorer' ? 'explorer' : 'recent',
   dark: localStorage.getItem('theme') === 'dark',
   fontScale: Number(localStorage.getItem('fontScale') || 1),
   language: localStorage.getItem('language') === 'en' ? 'en' : 'zh-CN',
@@ -40,7 +41,7 @@ const translations = {
     appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
     themeTitle: '切换明暗主题', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
-    library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
+    library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
     openFolder: '打开文件夹', quickOpenHint: '快速打开，也可以将文件拖到这里', revealFile: '定位文件', revealFileTitle: '在资源管理器中显示',
@@ -56,7 +57,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.2.3', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。',
+    aboutVersion: '版本 2.2.4', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
@@ -70,7 +71,7 @@ const translations = {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
     themeTitle: 'Toggle light/dark theme', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
-    library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
+    library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
     openFolder: 'Open Folder', quickOpenHint: 'Quick open, or drop a file here', revealFile: 'Show File', revealFileTitle: 'Show in File Explorer',
@@ -86,7 +87,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.2.3', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, document navigation, and recent reading.',
+    aboutVersion: 'Version 2.2.4', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, document navigation, and recent reading.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
@@ -97,6 +98,21 @@ const translations = {
     resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline'
   }
 };
+
+const codeMirrorTranslations = {
+  'zh-CN': {
+    Find: '查找内容', Replace: '替换为', next: '下一个', previous: '上一个', all: '全部选择',
+    'match case': '区分大小写', regexp: '正则表达式', 'by word': '全字匹配', replace: '替换',
+    'replace all': '全部替换', close: '关闭查找', 'current match': '当前匹配项', 'on line': '位于第',
+    'replaced match on line $': '已替换第 $ 行的匹配项', 'replaced $ matches': '已替换 $ 个匹配项',
+    'Go to line': '跳转到行', go: '跳转'
+  },
+  en: {}
+};
+
+function editorLanguageExtension() {
+  return EditorState.phrases.of(codeMirrorTranslations[state.language] || codeMirrorTranslations.en);
+}
 
 function t(key, values = {}) {
   let template = translations[state.language]?.[key] ?? translations['zh-CN'][key] ?? key;
@@ -122,7 +138,13 @@ function setLanguage(language, silent = false, persist = true) {
   els.editButtonLabel.textContent = t(state.editing ? 'preview' : 'edit');
   if (!state.currentFile) els.editorFileName.textContent = t('untitledDocument');
   if (!state.root) els.libraryName.textContent = t('recentReading');
-  if (codeEditor) updateEditorPosition();
+  if (codeEditor) {
+    const reopenSearch = searchPanelOpen(codeEditor.state);
+    if (reopenSearch) closeSearchPanel(codeEditor);
+    codeEditor.dispatch({ effects: editorLanguage.reconfigure(editorLanguageExtension()) });
+    if (reopenSearch) openSearchPanel(codeEditor);
+    updateEditorPosition();
+  }
   if (state.currentFile) {
     if (state.editing) renderEditorPreview(editorContent());
     else renderCurrentDocument();
@@ -200,7 +222,7 @@ function createEditorState(content = '', moveToStart = true) {
   return EditorState.create({
     doc: content,
     selection: { anchor: moveToStart ? 0 : content.length },
-    extensions: editorExtensions
+    extensions: [...editorExtensions, editorLanguage.of(editorLanguageExtension())]
   });
 }
 
@@ -353,7 +375,51 @@ function initializeCodeEditor() {
     '.cm-gutters': { backgroundColor: 'var(--paper)', color: 'var(--faint)', borderRight: '1px solid var(--line)', minWidth: '48px' },
     '.cm-activeLineGutter': { backgroundColor: 'var(--green-soft)', color: 'var(--green-deep)' },
     '.cm-foldPlaceholder': { backgroundColor: 'var(--green-soft)', border: '1px solid var(--line)', color: 'var(--green-deep)' },
-    '.cm-panels': { backgroundColor: 'var(--panel)', color: 'var(--text)' },
+    '.cm-panels': { backgroundColor: 'transparent', color: 'var(--text)' },
+    '.cm-panels-bottom': { borderTop: '0' },
+    '.cm-panel.cm-search': {
+      display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px',
+      padding: '12px 48px 12px 14px',
+      backgroundColor: 'color-mix(in srgb, var(--paper) 94%, var(--green-soft))',
+      borderTop: '1px solid var(--line)', boxShadow: '0 -12px 30px rgba(32, 49, 39, .09)',
+      fontFamily: '"Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif'
+    },
+    '.cm-panel.cm-search br': { display: 'block', flexBasis: '100%', width: '0', height: '0' },
+    '.cm-panel.cm-search .cm-textfield': {
+      boxSizing: 'border-box', flex: '0 1 320px', width: 'min(320px, 34vw)', minWidth: '180px', height: '34px',
+      padding: '0 12px', border: '1px solid var(--line)', borderRadius: '9px',
+      backgroundColor: 'var(--paper)', color: 'var(--text)', fontSize: '12px', outline: 'none',
+      boxShadow: 'inset 0 1px 2px rgba(32, 49, 39, .04)', transition: 'border-color .15s, box-shadow .15s'
+    },
+    '.cm-panel.cm-search .cm-textfield:focus': {
+      borderColor: 'var(--green)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--green) 16%, transparent)'
+    },
+    '.cm-panel.cm-search .cm-button': {
+      boxSizing: 'border-box', height: '32px', padding: '0 13px', border: '1px solid var(--line)',
+      borderRadius: '8px', backgroundImage: 'none', backgroundColor: 'var(--panel)', color: 'var(--text)',
+      fontSize: '11.5px', fontWeight: '650', cursor: 'pointer', transition: 'background .15s, border-color .15s, color .15s, transform .15s'
+    },
+    '.cm-panel.cm-search .cm-button:hover': {
+      backgroundImage: 'none', backgroundColor: 'var(--green-soft)', borderColor: 'var(--green)', color: 'var(--green-deep)'
+    },
+    '.cm-panel.cm-search .cm-button:active': { transform: 'translateY(1px)' },
+    '.cm-panel.cm-search button[name="next"], .cm-panel.cm-search button[name="replace"]': {
+      backgroundImage: 'none', backgroundColor: 'var(--green-deep)', borderColor: 'var(--green-deep)', color: '#fff'
+    },
+    '.cm-panel.cm-search button[name="next"]:hover, .cm-panel.cm-search button[name="replace"]:hover': {
+      backgroundImage: 'none', backgroundColor: 'var(--green)', borderColor: 'var(--green)', color: '#fff'
+    },
+    '.cm-panel.cm-search label': {
+      display: 'inline-flex', alignItems: 'center', gap: '5px', minHeight: '28px',
+      color: 'var(--muted)', fontSize: '11px', fontWeight: '550', whiteSpace: 'nowrap', cursor: 'pointer'
+    },
+    '.cm-panel.cm-search input[type="checkbox"]': { width: '14px', height: '14px', margin: '0', accentColor: 'var(--green-deep)' },
+    '.cm-panel.cm-search button[name="close"]': {
+      position: 'absolute', top: '11px', right: '12px', display: 'grid', placeItems: 'center',
+      width: '28px', height: '28px', padding: '0', border: '0', borderRadius: '8px',
+      backgroundColor: 'transparent', color: 'var(--muted)', fontSize: '20px', lineHeight: '1', cursor: 'pointer'
+    },
+    '.cm-panel.cm-search button[name="close"]:hover': { backgroundColor: 'var(--green-soft)', color: 'var(--green-deep)' },
     '.cm-searchMatch': { backgroundColor: '#eadc7a66', outline: '1px solid #c7ad42' },
     '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: '#e2a64d88' }
   });
@@ -432,6 +498,7 @@ async function removeRecentRecord(filePath) {
 
 function setSidebarMode(mode) {
   state.sidebarMode = mode === 'explorer' ? 'explorer' : 'recent';
+  localStorage.setItem('sidebarMode', state.sidebarMode);
   const explorer = state.sidebarMode === 'explorer';
   state.files = explorer ? [...state.explorerFiles] : [...state.recentFiles];
   els.recentTab.classList.toggle('active', !explorer);
@@ -959,7 +1026,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.2.3';
+  $('#currentVersion').textContent = info.currentVersion || '2.2.4';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -1046,7 +1113,19 @@ async function initialize() {
     name: filePath.split(/[\\/]/).pop(),
     directory: null
   }));
-  setSidebarMode('recent');
+  const savedExplorerRoot = String(prefs.explorerRoot || '').trim();
+  if (savedExplorerRoot) {
+    try {
+      const folder = await window.leafMD.listFolder(savedExplorerRoot);
+      state.root = folder?.root || savedExplorerRoot;
+      state.explorerFiles = folder?.files || [];
+    } catch (error) {
+      console.warn('Unable to restore resource explorer folder', error);
+      state.root = null;
+      state.explorerFiles = [];
+    }
+  }
+  setSidebarMode(state.sidebarMode === 'explorer' && state.root ? 'explorer' : 'recent');
   const initialFile = await window.leafMD.getInitialFile();
   if (initialFile?.path) {
     displayDocument(initialFile);
@@ -1065,7 +1144,10 @@ els.editButton.addEventListener('click', () => toggleEditor());
 els.saveButton.addEventListener('click', () => saveDocument(false));
 $('#saveAsButton').addEventListener('click', () => saveDocument(true));
 els.recentTab.addEventListener('click', () => setSidebarMode('recent'));
-els.explorerTab.addEventListener('click', () => state.root ? setSidebarMode('explorer') : openFolder());
+els.explorerTab.addEventListener('click', () => {
+  if (!state.root || state.sidebarMode === 'explorer') openFolder();
+  else setSidebarMode('explorer');
+});
 els.refreshExplorer.addEventListener('click', refreshExplorer);
 $('#collapseSidebar').addEventListener('click', () => toggleSidebar(true));
 $('#expandSidebar').addEventListener('click', () => toggleSidebar(false));

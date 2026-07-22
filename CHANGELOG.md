@@ -4,15 +4,21 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+## [2.2.4] - 2026-07-22
+
 ### 简体中文
 
 - 修复编辑模式下 `Ctrl/Cmd + F` 会切换到预览页的问题；现在会保持在源码编辑器中查找、高亮并滚动定位匹配内容。
+- 查找与替换面板新增简体中文/English 联动文案，并重新设计为与应用一致的绿色卡片式工具栏。
 - 左侧文档库和右侧本页目录新增可拖动分隔条，调整后的宽度会在下次启动时自动恢复。
+- 资源浏览器会记住已选择的文件夹和当前视图，下次启动自动恢复；在资源浏览器视图中再次点击标签即可更换文件夹。
 
 ### English
 
 - Fixed `Ctrl/Cmd + F` leaving the source editor for preview mode; editor search now stays in place, highlights matches and scrolls to the selected result.
+- Localized the find-and-replace panel for Simplified Chinese and English, with a polished green toolbar that matches the app.
 - Added draggable dividers for the library and document outline, with panel widths restored on the next launch.
+- The resource explorer now restores its selected folder and active view on launch; click the active Explorer tab again to choose another folder.
 
 ## [2.2.3] - 2026-07-21
 
@@ -100,3 +106,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.2.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.1
 [2.2.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.2
 [2.2.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.3
+[2.2.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.4

@@ -217,6 +217,16 @@ func TestFolderListingAndRecentRemoval(t *testing.T) {
 	if len(listing.Files) != 3 {
 		t.Fatalf("expected 3 Markdown/text files, got %d: %#v", len(listing.Files), listing.Files)
 	}
+	if err := app.rememberExplorerRoot(listing.Root); err != nil {
+		t.Fatal(err)
+	}
+	restoredPreferences, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if restoredPreferences.ExplorerRoot != listing.Root {
+		t.Fatalf("explorer root was not persisted: got %q, want %q", restoredPreferences.ExplorerRoot, listing.Root)
+	}
 	if _, err := app.ReadFile(filepath.Join(root, "README.md")); err != nil {
 		t.Fatal(err)
 	}

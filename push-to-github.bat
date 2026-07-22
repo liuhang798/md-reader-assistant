@@ -6,7 +6,7 @@ cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
 set "BRANCH=main"
-set "COMMIT_MSG=Release 2.2.3 - editor tools, explorer and autosave"
+set "COMMIT_MSG=Release 2.2.4 - editor search, resizable panels and explorer persistence"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
 

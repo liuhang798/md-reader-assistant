@@ -35,7 +35,7 @@ window.leafMD = {
   listFolder: root => desktopRuntime ? Backend.ListFolder(root) : resolved({ root, files: [] }),
   getPreferences: () => desktopRuntime
     ? Backend.GetPreferences()
-    : resolved({ language: localStorage.getItem('language') || 'zh-CN', recentFiles: [] }),
+    : resolved({ language: localStorage.getItem('language') || 'zh-CN', recentFiles: [], explorerRoot: localStorage.getItem('explorerRoot') || '' }),
   needsLanguageSelection: () => desktopRuntime ? Backend.NeedsLanguageSelection() : resolved(false),
   removeRecent: filePath => desktopRuntime ? Backend.RemoveRecent(filePath) : resolved(),
   getInitialFile: () => desktopRuntime ? Backend.GetInitialFile() : resolved(null),
@@ -53,13 +53,13 @@ window.leafMD = {
       ? {
           checked: true,
           available: true,
-          currentVersion: '2.2.3',
+          currentVersion: '2.2.4',
           latestVersion: '2.3.0',
           releaseName: 'MD阅读助手 2.3.0',
           releaseNotes: '新增阅读模式快捷操作\n优化大文档加载性能\n修复若干已知问题',
           releaseUrl: 'https://github.com/liuhang798/md-reader-assistant/releases/latest'
         }
-      : { checked: true, available: false, currentVersion: '2.2.3', latestVersion: '2.2.3' }),
+      : { checked: true, available: false, currentVersion: '2.2.4', latestVersion: '2.2.4' }),
   snoozeUpdates: days => desktopRuntime ? Backend.SnoozeUpdates(days) : resolved(),
   pathForFile: file => file?.path || '',
   onOpenFile: callback => desktopRuntime ? EventsOn('file:open-from-main', callback) : () => {},

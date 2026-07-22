@@ -43,19 +43,13 @@ On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the s
 
 The macOS build uses native left-side window controls and application menus, including standard Command shortcuts.
 
-## What's new in 2.2.3
+## What's new in 2.2.4
 
-- A complete Markdown formatting toolbar with keyboard shortcuts, table creation and local image insertion.
-- New documents open directly in the editor and autosave every 10 seconds without a location prompt.
-- Save As removes the auto-created draft and its Recent entry, including when the draft is reopened after an app restart; existing documents are never deleted.
-- A Resource Explorer joins Recent in the sidebar for browsing Markdown folders.
-- Safer per-document undo history prevents undo from erasing the content originally loaded from disk.
-- Local absolute and relative image paths now render reliably through the Go backend.
-- Update notifications can be paused for 30 days while manual checks remain available.
-- The Windows installer now performs an in-place upgrade and removes duplicate app entries or shortcuts left by older installers.
-- Windows upgrades automatically open at the previously selected installation directory, including upgrades from 2.2.2.
-- The Windows setup completion page runs MD Reader Assistant by default, while still allowing the option to be unchecked.
-- The Windows installer is available in Simplified Chinese and English. A genuinely new installation asks for the app interface language once on first launch; upgrades never show the first-run prompt.
+- `Ctrl/Cmd + F` now searches Markdown source directly inside the editor, highlights matches and scrolls to each result without leaving edit mode.
+- The find-and-replace panel follows the selected Simplified Chinese or English interface language and uses a polished toolbar that matches the application.
+- Drag the library and document-outline dividers to choose comfortable panel widths; both widths are restored at the next launch.
+- The Resource Explorer remembers the selected folder and active sidebar view between launches.
+- Click the already active Explorer tab to choose a different folder at any time.
 
 ## Highlights
 
@@ -63,7 +57,7 @@ The macOS build uses native left-side window controls and application menus, inc
 - Split editing mode: live preview on the left, syntax-highlighted editor on the right.
 - Formatting toolbar for headings, quotes, bold, italic, links, ordered/unordered/task lists, tables, images, inline code and code blocks, including `Ctrl/Cmd + B`, `Ctrl/Cmd + I` and `Ctrl/Cmd + K`.
 - Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
-- `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls the editor to the selected result.
+- `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls to the selected result; the polished find-and-replace panel follows the selected Chinese or English interface language.
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Clickable table of contents, active section tracking, search, print and back-to-top.
 - Recent documents update immediately and individual records can be removed.
@@ -71,6 +65,7 @@ The macOS build uses native left-side window controls and application menus, inc
 - Light/dark themes and adjustable reading font size.
 - Switch the left sidebar between Recent and a refreshable resource explorer for Markdown folders.
 - Drag the library and document-outline dividers to customize panel widths; the layout is remembered locally.
+- The resource explorer remembers its selected folder and active view across launches; click the active Explorer tab again to choose another folder.
 - Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.
 - Single-instance file opening and unsaved-change protection.
 - A new split reading/editing brand icon with transparent rounded corners and no white square canvas, plus an About screen with the author email and a direct repository link.
@@ -149,7 +144,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.2.3` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.2.4` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

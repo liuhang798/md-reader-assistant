@@ -80,6 +80,7 @@ export namespace main {
 	    recentFiles: string[];
 	    draftFiles?: string[];
 	    lastFile?: string;
+	    explorerRoot?: string;
 	    language: string;
 	    lastUpdateCheck?: string;
 	    suppressUpdateUntil?: string;
@@ -93,6 +94,7 @@ export namespace main {
 	        this.recentFiles = source["recentFiles"];
 	        this.draftFiles = source["draftFiles"];
 	        this.lastFile = source["lastFile"];
+	        this.explorerRoot = source["explorerRoot"];
 	        this.language = source["language"];
 	        this.lastUpdateCheck = source["lastUpdateCheck"];
 	        this.suppressUpdateUntil = source["suppressUpdateUntil"];

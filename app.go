@@ -25,7 +25,7 @@ import (
 const (
 	appNameZH  = "MD阅读助手"
 	appNameEN  = "MD Reader Assistant"
-	appVersion = "2.2.3"
+	appVersion = "2.2.4"
 	maxRecent  = 10
 )
 
@@ -60,6 +60,7 @@ type Preferences struct {
 	RecentFiles         []string `json:"recentFiles"`
 	DraftFiles          []string `json:"draftFiles,omitempty"`
 	LastFile            string   `json:"lastFile,omitempty"`
+	ExplorerRoot        string   `json:"explorerRoot,omitempty"`
 	Language            string   `json:"language"`
 	LastUpdateCheck     string   `json:"lastUpdateCheck,omitempty"`
 	SuppressUpdateUntil string   `json:"suppressUpdateUntil,omitempty"`
@@ -503,7 +504,14 @@ func (a *App) OpenFolder() (*FolderResult, error) {
 	if err != nil || root == "" {
 		return nil, err
 	}
-	return a.ListFolder(root)
+	folder, err := a.ListFolder(root)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.rememberExplorerRoot(folder.Root); err != nil {
+		return nil, err
+	}
+	return folder, nil
 }
 
 func (a *App) ReadFile(filePath string) (*Document, error) {
@@ -557,9 +565,24 @@ func (a *App) ListFolder(root string) (*FolderResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	info, err := os.Stat(absRoot)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("resource explorer path is not a directory: %s", absRoot)
+	}
 	files := make([]FolderFile, 0)
 	a.collectMarkdownFiles(absRoot, absRoot, 0, &files)
 	return &FolderResult{Root: absRoot, Name: filepath.Base(absRoot), Files: files}, nil
+}
+
+func (a *App) rememberExplorerRoot(root string) error {
+	cleaned := filepath.Clean(root)
+	_, err := a.updatePreferences(func(prefs *Preferences) {
+		prefs.ExplorerRoot = cleaned
+	})
+	return err
 }
 
 func (a *App) collectMarkdownFiles(root, current string, depth int, result *[]FolderFile) {
