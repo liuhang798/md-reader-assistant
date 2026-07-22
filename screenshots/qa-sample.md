@@ -1,6 +1,6 @@
-# LeafMD 阅读体验
+# MD阅读助手：阅读与编辑体验
 
-这是一份用于展示最新界面的示例文档。LeafMD 希望让本地 Markdown 阅读变得安静、清晰，而且足够漂亮。
+这是一份用于展示最新界面的示例文档。MD阅读助手让本地 Markdown 阅读与编辑变得安静、清晰，而且足够漂亮。
 
 > 好的阅读工具应该退到内容身后，只在你需要的时候出现。
 
@@ -21,7 +21,7 @@
 
 ```javascript
 function greet(reader) {
-  return `欢迎使用 LeafMD, ${reader}!`;
+  return `欢迎使用 MD阅读助手，${reader}！`;
 }
 ```
 

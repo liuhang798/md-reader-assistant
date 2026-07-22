@@ -3,18 +3,105 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MD阅读助手是一款真正轻量免费的本地 Markdown 阅读与编辑工具，支持 Windows、macOS 与 Linux。" />
+    <meta name="description" content="MD阅读助手是一款约 7 MB、免费开源、本地优先的 Markdown 阅读器与编辑器，支持实时预览、语法高亮、自动保存，以及 Windows、macOS 和 Linux。" />
+    <meta name="keywords" content="Markdown阅读器,Markdown编辑器,MD阅读器,MD编辑器,Markdown reader,Markdown editor,Windows Markdown,macOS Markdown,Linux Markdown,开源软件,免费软件" />
+    <meta name="author" content="liuhang798" />
+    <meta name="application-name" content="MD阅读助手" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="theme-color" content="#f7f4ec" />
     <meta property="og:url" content="https://liuhang798.github.io/" />
-    <meta property="og:title" content="MD阅读助手｜轻量免费的 Markdown 阅读器" />
-    <meta property="og:description" content="一款真正轻量免费的本地 Markdown 阅读与编辑工具，支持 Windows、macOS 与 Linux。" />
+    <meta property="og:site_name" content="MD阅读助手" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="MD阅读助手｜约 7 MB 的免费开源 Markdown 阅读器与编辑器" />
+    <meta property="og:description" content="本地优先、实时预览、语法高亮与自动保存，支持 Windows、macOS 和 Linux。" />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://liuhang798.github.io/split-editor.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:image:alt" content="MD阅读助手实时预览与 Markdown 语法高亮编辑界面" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MD阅读助手｜免费开源 Markdown 阅读器与编辑器" />
+    <meta name="twitter:description" content="约 7 MB，本地优先，支持 Windows、macOS 和 Linux。" />
+    <meta name="twitter:image" content="https://liuhang798.github.io/split-editor.png" />
     <link rel="canonical" href="https://liuhang798.github.io/" />
-    <link rel="icon" type="image/png" href="./appicon.png" />
-    <title>MD阅读助手｜轻量免费的 Markdown 阅读器</title>
+    <link rel="alternate" hreflang="zh-CN" href="https://liuhang798.github.io/" />
+    <link rel="alternate" hreflang="en" href="https://liuhang798.github.io/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://liuhang798.github.io/" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="icon" type="image/png" href="/appicon.png" />
+    <title>MD阅读助手｜免费开源 Markdown 阅读器与编辑器</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "MD阅读助手",
+        "alternateName": "MD Reader Assistant",
+        "description": "约 7 MB、免费开源、本地优先的跨平台 Markdown 阅读器与编辑器。",
+        "url": "https://liuhang798.github.io/",
+        "downloadUrl": "https://github.com/liuhang798/md-reader-assistant/releases/latest",
+        "codeRepository": "https://github.com/liuhang798/md-reader-assistant",
+        "license": "https://opensource.org/license/mit",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Windows 10+, macOS 10.15+, Linux",
+        "softwareVersion": "2.2.3",
+        "image": "https://liuhang798.github.io/split-editor.png",
+        "screenshot": "https://liuhang798.github.io/split-editor.png",
+        "inLanguage": ["zh-CN", "en"],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "liuhang798",
+          "url": "https://github.com/liuhang798"
+        }
+      }
+    </script>
+    <style>
+      #root > header, #root > main, #root > footer { width: min(1080px, calc(100% - 40px)); margin: auto; }
+      #root > header { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; }
+      #root > header nav { display: flex; gap: 18px; }
+      #root > header a, #root > main a { color: #3f5b46; font-weight: 700; }
+      #root > main section:first-child { padding: 64px 0 40px; text-align: center; }
+      #root > main h1 { max-width: 900px; margin: 12px auto; font: 700 clamp(38px, 6vw, 68px)/1.08 Georgia, serif; }
+      #root > main section:first-child > p { max-width: 760px; margin: 18px auto; }
+      #root > main img { width: 100%; height: auto; margin-top: 30px; border-radius: 18px; }
+      #root > main #features { padding: 44px 0 72px; }
+      #root > footer { padding: 24px 0 48px; color: #697269; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <header>
+        <a href="/" aria-label="MD阅读助手官网">MD阅读助手</a>
+        <nav aria-label="静态导航">
+          <a href="#features">功能</a>
+          <a href="https://github.com/liuhang798/md-reader-assistant">源代码</a>
+          <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest">免费下载</a>
+          <a href="/en/" lang="en">English</a>
+        </nav>
+      </header>
+      <main>
+        <section>
+          <p>免费开源 · 本地优先 · Windows / macOS / Linux</p>
+          <h1>约 7 MB 的轻量 Markdown 阅读器与编辑器</h1>
+          <p>MD阅读助手支持沉浸式阅读、左右分栏实时预览、Markdown 语法高亮、10 秒自动保存、目录导航、资源浏览器与本地图片预览。</p>
+          <p><a href="https://github.com/liuhang798/md-reader-assistant/releases/latest">下载 MD阅读助手 2.2.3</a></p>
+          <img src="/split-editor.png" width="1280" height="720" alt="MD阅读助手实时预览与 Markdown 语法高亮编辑界面" />
+        </section>
+        <section id="features">
+          <h2>打开即读，编辑时实时预览</h2>
+          <p>阅读模式提供本页目录、文档搜索、打印和回到顶部；编辑模式在左侧实时预览，右侧使用 CodeMirror 高亮 Markdown 源码。</p>
+          <h2>本地文件，跨平台使用</h2>
+          <p>文档保存在你的电脑中。Windows 提供安装向导与 .md 文件关联，macOS 提供通用 DMG，Linux 提供 DEB 与 AppImage。</p>
+          <h2>免费开源</h2>
+          <p>项目采用 MIT 许可证开放源代码，可在 <a href="https://github.com/liuhang798/md-reader-assistant">GitHub</a> 查看源码、提交问题或参与贡献。</p>
+        </section>
+      </main>
+      <footer><p>MD阅读助手 / MD Reader Assistant · MIT License</p></footer>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
