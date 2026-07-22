@@ -231,6 +231,16 @@ func TestFolderListingAndRecentRemoval(t *testing.T) {
 
 func TestLanguagePersistenceAndArgumentDetection(t *testing.T) {
 	app := testApp(t)
+	markerPath := app.languageSelectionMarkerPath()
+	if err := os.MkdirAll(filepath.Dir(markerPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(markerPath, []byte("new-install"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !app.NeedsLanguageSelection() {
+		t.Fatal("expected a new installation to require language selection")
+	}
 	language, err := app.SetLanguage("en")
 	if err != nil {
 		t.Fatal(err)
@@ -244,6 +254,25 @@ func TestLanguagePersistenceAndArgumentDetection(t *testing.T) {
 	}
 	if prefs.Language != "en" {
 		t.Fatalf("language was not persisted: %#v", prefs)
+	}
+	if app.NeedsLanguageSelection() {
+		t.Fatal("language selection marker was not cleared")
+	}
+
+	legacyRoot := t.TempDir()
+	legacyPreferences := filepath.Join(legacyRoot, "preferences.json")
+	legacyMarker := filepath.Join(legacyRoot, "first-run-language.flag")
+	if needsLanguageSelection("windows", legacyPreferences, legacyMarker) {
+		t.Fatal("an installation without the new marker must be treated as an upgrade")
+	}
+	if !needsLanguageSelection("darwin", legacyPreferences, legacyMarker) {
+		t.Fatal("a new macOS/Linux installation without preferences should ask for a language")
+	}
+	if err := os.WriteFile(legacyPreferences, []byte(`{"language":"zh-CN"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if needsLanguageSelection("linux", legacyPreferences, legacyMarker) {
+		t.Fatal("an existing macOS/Linux preference file must suppress the upgrade prompt")
 	}
 
 	expected := filepath.Join("C:\\docs", "guide.md")

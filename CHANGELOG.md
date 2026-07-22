@@ -19,6 +19,8 @@ All notable changes to MD Reader Assistant are documented here.
 - 修复升级安装后 Windows 可能出现两个“MD阅读助手”应用或快捷方式的问题；安装范围统一为当前用户，安装器会清理旧 Electron/早期版本遗留的重复卸载项和快捷方式。
 - Windows 更新安装时自动沿用上次选择的安装目录；从未记录目录的 2.2.2 升级时，也会根据现有卸载信息识别原安装位置。
 - Windows 安装完成页默认勾选“运行 MD阅读助手”，点击“完成”后直接启动应用，并允许用户取消勾选。
+- Windows 安装向导新增简体中文与 English 语言选择，欢迎页、目录页、安装进度和完成页会使用所选语言。
+- 全新安装后第一次启动会要求选择软件界面语言；选择结果会持久保存，后续启动不再弹出，从不含此功能的旧版本升级也不会弹出。
 
 ### English
 
@@ -35,6 +37,8 @@ All notable changes to MD Reader Assistant are documented here.
 - Fixed duplicate Windows app entries or shortcuts after upgrading by consistently using per-user installation and cleaning stale uninstall records and shortcuts left by Electron or early installers.
 - Windows upgrades now reuse the previously selected installation directory, with a compatibility fallback that detects the install location used by 2.2.2.
 - The Windows setup completion page now launches MD Reader Assistant by default after Finish, with an option to opt out.
+- Added Simplified Chinese and English selection for the complete Windows setup flow.
+- A new installation asks for the app interface language on its first launch and remembers the choice; upgrades from versions that predate this feature are explicitly excluded from the prompt.
 
 ## [2.2.2] - 2026-07-21
 

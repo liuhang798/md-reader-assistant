@@ -53,6 +53,7 @@ The macOS build uses native left-side window controls and application menus, inc
 - The Windows installer now performs an in-place upgrade and removes duplicate app entries or shortcuts left by older installers.
 - Windows upgrades automatically open at the previously selected installation directory, including upgrades from 2.2.2.
 - The Windows setup completion page runs MD Reader Assistant by default, while still allowing the option to be unchecked.
+- The Windows installer is available in Simplified Chinese and English. A genuinely new installation asks for the app interface language once on first launch; upgrades never show the first-run prompt.
 
 ## Highlights
 

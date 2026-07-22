@@ -58,10 +58,14 @@ ManifestDPIAware true
 
 !define MUI_ICON "..\icon.ico"
 !define MUI_UNICON "..\icon.ico"
+!define MUI_LANGDLL_ALLLANGUAGES
+!define MUI_LANGDLL_REGISTRY_ROOT HKCU
+!define MUI_LANGDLL_REGISTRY_KEY "Software\${INFO_COMPANYNAME}\${INFO_PROJECTNAME}"
+!define MUI_LANGDLL_REGISTRY_VALUENAME "InstallerLanguage"
 # !define MUI_WELCOMEFINISHPAGE_BITMAP "resources\leftimage.bmp" #Include this to add a bitmap on the left side of the Welcome Page. Must be a size of 164x314
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXECUTABLE}"
-!define MUI_FINISHPAGE_RUN_TEXT "运行 ${INFO_PRODUCTNAME}"
+!define MUI_FINISHPAGE_RUN_TEXT "$(FinishRunText)"
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
 
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
@@ -72,7 +76,11 @@ ManifestDPIAware true
 
 !insertmacro MUI_UNPAGE_INSTFILES # Uinstalling page
 
-!insertmacro MUI_LANGUAGE "SimpChinese" # Installer language
+!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "SimpChinese"
+
+LangString FinishRunText ${LANG_ENGLISH} "Run ${INFO_PRODUCTNAME}"
+LangString FinishRunText ${LANG_SIMPCHINESE} "运行 ${INFO_PRODUCTNAME}"
 
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
 #!uninstfinalize 'signtool --file "%1"'
@@ -80,6 +88,7 @@ ManifestDPIAware true
 
 Name "${INFO_PRODUCTNAME}"
 OutFile "..\..\bin\md-reader-assistant-${INFO_PRODUCTVERSION}-windows-${ARCH}.exe" # Keep release filenames ASCII-safe for CI.
+Var ExistingInstall
 !ifdef WAILS_INSTALL_SCOPE
   !if "${WAILS_INSTALL_SCOPE}" == "user"
     InstallDir "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"
@@ -94,7 +103,42 @@ ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
    !insertmacro wails.checkArchitecture
+   Call DetectExistingInstallation
    Call ResolvePreviousInstallDir
+   !insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
+
+Function un.onInit
+   !insertmacro MUI_UNGETLANGUAGE
+FunctionEnd
+
+# A first-run marker is created only when neither an installed version nor an
+# existing preference file is found. Therefore upgrades from versions that did
+# not have the language chooser never display it.
+Function DetectExistingInstallation
+    StrCpy $ExistingInstall "0"
+    SetRegView 64
+    ReadRegStr $0 HKCU "${UNINST_KEY}" "DisplayName"
+    StrCmp $0 "" detectPreferences detectExistingFound
+
+    detectPreferences:
+        IfFileExists "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" detectExistingFound detectLegacyInstall
+
+    detectLegacyInstall:
+        StrCpy $0 0
+    detectLegacyLoop:
+        EnumRegKey $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall" $0
+        StrCmp $1 "" detectExistingDone
+        ReadRegStr $2 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\$1" "DisplayName"
+        StrCmp $2 "${INFO_PRODUCTNAME}" detectExistingFound detectLegacyNext
+    detectLegacyNext:
+        IntOp $0 $0 + 1
+        Goto detectLegacyLoop
+
+    detectExistingFound:
+        StrCpy $ExistingInstall "1"
+
+    detectExistingDone:
 FunctionEnd
 
 # Prefer the directory recorded by 2.2.3 and later. Version 2.2.2 did not
@@ -148,6 +192,13 @@ Section
     SetOutPath $INSTDIR
 
     !insertmacro wails.files
+
+    StrCmp $ExistingInstall "1" firstRunMarkerDone
+    CreateDirectory "$APPDATA\${INFO_PRODUCTNAME}"
+    FileOpen $0 "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag" w
+    FileWrite $0 "new-install"
+    FileClose $0
+    firstRunMarkerDone:
 
     File "/oname=MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" "..\icon.ico"
 

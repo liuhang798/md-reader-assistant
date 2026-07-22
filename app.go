@@ -129,6 +129,10 @@ func (a *App) preferencePath() string {
 	return filepath.Join(base, appNameZH, "preferences.json")
 }
 
+func (a *App) languageSelectionMarkerPath() string {
+	return filepath.Join(filepath.Dir(a.preferencePath()), "first-run-language.flag")
+}
+
 func defaultPreferences() Preferences {
 	return Preferences{RecentFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN"}
 }
@@ -597,6 +601,28 @@ func (a *App) GetPreferences() (Preferences, error) {
 	return a.readPreferences()
 }
 
+// NeedsLanguageSelection is true only when an installer has explicitly marked
+// this as a new installation. Older versions never created the marker, so an
+// upgrade does not interrupt existing users with a first-run dialog.
+func (a *App) NeedsLanguageSelection() bool {
+	return needsLanguageSelection(goruntime.GOOS, a.preferencePath(), a.languageSelectionMarkerPath())
+}
+
+func needsLanguageSelection(platform, preferencePath, markerPath string) bool {
+	if _, err := os.Stat(markerPath); err == nil {
+		return true
+	}
+	// Windows installers create the marker only for a genuinely new install.
+	// On macOS and Linux there is no equivalent install wizard, so the absence
+	// of preferences is the first-launch signal. Existing users already have a
+	// preference file and are therefore never interrupted after an upgrade.
+	if platform == "windows" {
+		return false
+	}
+	_, err := os.Stat(preferencePath)
+	return errors.Is(err, os.ErrNotExist)
+}
+
 func (a *App) RemoveRecent(filePath string) (Preferences, error) {
 	cleaned := filepath.Clean(filePath)
 	return a.updatePreferences(func(prefs *Preferences) {
@@ -680,6 +706,11 @@ func (a *App) SetLanguage(language string) (string, error) {
 	_, err := a.updatePreferences(func(prefs *Preferences) {
 		prefs.Language = a.language
 	})
+	if err == nil {
+		if removeErr := os.Remove(a.languageSelectionMarkerPath()); removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
+			err = removeErr
+		}
+	}
 	return a.language, err
 }
 

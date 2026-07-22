@@ -26,6 +26,10 @@ export function ListFolder(arg1) {
   return window['go']['main']['App']['ListFolder'](arg1);
 }
 
+export function NeedsLanguageSelection() {
+  return window['go']['main']['App']['NeedsLanguageSelection']();
+}
+
 export function NewFile() {
   return window['go']['main']['App']['NewFile']();
 }

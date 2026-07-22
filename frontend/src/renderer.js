@@ -60,7 +60,7 @@ const translations = {
     remindLater: '稍后提醒', snooze30Days: '30 天内不再提醒', updateSnoozed: '未来 30 天不再自动提醒更新', openDownloadPage: '打开下载页面', alreadyLatest: '当前已是最新版本', updateCheckFailed: '检查更新失败，请稍后重试',
     formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3',
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
-    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片'
+    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试'
   },
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
@@ -89,7 +89,7 @@ const translations = {
     remindLater: 'Remind me later', snooze30Days: 'Don’t remind me for 30 days', updateSnoozed: 'Automatic update reminders paused for 30 days', openDownloadPage: 'Open download page', alreadyLatest: 'You’re using the latest version', updateCheckFailed: 'Unable to check for updates. Try again later.',
     formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3',
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
-    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image'
+    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.'
   }
 };
 
@@ -109,11 +109,11 @@ function applyStaticTranslations() {
   document.querySelectorAll('[data-language]').forEach(button => button.classList.toggle('active', button.dataset.language === state.language));
 }
 
-function setLanguage(language, silent = false) {
+function setLanguage(language, silent = false, persist = true) {
   state.language = language === 'en' ? 'en' : 'zh-CN';
   localStorage.setItem('language', state.language);
   applyStaticTranslations();
-  window.leafMD.setLanguage(state.language);
+  const persistence = persist ? window.leafMD.setLanguage(state.language) : Promise.resolve(state.language);
   els.editButtonLabel.textContent = t(state.editing ? 'preview' : 'edit');
   if (!state.currentFile) els.editorFileName.textContent = t('untitledDocument');
   if (!state.root) els.libraryName.textContent = t('recentReading');
@@ -126,6 +126,7 @@ function setLanguage(language, silent = false) {
   }
   setDirty(state.dirty);
   if (!silent) showToast(t('languageChanged'));
+  return persistence;
 }
 
 const els = {
@@ -137,7 +138,7 @@ const els = {
   moreMenu: $('#moreMenu'), toast: $('#toast'), editorView: $('#editorView'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
-  saveButton: $('#saveButton'), backToTop: $('#backToTop'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
+  saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
   recentTab: $('#recentTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'),
   editorUndoButton: $('#editorUndoButton')
 };
@@ -891,6 +892,36 @@ async function checkForUpdates(manual = false) {
   }
 }
 
+let automaticUpdateScheduled = false;
+
+function scheduleAutomaticUpdateCheck() {
+  if (automaticUpdateScheduled) return;
+  automaticUpdateScheduled = true;
+  setTimeout(() => checkForUpdates(false), 1200);
+}
+
+function openFirstRunLanguageDialog() {
+  els.firstRunLanguageDialog.classList.remove('hidden');
+  document.body.classList.add('dialog-open');
+  requestAnimationFrame(() => els.firstRunLanguageDialog.querySelector('[data-first-run-language="zh-CN"]')?.focus());
+}
+
+async function completeFirstRunLanguage(language) {
+  const buttons = els.firstRunLanguageDialog.querySelectorAll('[data-first-run-language]');
+  buttons.forEach(button => { button.disabled = true; });
+  try {
+    await setLanguage(language, true, true);
+    els.firstRunLanguageDialog.classList.add('hidden');
+    document.body.classList.remove('dialog-open');
+    showToast(t('languageChanged'));
+    scheduleAutomaticUpdateCheck();
+  } catch (error) {
+    console.warn('Unable to save first-run language:', error);
+    buttons.forEach(button => { button.disabled = false; });
+    showToast(t('languageSaveFailed'));
+  }
+}
+
 async function snoozeUpdates() {
   try {
     await window.leafMD.snoozeUpdates(30);
@@ -905,7 +936,8 @@ async function initialize() {
   setTheme(state.dark);
   setFontScale(state.fontScale, true);
   const prefs = await window.leafMD.getPreferences();
-  setLanguage(prefs.language || state.language, true);
+  const needsLanguageSelection = await window.leafMD.needsLanguageSelection();
+  setLanguage(prefs.language || state.language, true, !needsLanguageSelection);
   state.recentFiles = (prefs.recentFiles || []).map(filePath => ({
     path: filePath,
     name: filePath.split(/[\\/]/).pop(),
@@ -917,7 +949,8 @@ async function initialize() {
     displayDocument(initialFile);
     if (await window.leafMD.getStartupMode() === 'edit') toggleEditor(true);
   }
-  setTimeout(() => checkForUpdates(false), 1200);
+  if (needsLanguageSelection) openFirstRunLanguageDialog();
+  else scheduleAutomaticUpdateCheck();
 }
 
 $('#newFileButton').addEventListener('click', newFile);
@@ -960,6 +993,9 @@ $('.titlebar').addEventListener('dblclick', event => {
 });
 $('#closeAbout').addEventListener('click', closeAbout);
 $('#aboutDone').addEventListener('click', closeAbout);
+els.firstRunLanguageDialog.querySelectorAll('[data-first-run-language]').forEach(button => {
+  button.addEventListener('click', () => completeFirstRunLanguage(button.dataset.firstRunLanguage));
+});
 els.aboutDialog.addEventListener('click', event => {
   if (event.target === els.aboutDialog) closeAbout();
 });

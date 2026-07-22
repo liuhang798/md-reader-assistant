@@ -36,6 +36,7 @@ window.leafMD = {
   getPreferences: () => desktopRuntime
     ? Backend.GetPreferences()
     : resolved({ language: localStorage.getItem('language') || 'zh-CN', recentFiles: [] }),
+  needsLanguageSelection: () => desktopRuntime ? Backend.NeedsLanguageSelection() : resolved(false),
   removeRecent: filePath => desktopRuntime ? Backend.RemoveRecent(filePath) : resolved(),
   getInitialFile: () => desktopRuntime ? Backend.GetInitialFile() : resolved(null),
   getStartupMode: () => desktopRuntime ? Backend.GetStartupMode() : resolved('preview'),

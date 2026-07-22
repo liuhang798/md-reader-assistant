@@ -222,6 +222,25 @@
     <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.2.3</span></button>
   </div>
 
+  <div id="firstRunLanguageDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="firstRunLanguageTitle">
+    <section class="first-run-language-dialog">
+      <img src="/src/assets/images/app-logo.png" alt="">
+      <span class="eyebrow">WELCOME · 欢迎</span>
+      <h2 id="firstRunLanguageTitle">Choose your language<br><span>选择界面语言</span></h2>
+      <p>The interface language can be changed later in Settings.<br>之后可随时在设置中更改界面语言。</p>
+      <div class="first-run-language-options">
+        <button type="button" data-first-run-language="zh-CN">
+          <strong>简体中文</strong>
+          <small>使用简体中文</small>
+        </button>
+        <button type="button" data-first-run-language="en">
+          <strong>English</strong>
+          <small>Use English</small>
+        </button>
+      </div>
+    </section>
+  </div>
+
   <div id="aboutDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
     <section class="about-dialog">
       <button id="closeAbout" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">

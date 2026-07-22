@@ -14,6 +14,8 @@ export function GetStartupMode():Promise<string>;
 
 export function ListFolder(arg1:string):Promise<main.FolderResult>;
 
+export function NeedsLanguageSelection():Promise<boolean>;
+
 export function NewFile():Promise<main.Document>;
 
 export function OpenDefaultApps():Promise<void>;
