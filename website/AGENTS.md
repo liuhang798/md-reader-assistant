@@ -8,4 +8,6 @@ When implementing from a selected generated mock, treat that image as the source
 
 Current visual source: `C:\Users\柳航\.codex\generated_images\019f82c9-6fe4-71b0-9aab-640af3fd25e7\exec-eae2c9fb-e5f6-43e7-812a-c3bba9f6448d.png`. Preserve the warm ivory editorial style, forest-green accents, real product screenshots, and the single-line desktop headline `一款真正轻量免费的 Markdown 阅读器`.
 
+Official production URL: `https://liuhang798.github.io/`. The deployable website repository is `https://github.com/liuhang798/liuhang798.github.io`; keep canonical and social metadata aligned with this root URL.
+
 Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact so the same local prototype can be handed to Sites. Before a Sites handoff, run `npm run build` and `npm run test:sites`; the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`.

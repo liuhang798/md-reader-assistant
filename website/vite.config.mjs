@@ -2,9 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "./",
+  base: "/",
   build: {
     outDir: "dist/client",
+    assetsDir: "",
   },
   optimizeDeps: {
     include: ["react", "react-dom/client"],

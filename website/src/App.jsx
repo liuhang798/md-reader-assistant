@@ -15,7 +15,7 @@ import {
 
 const RELEASE_URL = "https://github.com/liuhang798/md-reader-assistant/releases/latest";
 const REPO_URL = "https://github.com/liuhang798/md-reader-assistant";
-const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}`;
+const asset = (name) => `${import.meta.env.BASE_URL}${name}`;
 
 function DownloadButton({ compact = false, footer = false }) {
   return (
