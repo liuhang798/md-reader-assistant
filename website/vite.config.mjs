@@ -5,6 +5,7 @@ export default defineConfig({
   base: "/",
   build: {
     outDir: "dist/client",
+    assetsDir: "",
   },
   optimizeDeps: {
     include: ["react", "react-dom/client"],
