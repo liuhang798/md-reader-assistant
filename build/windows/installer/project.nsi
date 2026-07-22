@@ -87,10 +87,32 @@ OutFile "..\..\bin\md-reader-assistant-${INFO_PRODUCTVERSION}-windows-${ARCH}.ex
 !else
   InstallDir "$PROGRAMFILES64\${INFO_COMPANYNAME}\${INFO_PRODUCTNAME}"
 !endif # Default installing folder ($PROGRAMFILES is Program Files folder).
+InstallDirRegKey HKCU "${UNINST_KEY}" "InstallLocation"
 ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
    !insertmacro wails.checkArchitecture
+   Call ResolvePreviousInstallDir
+FunctionEnd
+
+# Prefer the directory recorded by 2.2.3 and later. Version 2.2.2 did not
+# write InstallLocation, so use its DisplayIcon path as an upgrade fallback.
+Function ResolvePreviousInstallDir
+    SetRegView 64
+    ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
+    StrCmp $0 "" previousInstallFromIcon previousInstallFound
+
+    previousInstallFromIcon:
+        ReadRegStr $0 HKCU "${UNINST_KEY}" "DisplayIcon"
+        StrCmp $0 "" previousInstallDone
+        ${GetParent} "$0" $1
+        StrCmp $1 "" previousInstallDone
+        StrCpy $0 "$1"
+
+    previousInstallFound:
+        StrCpy $INSTDIR "$0"
+
+    previousInstallDone:
 FunctionEnd
 
 # Electron releases and early Wails installers used different uninstall keys
@@ -157,6 +179,10 @@ Section
     !insertmacro wails.associateCustomProtocols
 
     !insertmacro wails.writeUninstaller
+    # Persist the actual directory selected by the user so future upgrades
+    # open the directory page at the same location.
+    SetRegView 64
+    WriteRegStr HKCU "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
 SectionEnd
 
 Section "uninstall"

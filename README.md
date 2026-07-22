@@ -12,7 +12,7 @@
 
 ## Download and install
 
-Download the latest package for your platform from [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest). On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut and register Markdown file associations.
+Download the latest package for your platform from [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest). On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, and automatically reuse the previous installation directory during an upgrade.
 
 The macOS build uses native left-side window controls and application menus, including standard Command shortcuts.
 
@@ -28,6 +28,7 @@ MD Reader Assistant is an ultra-light cross-platform Markdown reader and editor 
 - Local absolute and relative image paths now render reliably through the Go backend.
 - Update notifications can be paused for 30 days while manual checks remain available.
 - The Windows installer now performs an in-place upgrade and removes duplicate app entries or shortcuts left by older installers.
+- Windows upgrades automatically open at the previously selected installation directory, including upgrades from 2.2.2.
 
 ## Highlights
 
@@ -126,6 +127,7 @@ Push a tag such as `v2.2.3` to run the Windows, macOS and Linux workflow in `.gi
 ## Project documentation
 
 - [Changelog](CHANGELOG.md)
+- [AI project technical guide](AGENTS.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Release guide](RELEASING.md)
