@@ -75,6 +75,10 @@ export function App() {
           <a href="#features">功能</a>
           <a href="#interface">界面</a>
           <a href={REPO_URL} target="_blank" rel="noreferrer">开源</a>
+          <a className="language-link" href="/en/" lang="en" aria-label="Open the English website">
+            <span className="language-desktop">English</span>
+            <span className="language-mobile">EN</span>
+          </a>
           <DownloadButton compact />
         </nav>
       </header>
