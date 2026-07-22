@@ -11,6 +11,8 @@
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-526b58" alt="Windows, macOS and Linux">
   </p>
   <p>
+    <a href="https://liuhang798.github.io/"><strong>Official website</strong></a>
+    ·
     <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><strong>Download latest release</strong></a>
     · <a href="#screenshots">Screenshots</a>
     · <a href="#development">Build from source</a>
@@ -149,6 +151,8 @@ Push a tag such as `v2.2.3` to run the Windows, macOS and Linux workflow in `.gi
 
 ## Project documentation
 
+- [Official website](https://liuhang798.github.io/)
+- [Official website source](https://github.com/liuhang798/liuhang798.github.io)
 - [Changelog](CHANGELOG.md)
 - [AI project technical guide](AGENTS.md)
 - [Contributing](CONTRIBUTING.md)

@@ -11,6 +11,8 @@
     <img src="https://img.shields.io/badge/平台-Windows%20%7C%20macOS%20%7C%20Linux-526b58" alt="支持 Windows、macOS 和 Linux">
   </p>
   <p>
+    <a href="https://liuhang798.github.io/"><strong>访问官网</strong></a>
+    ·
     <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><strong>下载最新版本</strong></a>
     · <a href="#项目截图">查看截图</a>
     · <a href="#本地开发">从源码构建</a>
@@ -143,6 +145,8 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 
 ## 项目文档
 
+- [项目官网](https://liuhang798.github.io/)
+- [官网源代码](https://github.com/liuhang798/liuhang798.github.io)
 - [更新记录](CHANGELOG.md)
 - [AI 项目技术指南](AGENTS.md)
 - [贡献指南](CONTRIBUTING.md)
