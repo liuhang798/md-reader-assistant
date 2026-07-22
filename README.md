@@ -1,22 +1,45 @@
 <div align="center">
   <img src="build/appicon.png" width="96" alt="MD Reader Assistant icon">
   <h1>MD Reader Assistant</h1>
-  <p>A beautiful, focused, cross-platform Markdown reader and editor.</p>
+  <p><strong>A fast, local-first Markdown reader, viewer and editor — about 7 MB on Windows.</strong></p>
+  <p>Live preview · Syntax highlighting · Plain local files · Windows, macOS and Linux</p>
   <p><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
   <p>
     <a href="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml"><img src="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml/badge.svg" alt="Build status"></a>
     <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/md-reader-assistant" alt="Latest release"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/md-reader-assistant" alt="MIT License"></a>
+    <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-526b58" alt="Windows, macOS and Linux">
+  </p>
+  <p>
+    <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><strong>Download latest release</strong></a>
+    · <a href="#screenshots">Screenshots</a>
+    · <a href="#development">Build from source</a>
   </p>
 </div>
 
-## Download and install
+![MD Reader Assistant split-view Markdown editor with live preview and syntax highlighting](screenshots/03-split-editor.png)
 
-Download the latest package for your platform from [GitHub Releases](https://github.com/liuhang798/md-reader-assistant/releases/latest). On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, and automatically reuse the previous installation directory during an upgrade.
+## Why MD Reader Assistant?
+
+- **Lightweight by design:** the Windows installer is only about **7 MB**, built with Go and Wails instead of Electron.
+- **Local-first and private:** open and edit ordinary Markdown files on your computer—no account, proprietary vault or cloud lock-in.
+- **Reading and editing together:** switch from a focused Markdown reader to split-view editing with live preview and syntax highlighting.
+- **Practical desktop integration:** recent files, resource explorer, autosave, native dialogs, file associations and update notifications.
+- **Cross-platform and open source:** one MIT-licensed Markdown desktop app for Windows, macOS and Linux.
+
+It is a good fit for reading long Markdown documents, editing README files, maintaining technical notes and working with local documentation folders.
+
+## Download
+
+| Platform | Package | Download |
+|---|---|---|
+| Windows x64 | Step-by-step installer (`.exe`) | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
+| macOS | Universal Intel + Apple Silicon (`.dmg`) | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
+| Linux x64 | Debian package + portable AppImage | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
+
+On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup.
 
 The macOS build uses native left-side window controls and application menus, including standard Command shortcuts.
-
-MD Reader Assistant is an ultra-light cross-platform Markdown reader and editor built with Go, Wails, native JavaScript and Vite. The Windows installer is only about **7 MB**, while Windows, macOS and Linux share the same focused reading and editing experience.
 
 ## What's new in 2.2.3
 
@@ -29,6 +52,7 @@ MD Reader Assistant is an ultra-light cross-platform Markdown reader and editor 
 - Update notifications can be paused for 30 days while manual checks remain available.
 - The Windows installer now performs an in-place upgrade and removes duplicate app entries or shortcuts left by older installers.
 - Windows upgrades automatically open at the previously selected installation directory, including upgrades from 2.2.2.
+- The Windows setup completion page runs MD Reader Assistant by default, while still allowing the option to be unchecked.
 
 ## Highlights
 
@@ -52,8 +76,6 @@ MD Reader Assistant is an ultra-light cross-platform Markdown reader and editor 
 | Home | Reader |
 |---|---|
 | ![Home](screenshots/01-home.png) | ![Reader](screenshots/02-reader.png) |
-
-![Split editor](screenshots/03-split-editor.png)
 
 ![About screen](screenshots/04-about.png)
 

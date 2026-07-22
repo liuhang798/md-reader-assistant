@@ -18,6 +18,7 @@ All notable changes to MD Reader Assistant are documented here.
 - 修复新建文档“另存为”后出现两条最近阅读记录；另存成功后会删除自动创建的临时草稿及其记录，草稿标记在软件重启后仍然有效。
 - 修复升级安装后 Windows 可能出现两个“MD阅读助手”应用或快捷方式的问题；安装范围统一为当前用户，安装器会清理旧 Electron/早期版本遗留的重复卸载项和快捷方式。
 - Windows 更新安装时自动沿用上次选择的安装目录；从未记录目录的 2.2.2 升级时，也会根据现有卸载信息识别原安装位置。
+- Windows 安装完成页默认勾选“运行 MD阅读助手”，点击“完成”后直接启动应用，并允许用户取消勾选。
 
 ### English
 
@@ -33,6 +34,7 @@ All notable changes to MD Reader Assistant are documented here.
 - Fixed duplicate Recent entries after saving a newly created document under another name; the auto-created draft and its record are removed after a successful Save As, even after restarting the app.
 - Fixed duplicate Windows app entries or shortcuts after upgrading by consistently using per-user installation and cleaning stale uninstall records and shortcuts left by Electron or early installers.
 - Windows upgrades now reuse the previously selected installation directory, with a compatibility fallback that detects the install location used by 2.2.2.
+- The Windows setup completion page now launches MD Reader Assistant by default after Finish, with an option to opt out.
 
 ## [2.2.2] - 2026-07-21
 
