@@ -281,8 +281,8 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-wid
 .editor-preview-content h2 { font-size: calc(22px * var(--font-scale)); }
 .editor-preview-content h3 { font-size: calc(18px * var(--font-scale)); }
 .preview-error { color: var(--muted); text-align: center; padding: 60px 20px; }
-#markdownEditor { flex: 1; width: 100%; min-height: 0; overflow: hidden; background: transparent; font-size: 15px; user-select: text; }
-#markdownEditor .cm-editor { position: relative; z-index: 1; height: 100%; outline: none; pointer-events: auto; }
+#markdownEditor { flex: 1; width: 100%; min-height: 0; overflow: hidden; background: transparent; user-select: text; }
+#markdownEditor .cm-editor { position: relative; z-index: 1; height: 100%; outline: none; pointer-events: auto; font-size: calc(15px * var(--font-scale)); }
 #markdownEditor .cm-content { cursor: text; user-select: text !important; pointer-events: auto; }
 #markdownEditor .cm-scroller { scrollbar-gutter: stable; }
 #markdownEditor .cm-foldGutter { width: 14px; }

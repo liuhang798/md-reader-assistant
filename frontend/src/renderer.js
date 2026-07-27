@@ -50,7 +50,7 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
     zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', printDocument: '打印文档', copy: '复制', copied: '已复制',
-    bodyFontScale: '正文字号 {percent}%', recentOpened: '最近打开', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyExplorer: '请先打开一个文件夹',
+    bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyExplorer: '请先打开一个文件夹',
     markdownDocument: 'Markdown 文档', removeRecentTitle: '删除最近阅读记录', removeRecentAria: '删除 {name} 的最近阅读记录',
     discardConfirm: '当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？', previewError: '暂时无法渲染当前内容',
     readingTime: '约 {minutes} 分钟 · {words} 字', renderFailed: 'Markdown 渲染失败', openFailed: '无法打开这个文件',
@@ -80,7 +80,7 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
     zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
-    bodyFontScale: 'Reading text {percent}%', recentOpened: 'Recently opened', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyExplorer: 'Open a folder to browse files',
+    bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyExplorer: 'Open a folder to browse files',
     markdownDocument: 'Markdown document', removeRecentTitle: 'Remove recent record', removeRecentAria: 'Remove {name} from Recent',
     discardConfirm: 'This document has unsaved changes.\n\nDiscard the changes and continue?', previewError: 'The current content cannot be rendered',
     readingTime: 'About {minutes} min · {words} words', renderFailed: 'Markdown rendering failed', openFailed: 'Unable to open this file',
@@ -469,7 +469,7 @@ function setTheme(dark) {
 }
 
 function setFontScale(scale, silent = false) {
-  state.fontScale = Math.max(.82, Math.min(1.35, scale));
+  state.fontScale = Math.max(.82, Math.min(2, scale));
   document.documentElement.style.setProperty('--font-scale', state.fontScale);
   localStorage.setItem('fontScale', state.fontScale);
   if (!silent) showToast(t('bodyFontScale', { percent: Math.round(state.fontScale * 100) }));

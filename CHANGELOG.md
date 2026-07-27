@@ -4,6 +4,16 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+### 简体中文
+
+- 放大、缩小和恢复字号现在会同时作用于阅读页、实时预览、Markdown 源码和编辑器行号，最高支持 200%，更适合 4K 高分辨率显示器。
+- 字号比例会自动保存，关闭并重新打开软件后继续使用上次设置。
+
+### English
+
+- Increase, decrease and reset text size now apply to the reader, live preview, Markdown source and editor line numbers, with scaling up to 200% for high-DPI and 4K displays.
+- The selected text scale is saved automatically and restored on the next launch.
+
 ## [2.2.4] - 2026-07-22
 
 ### 简体中文

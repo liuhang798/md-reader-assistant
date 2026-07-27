@@ -66,8 +66,9 @@ app.go / updates.go（Go 后端）
 | `build/windows/installer/wails_tools.nsh` | Wails 生成文件，通常不要手工修改 |
 | `packaging/linux/` | DEB、AppImage、桌面文件和 MIME 配置 |
 | `.github/workflows/release.yml` | 三平台构建、产物命名、Release 更新与发布说明提取 |
-| `README.md` | 英文项目主页 |
-| `README.zh-CN.md` | 简体中文项目主页 |
+| `README.md` | GitHub 默认显示的简体中文项目主页 |
+| `README.en.md` | English 项目主页 |
+| `README.zh-CN.md` | 旧中文版链接的兼容入口，指向默认中文主页 |
 | `CHANGELOG.md` | 中英文版本升级日志，也是应用更新弹窗和 Release notes 的来源 |
 | `RELEASING.md` | 版本发布操作指南 |
 | `push-to-github.bat` | Windows 双击自动拉取、提交并推送源码 |
@@ -307,7 +308,7 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 - `frontend/src/main.js`
 - `frontend/src/renderer.js`
 - `build/windows/installer/project.nsi`
-- `CHANGELOG.md`、`README.md`、`README.zh-CN.md`、`RELEASING.md`
+- `CHANGELOG.md`、`README.md`、`README.en.md`、`README.zh-CN.md`、`RELEASING.md`
 
 标签必须与版本完全一致，例如 `v2.2.4`。`.github/workflows/release.yml` 会：
 
