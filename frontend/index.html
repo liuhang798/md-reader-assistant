@@ -38,7 +38,7 @@
       <button id="searchButton" class="icon-button" data-i18n-title="searchTitle" title="在文档中查找 (Ctrl+F)">
         <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
       </button>
-      <button id="themeButton" class="icon-button" data-i18n-title="themeTitle" title="切换明暗主题">
+      <button id="themeButton" class="icon-button" data-i18n-title="themeTitle" title="选择主题" aria-haspopup="menu" aria-expanded="false">
         <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         <svg class="moon-icon" viewBox="0 0 24 24"><path d="M20 15.4A8 8 0 0 1 8.6 4 8 8 0 1 0 20 15.4Z"/></svg>
       </button>
@@ -224,6 +224,20 @@
     <hr>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span> <span>GitHub</span></button>
     <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.2.4</span></button>
+  </div>
+
+  <div id="themeMenu" class="popover theme-menu hidden no-drag" role="menu" aria-labelledby="themeMenuLabel">
+    <div id="themeMenuLabel" class="popover-label" data-i18n="chooseTheme">选择主题</div>
+    <div class="theme-options">
+      <button type="button" role="menuitemradio" data-theme-option="classic-light" aria-checked="false"><span class="theme-swatch theme-swatch-classic-light"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-theme-option="classic-dark" aria-checked="false"><span class="theme-swatch theme-swatch-classic-dark"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-theme-option="wechat-green" aria-checked="false"><span class="theme-swatch theme-swatch-wechat-green"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-theme-option="alipay-blue" aria-checked="false"><span class="theme-swatch theme-swatch-alipay-blue"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-theme-option="wisteria" aria-checked="false"><span class="theme-swatch theme-swatch-wisteria"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-theme-option="amber-paper" aria-checked="false"><span class="theme-swatch theme-swatch-amber-paper"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-theme-option="deep-ocean" aria-checked="false"><span class="theme-swatch theme-swatch-deep-ocean"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-theme-option="amethyst-night" aria-checked="false"><span class="theme-swatch theme-swatch-amethyst-night"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+    </div>
   </div>
 
   <div id="firstRunLanguageDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="firstRunLanguageTitle">

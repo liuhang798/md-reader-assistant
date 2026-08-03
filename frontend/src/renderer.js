@@ -58,7 +58,7 @@ const translations = {
   'zh-CN': {
     appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
-    themeTitle: '切换明暗主题', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
+    themeTitle: '选择主题', chooseTheme: '选择主题', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
     library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
@@ -88,7 +88,7 @@ const translations = {
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
-    themeTitle: 'Toggle light/dark theme', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
+    themeTitle: 'Choose theme', chooseTheme: 'Choose theme', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
     library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
@@ -146,6 +146,11 @@ function applyStaticTranslations() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(element => { element.placeholder = t(element.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
   document.querySelectorAll('[data-language]').forEach(button => button.classList.toggle('active', button.dataset.language === state.language));
+  document.querySelectorAll('[data-theme-option]').forEach(button => {
+    const name = THEMES[button.dataset.themeOption]?.[state.language === 'en' ? 'en' : 'zhCN'];
+    const label = button.querySelector('.theme-option-name');
+    if (label && name) label.textContent = name;
+  });
 }
 
 function setLanguage(language, silent = false, persist = true) {
@@ -180,7 +185,7 @@ const els = {
   breadcrumb: $('#breadcrumb'), readingTime: $('#readingTime'), progressBar: $('#progressBar'),
   appShell: $('.app-shell'), sidebar: $('#sidebar'), expandSidebar: $('#expandSidebar'), sidebarResizer: $('#sidebarResizer'), tocResizer: $('#tocResizer'), searchBar: $('#searchBar'),
   searchInput: $('#searchInput'), searchCount: $('#searchCount'), dropOverlay: $('#dropOverlay'),
-  moreMenu: $('#moreMenu'), toast: $('#toast'), editorView: $('#editorView'),
+  moreMenu: $('#moreMenu'), themeMenu: $('#themeMenu'), toast: $('#toast'), editorView: $('#editorView'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
@@ -479,11 +484,33 @@ function showToast(message) {
   showToast.timer = setTimeout(() => els.toast.classList.add('hidden'), 1800);
 }
 
+function updateThemeSelection() {
+  document.querySelectorAll('[data-theme-option]').forEach(button => {
+    const active = button.dataset.themeOption === state.theme;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-checked', String(active));
+  });
+}
+
 function setTheme(themeId) {
   state.theme = normalizeTheme(themeId);
   document.documentElement.dataset.theme = state.theme;
   localStorage.setItem('theme', state.theme);
+  updateThemeSelection();
   window.leafMD.setTheme(THEMES[state.theme].mode === 'dark');
+}
+
+function closeThemeMenu() {
+  els.themeMenu.classList.add('hidden');
+  $('#themeButton').setAttribute('aria-expanded', 'false');
+}
+
+function toggleThemeMenu() {
+  const opening = els.themeMenu.classList.contains('hidden');
+  els.moreMenu.classList.add('hidden');
+  els.themeMenu.classList.toggle('hidden', !opening);
+  $('#themeButton').setAttribute('aria-expanded', String(opening));
+  if (opening) requestAnimationFrame(() => els.themeMenu.querySelector('[aria-checked="true"]')?.focus());
 }
 
 function setFontScale(scale, silent = false) {
@@ -1156,7 +1183,18 @@ async function initialize() {
 $('#newFileButton').addEventListener('click', newFile);
 ['#openFileButton', '#welcomeOpenFile'].forEach(id => $(id).addEventListener('click', openFile));
 ['#openFolderButton', '#welcomeOpenFolder', '#folderCta'].forEach(id => $(id).addEventListener('click', openFolder));
-$('#themeButton').addEventListener('click', () => setTheme(THEMES[state.theme].mode === 'dark' ? 'classic-light' : 'classic-dark'));
+$('#themeButton').addEventListener('click', event => {
+  event.stopPropagation();
+  toggleThemeMenu();
+});
+els.themeMenu.addEventListener('click', event => {
+  event.stopPropagation();
+  const button = event.target.closest('[data-theme-option]');
+  if (!button) return;
+  setTheme(button.dataset.themeOption);
+  closeThemeMenu();
+  $('#themeButton').focus();
+});
 els.backToTop.addEventListener('click', () => $('.reader-pane').scrollTo({ top: 0, behavior: 'smooth' }));
 els.editButton.addEventListener('click', () => toggleEditor());
 els.saveButton.addEventListener('click', () => saveDocument(false));
@@ -1185,6 +1223,7 @@ $('#printButton').addEventListener('click', () => {
 });
 $('#moreButton').addEventListener('click', event => {
   event.stopPropagation();
+  closeThemeMenu();
   els.moreMenu.classList.toggle('hidden');
 });
 $('#windowMinimise').addEventListener('click', () => window.leafMD.minimiseWindow());
@@ -1257,7 +1296,10 @@ els.moreMenu.addEventListener('click', event => {
   if (action === 'about') openAbout();
   els.moreMenu.classList.add('hidden');
 });
-document.addEventListener('click', () => els.moreMenu.classList.add('hidden'));
+document.addEventListener('click', () => {
+  els.moreMenu.classList.add('hidden');
+  closeThemeMenu();
+});
 $('.reader-pane').addEventListener('scroll', updateActiveToc, { passive: true });
 
 document.addEventListener('keydown', event => {
@@ -1273,6 +1315,7 @@ document.addEventListener('keydown', event => {
   else if (primaryModifier && (event.key === '+' || event.key === '=')) { event.preventDefault(); setFontScale(state.fontScale + .08); }
   else if (primaryModifier && event.key === '-') { event.preventDefault(); setFontScale(state.fontScale - .08); }
   else if (primaryModifier && event.key === '0') { event.preventDefault(); setFontScale(1); }
+  else if (event.key === 'Escape' && !els.themeMenu.classList.contains('hidden')) { closeThemeMenu(); $('#themeButton').focus(); }
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
   else if (event.key === 'Escape' && !els.updateDialog.classList.contains('hidden')) closeUpdate();
   else if (event.key === 'Escape' && !els.aboutDialog.classList.contains('hidden')) closeAbout();
