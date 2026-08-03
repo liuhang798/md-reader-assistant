@@ -20,6 +20,7 @@ Thumbs.db
 *.log
 *.tmp
 .site-publish/
+.superpowers/
 
 # Local test and coverage output
 coverage/
