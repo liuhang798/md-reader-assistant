@@ -51,6 +51,7 @@ test('all themes have CSS palettes and an accessible chooser', () => {
     assert.match(html, new RegExp(`data-theme-option="${id}"`));
   }
   assert.match(html, /id="themeButton"[^>]*aria-haspopup="menu"/);
+  assert.match(html, /id="themeButton"[^>]*data-i18n-aria-label="themeTitle"/);
 });
 
 test('theme chooser applies a selection and keeps its accessibility state in sync', () => {
