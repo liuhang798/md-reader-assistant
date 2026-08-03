@@ -63,7 +63,8 @@ The macOS build uses native left-side window controls and application menus, inc
 - Clickable table of contents, active section tracking, search, print and back-to-top.
 - Recent documents update immediately and individual records can be removed.
 - Simplified Chinese and English interface with persistent language selection.
-- Light/dark themes and synchronized reading/editor text zoom up to 200%, remembered across launches.
+- Eight complete color themes—Classic Light, Classic Dark, Verdant Voice, Azure Cloud, Wisteria Mist, Amber Paper, Deep Ocean and Amethyst Night—apply consistently to reading, preview, editing, menus and dialogs, with the selection restored across launches.
+- Synchronized reading/editor text zoom up to 200%, remembered across launches.
 - Switch the left sidebar between Recent and a refreshable resource explorer for Markdown folders.
 - Drag the library and document-outline dividers to customize panel widths; the layout is remembered locally.
 - The resource explorer remembers its selected folder and active view across launches; click the active Explorer tab again to choose another folder.
