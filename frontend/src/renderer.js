@@ -15,6 +15,24 @@ let codeEditor;
 let editorExtensions = [];
 const editorLanguage = new Compartment();
 let suppressEditorChanges = false;
+
+const THEMES = {
+  'classic-light': { mode: 'light', zhCN: '经典浅色', en: 'Classic Light' },
+  'classic-dark': { mode: 'dark', zhCN: '经典深色', en: 'Classic Dark' },
+  'wechat-green': { mode: 'light', zhCN: '青翠新语', en: 'Verdant Voice' },
+  'alipay-blue': { mode: 'light', zhCN: '云海湛蓝', en: 'Azure Cloud' },
+  'wisteria': { mode: 'light', zhCN: '紫藤雾色', en: 'Wisteria Mist' },
+  'amber-paper': { mode: 'light', zhCN: '琥珀书页', en: 'Amber Paper' },
+  'deep-ocean': { mode: 'dark', zhCN: '深海夜航', en: 'Deep Ocean' },
+  'amethyst-night': { mode: 'dark', zhCN: '墨夜紫晶', en: 'Amethyst Night' }
+};
+
+function normalizeTheme(theme) {
+  if (theme === 'light') return 'classic-light';
+  if (theme === 'dark') return 'classic-dark';
+  return THEMES[theme] ? theme : 'classic-light';
+}
+
 const state = {
   currentFile: null,
   root: null,
@@ -22,7 +40,7 @@ const state = {
   explorerFiles: [],
   recentFiles: [],
   sidebarMode: localStorage.getItem('sidebarMode') === 'explorer' ? 'explorer' : 'recent',
-  dark: localStorage.getItem('theme') === 'dark',
+  theme: normalizeTheme(localStorage.getItem('theme')),
   fontScale: Number(localStorage.getItem('fontScale') || 1),
   language: localStorage.getItem('language') === 'en' ? 'en' : 'zh-CN',
   sidebarWidth: Number(localStorage.getItem('sidebarWidth') || 258),
@@ -461,11 +479,11 @@ function showToast(message) {
   showToast.timer = setTimeout(() => els.toast.classList.add('hidden'), 1800);
 }
 
-function setTheme(dark) {
-  state.dark = dark;
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  localStorage.setItem('theme', dark ? 'dark' : 'light');
-  window.leafMD.setTheme(dark);
+function setTheme(themeId) {
+  state.theme = normalizeTheme(themeId);
+  document.documentElement.dataset.theme = state.theme;
+  localStorage.setItem('theme', state.theme);
+  window.leafMD.setTheme(THEMES[state.theme].mode === 'dark');
 }
 
 function setFontScale(scale, silent = false) {
@@ -1103,7 +1121,7 @@ async function snoozeUpdates() {
 }
 
 async function initialize() {
-  setTheme(state.dark);
+  setTheme(state.theme);
   setFontScale(state.fontScale, true);
   const prefs = await window.leafMD.getPreferences();
   const needsLanguageSelection = await window.leafMD.needsLanguageSelection();
@@ -1138,7 +1156,7 @@ async function initialize() {
 $('#newFileButton').addEventListener('click', newFile);
 ['#openFileButton', '#welcomeOpenFile'].forEach(id => $(id).addEventListener('click', openFile));
 ['#openFolderButton', '#welcomeOpenFolder', '#folderCta'].forEach(id => $(id).addEventListener('click', openFolder));
-$('#themeButton').addEventListener('click', () => setTheme(!state.dark));
+$('#themeButton').addEventListener('click', () => setTheme(THEMES[state.theme].mode === 'dark' ? 'classic-light' : 'classic-dark'));
 els.backToTop.addEventListener('click', () => $('.reader-pane').scrollTo({ top: 0, behavior: 'smooth' }));
 els.editButton.addEventListener('click', () => toggleEditor());
 els.saveButton.addEventListener('click', () => saveDocument(false));
