@@ -59,3 +59,7 @@ test('theme chooser applies a selection and keeps its accessibility state in syn
   assert.match(renderer, /button\.setAttribute\('aria-checked', String\(active\)\)/);
   assert.match(renderer, /THEMES\[button\.dataset\.themeOption\]\?\.\[state\.language === 'en' \? 'en' : 'zhCN'\]/);
 });
+
+test('theme chooser aligns with the native macOS toolbar', () => {
+  assert.match(styles, /:root\[data-platform="darwin"\] \.theme-menu\s*\{[^}]*right:\s*58px/s);
+});

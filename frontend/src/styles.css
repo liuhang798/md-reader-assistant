@@ -322,6 +322,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 :root[data-platform="darwin"] .window-controls {
   display: none;
 }
+:root[data-platform="darwin"] .theme-menu {
+  right: 58px;
+}
 .toolbar-button, .icon-button, .small-icon, .text-button { border: 0; cursor: pointer; background: transparent; }
 .toolbar-button { height: 34px; padding: 0 14px; border-radius: 9px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
 .toolbar-button svg { width: 17px; }
