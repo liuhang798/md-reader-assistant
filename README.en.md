@@ -39,11 +39,11 @@ It is a good fit for reading long Markdown documents, editing README files, main
 | macOS | Universal Intel + Apple Silicon (`.dmg`) | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 | Linux x64 | Debian package + portable AppImage | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 
-On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup.
+On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup. Its selected language is also used by the app, so first launch does not ask for it again.
 
-The macOS build uses native left-side window controls and application menus, including standard Command shortcuts.
+The macOS build uses native left-side window controls and application menus, including standard Command shortcuts. Lazy editor loading and deferred explorer restoration reduce cold-start work.
 
-## What's new in 2.2.4
+## What's new in 2.2.5
 
 - `Ctrl/Cmd + F` now searches Markdown source directly inside the editor, highlights matches and scrolls to each result without leaving edit mode.
 - The find-and-replace panel follows the selected Simplified Chinese or English interface language and uses a polished toolbar that matches the application.
@@ -61,7 +61,8 @@ The macOS build uses native left-side window controls and application menus, inc
 - `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls to the selected result; the polished find-and-replace panel follows the selected Chinese or English interface language.
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Clickable table of contents, active section tracking, search, print and back-to-top.
-- Recent documents update immediately and individual records can be removed.
+- Recent documents update immediately and individual records can be removed; reopening an existing item keeps its list position.
+- On macOS, closing the main window leaves the app running in the background, and Markdown files opened from Finder display directly.
 - Simplified Chinese and English interface with persistent language selection.
 - Eight complete color themes—Classic Light, Classic Dark, Verdant Voice, Azure Cloud, Wisteria Mist, Amber Paper, Deep Ocean and Amethyst Night—apply consistently to reading, preview, editing, menus and dialogs, with the selection restored across launches.
 - Synchronized reading/editor text zoom up to 200%, remembered across launches.
@@ -146,7 +147,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.2.4` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.2.5` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

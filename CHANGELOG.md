@@ -4,12 +4,18 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+## [2.2.5] - 2026-08-06
+
 ### 简体中文
 
 - 新增 8 套完整配色主题：经典浅色、经典深色、青翠新语、云海湛蓝、紫藤雾色、琥珀书页、深海夜航和墨夜紫晶；阅读页、实时预览、Markdown 编辑器、语法高亮、菜单和弹窗会同步切换。
 - 主题选择会自动保存并在下次启动时恢复；旧版 `light` / `dark` 设置会自动迁移，异常值安全回退到经典浅色。
 - 放大、缩小和恢复字号现在会同时作用于阅读页、实时预览、Markdown 源码和编辑器行号，最高支持 200%，更适合 4K 高分辨率显示器。
 - 字号比例会自动保存，关闭并重新打开软件后继续使用上次设置。
+- macOS 点击左上角关闭按钮后改为隐藏窗口并继续在后台运行；从 Finder 打开 Markdown 文件时会在应用启动后直接显示文档。
+- 点击“最近阅读”中的已有文档不再改变列表顺序。
+- Windows 安装向导选择的语言会直接作为软件界面语言，首次进入软件不再重复要求选择。
+- 优化 macOS 冷启动：Markdown 编辑器改为进入编辑模式时按需加载，资源浏览器目录在首屏显示后恢复，减少首次打开等待。
 
 ### English
 
@@ -17,6 +23,10 @@ All notable changes to MD Reader Assistant are documented here.
 - Theme selection is saved and restored automatically; legacy `light` / `dark` values migrate safely and unknown values fall back to Classic Light.
 - Increase, decrease and reset text size now apply to the reader, live preview, Markdown source and editor line numbers, with scaling up to 200% for high-DPI and 4K displays.
 - The selected text scale is saved automatically and restored on the next launch.
+- On macOS, the close button now hides the window while the app keeps running; Markdown files opened from Finder are displayed after startup.
+- Opening an existing item from Recent no longer changes the list order.
+- The Windows installer language now becomes the initial app language, avoiding a second language prompt on first launch.
+- Improved macOS cold startup by loading the Markdown editor only when editing begins and restoring resource-explorer folders after the first paint.
 
 ## [2.2.4] - 2026-07-22
 
@@ -121,3 +131,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.2.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.2
 [2.2.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.3
 [2.2.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.4
+[2.2.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.5

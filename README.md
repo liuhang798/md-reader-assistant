@@ -39,11 +39,11 @@
 | macOS | Intel + Apple Silicon 通用版（`.dmg`） | [下载最新版本](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 | Linux x64 | Debian 安装包 + 便携 AppImage | [下载最新版本](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 
-Windows 用户运行 `md-reader-assistant-版本-windows-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式、Markdown 文件关联、升级时沿用上次安装目录，并在安装完成后直接启动软件。
+Windows 用户运行 `md-reader-assistant-版本-windows-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式、Markdown 文件关联、升级时沿用上次安装目录，并在安装完成后直接启动软件。安装向导中选择的语言会直接用于软件界面，首次进入时无需再次选择。
 
-macOS 版本使用系统原生左侧窗口控制按钮与应用菜单，并支持标准 Command 快捷键。
+macOS 版本使用系统原生左侧窗口控制按钮与应用菜单，并支持标准 Command 快捷键。编辑器和资源浏览器采用延迟初始化，减少冷启动等待。
 
-## 2.2.4 更新亮点
+## 2.2.5 更新亮点
 
 - 编辑状态下按 `Ctrl/Cmd + F` 可直接查找 Markdown 源码，高亮匹配内容并滚动定位，不再跳回预览页面。
 - 查找替换面板会跟随简体中文或 English 界面语言，并采用与软件一致的精致工具栏样式。
@@ -62,7 +62,8 @@ macOS 版本使用系统原生左侧窗口控制按钮与应用菜单，并支�
 - 点击目录定位章节、当前章节跟随、文档搜索、打印和回到顶部。
 - 左侧文档库和右侧本页目录支持拖动分隔条调整宽度，并在下次启动时恢复上次布局。
 - 资源浏览器自动记忆已选文件夹和当前视图，下次启动继续显示；再次点击已激活的“资源浏览器”可更换文件夹。
-- 打开文档后立即进入最近阅读，并可单独删除阅读记录。
+- 打开文档后立即进入最近阅读，并可单独删除阅读记录；再次点击已有记录不会改变列表顺序。
+- macOS 关闭主窗口后应用继续在后台运行；从 Finder 打开关联的 Markdown 文件会直接显示文档。
 - 简体中文和 English 界面切换，并自动记忆语言选择。
 - 内置 8 套完整配色主题，包括经典浅色、经典深色、青翠新语、云海湛蓝、紫藤雾色、琥珀书页、深海夜航和墨夜紫晶；主题选择会自动记忆，并同步作用于阅读、预览、编辑器、菜单和弹窗。
 - 阅读/编辑字号同步调节，最高支持 200%，并在下次启动时恢复上次比例。
@@ -139,7 +140,7 @@ npm run build
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-推送 `v2.2.4` 等版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包并发布到 GitHub Releases。客户端会根据仓库的最新稳定 Release 提醒更新。
+推送 `v2.2.5` 等版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包并发布到 GitHub Releases。客户端会根据仓库的最新稳定 Release 提醒更新。
 
 ## 项目文档
 

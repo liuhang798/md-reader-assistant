@@ -28,7 +28,7 @@
 !define INFO_PROJECTNAME    "md-reader-assistant"
 !define INFO_COMPANYNAME    "LeafMD Open Source"
 !define INFO_PRODUCTNAME    "MD阅读助手"
-!define INFO_PRODUCTVERSION "2.2.4"
+!define INFO_PRODUCTVERSION "2.2.5"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
@@ -88,7 +88,6 @@ LangString FinishRunText ${LANG_SIMPCHINESE} "运行 ${INFO_PRODUCTNAME}"
 
 Name "${INFO_PRODUCTNAME}"
 OutFile "..\..\bin\md-reader-assistant-${INFO_PRODUCTVERSION}-windows-${ARCH}.exe" # Keep release filenames ASCII-safe for CI.
-Var ExistingInstall
 !ifdef WAILS_INSTALL_SCOPE
   !if "${WAILS_INSTALL_SCOPE}" == "user"
     InstallDir "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"
@@ -103,42 +102,12 @@ ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
    !insertmacro wails.checkArchitecture
-   Call DetectExistingInstallation
    Call ResolvePreviousInstallDir
    !insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 
 Function un.onInit
    !insertmacro MUI_UNGETLANGUAGE
-FunctionEnd
-
-# A first-run marker is created only when neither an installed version nor an
-# existing preference file is found. Therefore upgrades from versions that did
-# not have the language chooser never display it.
-Function DetectExistingInstallation
-    StrCpy $ExistingInstall "0"
-    SetRegView 64
-    ReadRegStr $0 HKCU "${UNINST_KEY}" "DisplayName"
-    StrCmp $0 "" detectPreferences detectExistingFound
-
-    detectPreferences:
-        IfFileExists "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" detectExistingFound detectLegacyInstall
-
-    detectLegacyInstall:
-        StrCpy $0 0
-    detectLegacyLoop:
-        EnumRegKey $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall" $0
-        StrCmp $1 "" detectExistingDone
-        ReadRegStr $2 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\$1" "DisplayName"
-        StrCmp $2 "${INFO_PRODUCTNAME}" detectExistingFound detectLegacyNext
-    detectLegacyNext:
-        IntOp $0 $0 + 1
-        Goto detectLegacyLoop
-
-    detectExistingFound:
-        StrCpy $ExistingInstall "1"
-
-    detectExistingDone:
 FunctionEnd
 
 # Prefer the directory recorded by 2.2.3 and later. Version 2.2.2 did not
@@ -193,12 +162,22 @@ Section
 
     !insertmacro wails.files
 
-    StrCmp $ExistingInstall "1" firstRunMarkerDone
+    # The installer language becomes the initial application language. Keep an
+    # existing preference file on upgrades, but remove the legacy marker so the
+    # application never asks the user to choose the same language twice.
     CreateDirectory "$APPDATA\${INFO_PRODUCTNAME}"
-    FileOpen $0 "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag" w
-    FileWrite $0 "new-install"
+    Delete "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag"
+    IfFileExists "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" installerLanguageDone
+    FileOpen $0 "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" w
+    StrCmp $LANGUAGE ${LANG_ENGLISH} installerLanguageEnglish installerLanguageChinese
+    installerLanguageEnglish:
+        FileWrite $0 "{$\"recentFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"en$\"}"
+        Goto installerLanguageClose
+    installerLanguageChinese:
+        FileWrite $0 "{$\"recentFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"zh-CN$\"}"
+    installerLanguageClose:
     FileClose $0
-    firstRunMarkerDone:
+    installerLanguageDone:
 
     File "/oname=MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" "..\icon.ico"
 

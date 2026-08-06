@@ -189,6 +189,74 @@ func TestReadSaveAndRecent(t *testing.T) {
 	}
 }
 
+func TestReadingExistingRecentFileKeepsItsPosition(t *testing.T) {
+	app := testApp(t)
+	dir := t.TempDir()
+	firstPath := filepath.Join(dir, "first.md")
+	secondPath := filepath.Join(dir, "second.md")
+	for _, filePath := range []string{firstPath, secondPath} {
+		if err := os.WriteFile(filePath, []byte("# Document"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := app.ReadFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if _, err := app.ReadFile(firstPath); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{secondPath, firstPath}
+	if len(prefs.RecentFiles) != len(want) {
+		t.Fatalf("recent file count = %d, want %d: %#v", len(prefs.RecentFiles), len(want), prefs.RecentFiles)
+	}
+	for index := range want {
+		if prefs.RecentFiles[index] != want[index] {
+			t.Fatalf("recent files reordered: got %#v, want %#v", prefs.RecentFiles, want)
+		}
+	}
+}
+
+func TestFileOpenBeforeFrontendReadyBecomesInitialDocument(t *testing.T) {
+	app := testApp(t)
+	filePath := filepath.Join(t.TempDir(), "opened-from-finder.md")
+	if err := os.WriteFile(filePath, []byte("# Opened from Finder"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	app.onFileOpen(filePath)
+	doc, err := app.GetInitialFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc == nil || doc.Path != filePath || doc.Content != "# Opened from Finder" {
+		t.Fatalf("queued macOS file was not opened: %#v", doc)
+	}
+
+	doc, err = app.GetInitialFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc != nil {
+		t.Fatalf("initial document should only be consumed once: %#v", doc)
+	}
+}
+
+func TestHideWindowOnCloseOnlyOnMacOS(t *testing.T) {
+	if !hideWindowOnClose("darwin") {
+		t.Fatal("macOS close button should hide the window")
+	}
+	for _, platform := range []string{"windows", "linux"} {
+		if hideWindowOnClose(platform) {
+			t.Fatalf("%s close button must keep the existing quit behaviour", platform)
+		}
+	}
+}
+
 func TestFolderListingAndRecentRemoval(t *testing.T) {
 	app := testApp(t)
 	root := t.TempDir()
@@ -291,6 +359,28 @@ func TestLanguagePersistenceAndArgumentDetection(t *testing.T) {
 	}
 	if actual := findMarkdownArgument([]string{"app.exe", "image.png"}); actual != "" {
 		t.Fatalf("unexpected argument detection: %q", actual)
+	}
+}
+
+func TestWindowsInstallerUsesItsLanguageAsTheInitialAppLanguage(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("build", "windows", "installer", "project.nsi"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	installer := string(data)
+	for _, required := range []string{
+		`Delete "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag"`,
+		`IfFileExists "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" installerLanguageDone`,
+		`StrCmp $LANGUAGE ${LANG_ENGLISH} installerLanguageEnglish installerLanguageChinese`,
+		`$\"language$\":$\"en$\"`,
+		`$\"language$\":$\"zh-CN$\"`,
+	} {
+		if !strings.Contains(installer, required) {
+			t.Errorf("Windows installer is missing initial-language rule %q", required)
+		}
+	}
+	if strings.Contains(installer, `FileOpen $0 "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag"`) {
+		t.Fatal("Windows installer must not create a marker that asks for language again in the application")
 	}
 }
 

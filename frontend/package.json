@@ -1,7 +1,7 @@
 {
   "name": "md-reader-assistant-wails-frontend",
   "private": true,
-  "version": "2.2.4",
+  "version": "2.2.5",
   "type": "module",
   "scripts": {
     "dev": "vite",

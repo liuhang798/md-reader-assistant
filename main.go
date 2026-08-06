@@ -26,17 +26,18 @@ func main() {
 	}
 
 	err := wails.Run(&options.App{
-		Title:            appNameZH,
-		Width:            1440,
-		Height:           920,
-		MinWidth:         920,
-		MinHeight:        620,
-		Frameless:        goruntime.GOOS != "darwin",
-		Menu:             applicationMenu,
-		AssetServer:      &assetserver.Options{Assets: assets},
-		BackgroundColour: &options.RGBA{R: 246, G: 244, B: 239, A: 255},
-		OnStartup:        app.startup,
-		OnBeforeClose:    app.beforeClose,
+		Title:             appNameZH,
+		Width:             1440,
+		Height:            920,
+		MinWidth:          920,
+		MinHeight:         620,
+		Frameless:         goruntime.GOOS != "darwin",
+		HideWindowOnClose: hideWindowOnClose(goruntime.GOOS),
+		Menu:              applicationMenu,
+		AssetServer:       &assetserver.Options{Assets: assets},
+		BackgroundColour:  &options.RGBA{R: 246, G: 244, B: 239, A: 255},
+		OnStartup:         app.startup,
+		OnBeforeClose:     app.beforeClose,
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId:               "com.liuhang.md-reader-assistant",
 			OnSecondInstanceLaunch: app.onSecondInstanceLaunch,
@@ -52,4 +53,8 @@ func main() {
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
+}
+
+func hideWindowOnClose(platform string) bool {
+	return platform == "darwin"
 }

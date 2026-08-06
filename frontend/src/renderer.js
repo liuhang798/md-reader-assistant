@@ -1,19 +1,28 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';
-import { basicSetup } from 'codemirror';
-import { Compartment, EditorState } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
-import { undo, undoDepth } from '@codemirror/commands';
-import { closeSearchPanel, openSearchPanel, searchPanelOpen } from '@codemirror/search';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { markdown } from '@codemirror/lang-markdown';
-import { tags } from '@lezer/highlight';
 
 const $ = selector => document.querySelector(selector);
 let codeEditor;
 let editorExtensions = [];
-const editorLanguage = new Compartment();
+let basicSetup;
+let Compartment;
+let EditorState;
+let EditorView;
+let keymap;
+let undo;
+let undoDepth;
+let closeSearchPanel;
+let openSearchPanel;
+let searchPanelOpen;
+let HighlightStyle;
+let syntaxHighlighting;
+let markdown;
+let tags;
+let editorLanguage;
+let markdownHighlightStyle;
+let editorDependenciesPromise;
+let editorInitializationPromise;
 let suppressEditorChanges = false;
 
 const THEMES = {
@@ -75,7 +84,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.2.4', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。',
+    aboutVersion: '版本 2.2.5', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
@@ -105,7 +114,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.2.4', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, document navigation, and recent reading.',
+    aboutVersion: 'Version 2.2.5', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, document navigation, and recent reading.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
@@ -216,7 +225,8 @@ marked.use({
   }
 });
 
-const markdownHighlightStyle = HighlightStyle.define([
+function createMarkdownHighlightStyle() {
+  return HighlightStyle.define([
   { tag: tags.heading1, color: 'var(--syntax-heading)', fontWeight: '800', fontSize: '1.25em' },
   { tag: tags.heading2, color: 'var(--syntax-heading-2)', fontWeight: '750', fontSize: '1.14em' },
   { tag: [tags.heading3, tags.heading4, tags.heading5, tags.heading6], color: 'var(--syntax-heading-3)', fontWeight: '700' },
@@ -235,7 +245,40 @@ const markdownHighlightStyle = HighlightStyle.define([
   { tag: tags.number, color: 'var(--syntax-number)' },
   { tag: tags.bool, color: 'var(--syntax-keyword)' },
   { tag: tags.punctuation, color: 'var(--syntax-punctuation)' }
-]);
+  ]);
+}
+
+function loadEditorDependencies() {
+  if (editorDependenciesPromise) return editorDependenciesPromise;
+  editorDependenciesPromise = Promise.all([
+    import('codemirror'),
+    import('@codemirror/state'),
+    import('@codemirror/view'),
+    import('@codemirror/commands'),
+    import('@codemirror/search'),
+    import('@codemirror/language'),
+    import('@codemirror/lang-markdown'),
+    import('@lezer/highlight')
+  ]).then(([codemirrorModule, stateModule, viewModule, commandsModule, searchModule, languageModule, markdownModule, highlightModule]) => {
+    basicSetup = codemirrorModule.basicSetup;
+    Compartment = stateModule.Compartment;
+    EditorState = stateModule.EditorState;
+    EditorView = viewModule.EditorView;
+    keymap = viewModule.keymap;
+    undo = commandsModule.undo;
+    undoDepth = commandsModule.undoDepth;
+    closeSearchPanel = searchModule.closeSearchPanel;
+    openSearchPanel = searchModule.openSearchPanel;
+    searchPanelOpen = searchModule.searchPanelOpen;
+    HighlightStyle = languageModule.HighlightStyle;
+    syntaxHighlighting = languageModule.syntaxHighlighting;
+    markdown = markdownModule.markdown;
+    tags = highlightModule.tags;
+    editorLanguage = new Compartment();
+    markdownHighlightStyle = createMarkdownHighlightStyle();
+  });
+  return editorDependenciesPromise;
+}
 
 function editorContent() {
   return codeEditor?.state.doc.toString() || '';
@@ -266,6 +309,7 @@ function replaceEditorContent(content, moveToStart = false) {
 }
 
 function focusCodeEditor() {
+  if (!codeEditor) return;
   requestAnimationFrame(() => {
     codeEditor.requestMeasure();
     requestAnimationFrame(() => codeEditor.focus());
@@ -377,8 +421,12 @@ async function insertImage() {
   }
 }
 
-function initializeCodeEditor() {
-  const saveKeymap = keymap.of([
+async function initializeCodeEditor() {
+  if (codeEditor) return codeEditor;
+  if (editorInitializationPromise) return editorInitializationPromise;
+  editorInitializationPromise = (async () => {
+    await loadEditorDependencies();
+    const saveKeymap = keymap.of([
     { key: 'Mod-s', run: () => { saveDocument(false); return true; } },
     { key: 'Mod-Shift-s', run: () => { saveDocument(true); return true; } },
     { key: 'Mod-e', run: () => { toggleEditor(false); return true; } },
@@ -387,7 +435,7 @@ function initializeCodeEditor() {
     { key: 'Mod-i', run: () => runFormatCommand('italic') },
     { key: 'Mod-k', run: () => runFormatCommand('link') }
   ]);
-  const editorTheme = EditorView.theme({
+    const editorTheme = EditorView.theme({
     '&': { height: '100%', backgroundColor: 'transparent', color: 'var(--text)' },
     '.cm-scroller': { overflow: 'auto', fontFamily: '"Cascadia Code", "Microsoft YaHei UI", Consolas, monospace' },
     '.cm-content': { padding: '24px 32px 60px', caretColor: 'var(--green-deep)', lineHeight: '1.75' },
@@ -446,7 +494,7 @@ function initializeCodeEditor() {
     '.cm-searchMatch': { backgroundColor: '#eadc7a66', outline: '1px solid #c7ad42' },
     '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: '#e2a64d88' }
   });
-  editorExtensions = [
+    editorExtensions = [
     basicSetup,
     markdown(),
     syntaxHighlighting(markdownHighlightStyle),
@@ -464,13 +512,16 @@ function initializeCodeEditor() {
       updateUndoButton(update.state);
     })
   ];
-  codeEditor = new EditorView({
-    state: createEditorState(''),
-    parent: els.editor
-  });
-  els.editor.addEventListener('pointerdown', () => {
-    if (state.editing && !codeEditor.hasFocus) codeEditor.focus();
-  }, true);
+    codeEditor = new EditorView({
+      state: createEditorState(''),
+      parent: els.editor
+    });
+    els.editor.addEventListener('pointerdown', () => {
+      if (state.editing && !codeEditor.hasFocus) codeEditor.focus();
+    }, true);
+    return codeEditor;
+  })();
+  return editorInitializationPromise;
 }
 
 function slugify(text, index) {
@@ -529,7 +580,12 @@ function recentEntry(doc) {
 }
 
 function addRecentDocument(doc) {
-  state.recentFiles = [recentEntry(doc), ...state.recentFiles.filter(file => file.path !== doc.path)].slice(0, 10);
+  const existingIndex = state.recentFiles.findIndex(file => file.path === doc.path);
+  if (existingIndex >= 0) {
+    state.recentFiles[existingIndex] = recentEntry(doc);
+  } else {
+    state.recentFiles = [recentEntry(doc), ...state.recentFiles].slice(0, 10);
+  }
   if (state.sidebarMode === 'recent') state.files = [...state.recentFiles];
 }
 
@@ -576,6 +632,27 @@ async function refreshExplorer() {
     console.error(error);
     showToast(t('folderOpenFailed'));
   }
+}
+
+function restoreExplorerAfterFirstPaint(savedRoot) {
+  if (!savedRoot) return;
+  requestAnimationFrame(() => requestAnimationFrame(async () => {
+    if (state.root !== savedRoot) return;
+    try {
+      const folder = await window.leafMD.listFolder(savedRoot);
+      if (state.root !== savedRoot) return;
+      state.root = folder?.root || savedRoot;
+      state.explorerFiles = folder?.files || [];
+      if (state.sidebarMode === 'explorer') setSidebarMode('explorer');
+    } catch (error) {
+      console.warn('Unable to restore resource explorer folder', error);
+      if (state.root === savedRoot) {
+        state.root = null;
+        state.explorerFiles = [];
+        setSidebarMode('recent');
+      }
+    }
+  }));
 }
 
 function renderFileList() {
@@ -754,7 +831,7 @@ async function newFile() {
     const doc = await window.leafMD.newFile();
     if (!doc?.path) return;
     displayDocument(doc);
-    toggleEditor(true);
+    await toggleEditor(true);
     if (pathIsInsideRoot(doc.path)) await refreshExplorer();
   } catch (error) {
     console.error(error);
@@ -779,9 +856,20 @@ function updateEditorPosition() {
   els.editorPosition.textContent = t('editorPosition', { line: line.number, column: cursor - line.from + 1 });
 }
 
-function toggleEditor(forceEditing) {
+async function toggleEditor(forceEditing) {
   if (!state.currentFile) return;
-  state.editing = typeof forceEditing === 'boolean' ? forceEditing : !state.editing;
+  const nextEditing = typeof forceEditing === 'boolean' ? forceEditing : !state.editing;
+  if (nextEditing) {
+    try {
+      await initializeCodeEditor();
+    } catch (error) {
+      console.error('Unable to load the Markdown editor:', error);
+      showToast(t('previewError'));
+      return;
+    }
+    if (!state.currentFile) return;
+  }
+  state.editing = nextEditing;
   if (state.editing) {
     if (editorContent() !== state.currentFile.content) replaceEditorContent(state.currentFile.content, true);
     renderEditorPreview(state.currentFile.content);
@@ -1071,7 +1159,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.2.4';
+  $('#currentVersion').textContent = info.currentVersion || '2.2.5';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -1159,23 +1247,15 @@ async function initialize() {
     directory: null
   }));
   const savedExplorerRoot = String(prefs.explorerRoot || '').trim();
-  if (savedExplorerRoot) {
-    try {
-      const folder = await window.leafMD.listFolder(savedExplorerRoot);
-      state.root = folder?.root || savedExplorerRoot;
-      state.explorerFiles = folder?.files || [];
-    } catch (error) {
-      console.warn('Unable to restore resource explorer folder', error);
-      state.root = null;
-      state.explorerFiles = [];
-    }
-  }
+  state.root = savedExplorerRoot || null;
+  state.explorerFiles = [];
   setSidebarMode(state.sidebarMode === 'explorer' && state.root ? 'explorer' : 'recent');
   const initialFile = await window.leafMD.getInitialFile();
   if (initialFile?.path) {
     displayDocument(initialFile);
-    if (await window.leafMD.getStartupMode() === 'edit') toggleEditor(true);
+    if (await window.leafMD.getStartupMode() === 'edit') await toggleEditor(true);
   }
+  restoreExplorerAfterFirstPaint(savedExplorerRoot);
   if (needsLanguageSelection) openFirstRunLanguageDialog();
   else scheduleAutomaticUpdateCheck();
 }
@@ -1347,7 +1427,6 @@ window.leafMD.onFileDrop(paths => {
   else showToast(t('dropUnsupported'));
 });
 
-initializeCodeEditor();
 initializePaneResizers();
 initialize();
 setInterval(() => {

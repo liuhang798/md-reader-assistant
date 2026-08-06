@@ -25,7 +25,7 @@ import (
 const (
 	appNameZH  = "MD阅读助手"
 	appNameEN  = "MD Reader Assistant"
-	appVersion = "2.2.4"
+	appVersion = "2.2.5"
 	maxRecent  = 10
 )
 
@@ -75,6 +75,7 @@ type App struct {
 	dirty               bool
 	language            string
 	initialFile         string
+	frontendReady       bool
 	preferencesOverride string
 }
 
@@ -83,7 +84,9 @@ func NewApp() *App {
 }
 
 func (a *App) startup(ctx context.Context) {
+	a.mu.Lock()
 	a.ctx = ctx
+	a.mu.Unlock()
 	prefs, _ := a.readPreferences()
 	a.language = normaliseLanguage(prefs.Language)
 	a.restoreDrafts(prefs.DraftFiles)
@@ -111,11 +114,21 @@ func (a *App) onSecondInstanceLaunch(data options.SecondInstanceData) {
 }
 
 func (a *App) onFileOpen(filePath string) {
-	if filePath == "" || a.ctx == nil {
+	if filePath == "" {
 		return
 	}
+	a.mu.Lock()
+	ctx := a.ctx
+	if ctx == nil || !a.frontendReady {
+		a.initialFile = filePath
+		a.mu.Unlock()
+		return
+	}
+	a.mu.Unlock()
 	if doc, err := a.ReadFile(filePath); err == nil {
-		wailsruntime.EventsEmit(a.ctx, "file:open-from-main", doc)
+		wailsruntime.EventsEmit(ctx, "file:open-from-main", doc)
+		wailsruntime.WindowUnminimise(ctx)
+		wailsruntime.WindowShow(ctx)
 	}
 }
 
@@ -206,13 +219,26 @@ func (a *App) updatePreferences(update func(*Preferences)) (Preferences, error) 
 func (a *App) rememberFile(filePath string) error {
 	cleaned := filepath.Clean(filePath)
 	_, err := a.updatePreferences(func(prefs *Preferences) {
-		recent := []string{cleaned}
+		recent := make([]string, 0, maxRecent)
+		alreadyRecent := false
 		for _, item := range prefs.RecentFiles {
-			if !strings.EqualFold(filepath.Clean(item), cleaned) {
+			if strings.EqualFold(filepath.Clean(item), cleaned) {
+				if alreadyRecent {
+					continue
+				}
+				alreadyRecent = true
+				recent = append(recent, cleaned)
+			} else {
 				recent = append(recent, item)
 			}
 			if len(recent) >= maxRecent {
 				break
+			}
+		}
+		if !alreadyRecent {
+			recent = append([]string{cleaned}, recent...)
+			if len(recent) > maxRecent {
+				recent = recent[:maxRecent]
 			}
 		}
 		prefs.RecentFiles = recent
@@ -666,10 +692,15 @@ func (a *App) RemoveRecent(filePath string) (Preferences, error) {
 }
 
 func (a *App) GetInitialFile() (*Document, error) {
-	if a.initialFile == "" {
+	a.mu.Lock()
+	a.frontendReady = true
+	filePath := a.initialFile
+	a.initialFile = ""
+	a.mu.Unlock()
+	if filePath == "" {
 		return nil, nil
 	}
-	return a.ReadFile(a.initialFile)
+	return a.ReadFile(filePath)
 }
 
 func (a *App) GetStartupMode() string {
