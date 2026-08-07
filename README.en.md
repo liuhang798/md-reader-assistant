@@ -19,7 +19,7 @@
   </p>
 </div>
 
-![MD Reader Assistant split-view Markdown editor with live preview and syntax highlighting](screenshots/03-split-editor.png)
+![MD Reader Assistant split-view Markdown editor with live preview and syntax highlighting](screenshots/en/03-split-editor.png)
 
 ## Why MD Reader Assistant?
 
@@ -76,11 +76,11 @@ The macOS build uses native left-side window controls and application menus, inc
 
 | Home | Reader |
 |---|---|
-| ![Home](screenshots/01-home.png) | ![Reader](screenshots/02-reader.png) |
+| ![Home](screenshots/en/01-home.png) | ![Reader](screenshots/en/02-reader.png) |
 
-![About screen](screenshots/04-about.png)
+![About screen](screenshots/en/04-about.png)
 
-![Update available](screenshots/05-update-available.png)
+![Update available](screenshots/en/05-update-available.png)
 
 ## Go + Wails v2
 

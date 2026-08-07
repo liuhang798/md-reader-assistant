@@ -18,7 +18,8 @@ This document records the final visual and interaction verification for the curr
 - [Split editor](screenshots/03-split-editor.png)
 - [About](screenshots/04-about.png)
 - [Update available](screenshots/05-update-available.png)
+- [English screenshots](screenshots/en/)
 
 ## Result
 
-No blocking visual, interaction, or accessibility issue remains for version 2.2.1.
+No blocking visual, interaction, or accessibility issue remains for version 2.2.6.
