@@ -78,6 +78,7 @@ test('prominent accent surfaces use restrained shadows', () => {
   assert.match(styles, /\.brand-mark\s*\{[^}]*box-shadow:\s*0 1px 4px rgba\(37, 54, 41, \.10\)/s);
   assert.match(styles, /\.primary\s*\{[^}]*box-shadow:\s*0 2px 8px color-mix\(in srgb, var\(--accent\) 10%, transparent\)/s);
   assert.match(styles, /\.leaf-float\s*\{[^}]*box-shadow:\s*0 5px 14px color-mix\(in srgb, var\(--accent\) 12%, transparent\)/s);
+  assert.match(styles, /\.back-to-top\s*\{[^}]*box-shadow:\s*0 4px 12px color-mix\(in srgb, var\(--accent\) 12%, transparent\)/s);
 });
 
 test('CodeMirror consumes semantic accent variables', () => {

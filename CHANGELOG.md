@@ -11,14 +11,14 @@ All notable changes to MD Reader Assistant are documented here.
 - 将主题颜色与白天/黑夜模式拆分为两个独立功能；新增清新绿、晴空蓝、活力橙、灵动紫、珊瑚红、湖水蓝、雾蓝灰和陶土棕 8 种强调色，可与两种明暗模式自由组合，图 1 绿色为默认颜色。
 - 更新应用品牌图标为亮绿色书页与羽毛标识，移除外部黑色画布并保留透明圆角；应用内 Logo 会随主题颜色切换，Windows、macOS、Linux、安装器和项目主页继续使用默认绿色图标。
 - 自动迁移旧版完整主题设置，分别恢复为最接近的强调色与明暗模式组合。
-- 降低 Logo、主操作按钮和首页叶子图标的强调色阴影，让界面层次更加轻盈克制。
+- 降低 Logo、主操作按钮、首页叶子图标和“回到顶部”按钮的强调色阴影，让界面层次更加轻盈克制。
 
 ### English
 
 - Split accent color and light/dark mode into independent controls. Fresh Green, Clear Blue, Vivid Orange, Vivid Violet, Coral Red, Lake Cyan, Mist Slate and Clay Brown can be combined with either mode, with the supplied green as the default.
 - Updated the application brand icon to the bright-green book-and-feather mark with transparent outer corners. In-app Logos follow the selected accent while Windows, macOS, Linux, installer and project-page icons stay green.
 - Migrated legacy complete-theme settings to the closest independent accent and color-mode combination.
-- Reduced accent-colored shadows on Logos, primary actions and the welcome illustration for a lighter, more restrained visual hierarchy.
+- Reduced accent-colored shadows on Logos, primary actions, the welcome illustration and the back-to-top control for a lighter, more restrained visual hierarchy.
 
 ## [2.2.5] - 2026-08-06
 

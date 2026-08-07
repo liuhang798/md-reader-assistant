@@ -344,7 +344,7 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-wid
 .editor-footer { min-height: 40px; border-top: 1px solid var(--line); color: var(--faint); display: flex; justify-content: space-between; align-items: center; padding: 8px 18px; font-size: 10px; }
 .editor-footer kbd { padding: 1px 4px; }
 
-.back-to-top { position: fixed; z-index: 14; right: 229px; bottom: 26px; width: 43px; height: 43px; border: 0; border-radius: 13px; display: grid; place-items: center; background: var(--accent-strong); color: var(--accent-contrast); box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 28%, transparent); cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(9px); transition: opacity .2s ease, transform .2s ease, filter .15s ease; }
+.back-to-top { position: fixed; z-index: 14; right: 229px; bottom: 26px; width: 43px; height: 43px; border: 0; border-radius: 13px; display: grid; place-items: center; background: var(--accent-strong); color: var(--accent-contrast); box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 12%, transparent); cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(9px); transition: opacity .2s ease, transform .2s ease, filter .15s ease; }
 .back-to-top svg { width: 19px; height: 19px; stroke-width: 2; }
 .back-to-top:hover { filter: brightness(1.1); }
 .back-to-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
