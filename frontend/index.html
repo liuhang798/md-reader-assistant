@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-accent="green" data-color-mode="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,7 @@
   <header class="titlebar">
     <div class="brand" data-i18n-aria-label="appName" aria-label="MD阅读助手">
       <span class="brand-mark">
-        <img src="/src/assets/images/app-logo.png" alt="">
+        <img src="/src/assets/images/app-logo.png" data-themed-logo alt="">
       </span>
       <span data-i18n="appName">MD阅读助手</span>
     </div>
@@ -38,7 +38,10 @@
       <button id="searchButton" class="icon-button" data-i18n-title="searchTitle" title="在文档中查找 (Ctrl+F)">
         <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
       </button>
-      <button id="themeButton" class="icon-button" data-i18n-title="themeTitle" data-i18n-aria-label="themeTitle" title="选择主题" aria-label="选择主题" aria-haspopup="menu" aria-expanded="false">
+      <button id="accentButton" class="icon-button accent-button" data-i18n-title="accentThemeTitle" data-i18n-aria-label="accentThemeTitle" title="选择主题颜色" aria-label="选择主题颜色" aria-haspopup="menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17h1.3a1.9 1.9 0 0 0 0-3.8h-.8a1.7 1.7 0 0 1 0-3.4H16a4.5 4.5 0 0 0 4.5-4.5C20.5 5.9 16.7 3.5 12 3.5Z"/><circle cx="7.8" cy="10" r=".8" fill="currentColor" stroke="none"/><circle cx="10" cy="6.9" r=".8" fill="currentColor" stroke="none"/><circle cx="14.2" cy="6.8" r=".8" fill="currentColor" stroke="none"/><circle cx="17.1" cy="9.3" r=".8" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <button id="colorModeButton" class="icon-button" data-i18n-title="colorModeTitle" data-i18n-aria-label="colorModeTitle" title="切换白天/黑夜模式" aria-label="切换白天/黑夜模式" aria-pressed="false">
         <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         <svg class="moon-icon" viewBox="0 0 24 24"><path d="M20 15.4A8 8 0 0 1 8.6 4 8 8 0 1 0 20 15.4Z"/></svg>
       </button>
@@ -226,23 +229,23 @@
     <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.2.5</span></button>
   </div>
 
-  <div id="themeMenu" class="popover theme-menu hidden no-drag" role="menu" aria-labelledby="themeMenuLabel">
-    <div id="themeMenuLabel" class="popover-label" data-i18n="chooseTheme">选择主题</div>
-    <div class="theme-options">
-      <button type="button" role="menuitemradio" data-theme-option="classic-light" aria-checked="false"><span class="theme-swatch theme-swatch-classic-light"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
-      <button type="button" role="menuitemradio" data-theme-option="classic-dark" aria-checked="false"><span class="theme-swatch theme-swatch-classic-dark"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
-      <button type="button" role="menuitemradio" data-theme-option="wechat-green" aria-checked="false"><span class="theme-swatch theme-swatch-wechat-green"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
-      <button type="button" role="menuitemradio" data-theme-option="alipay-blue" aria-checked="false"><span class="theme-swatch theme-swatch-alipay-blue"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
-      <button type="button" role="menuitemradio" data-theme-option="wisteria" aria-checked="false"><span class="theme-swatch theme-swatch-wisteria"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
-      <button type="button" role="menuitemradio" data-theme-option="amber-paper" aria-checked="false"><span class="theme-swatch theme-swatch-amber-paper"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
-      <button type="button" role="menuitemradio" data-theme-option="deep-ocean" aria-checked="false"><span class="theme-swatch theme-swatch-deep-ocean"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
-      <button type="button" role="menuitemradio" data-theme-option="amethyst-night" aria-checked="false"><span class="theme-swatch theme-swatch-amethyst-night"></span><span class="theme-option-name"></span><span class="theme-check">✓</span></button>
+  <div id="accentMenu" class="popover accent-menu hidden no-drag" role="menu" aria-labelledby="accentMenuLabel">
+    <div id="accentMenuLabel" class="popover-label" data-i18n="chooseAccentTheme">选择主题颜色</div>
+    <div class="accent-options">
+      <button type="button" role="menuitemradio" data-accent-option="green" aria-checked="false"><span class="accent-swatch accent-swatch-green"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-accent-option="blue" aria-checked="false"><span class="accent-swatch accent-swatch-blue"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-accent-option="orange" aria-checked="false"><span class="accent-swatch accent-swatch-orange"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-accent-option="violet" aria-checked="false"><span class="accent-swatch accent-swatch-violet"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-accent-option="coral" aria-checked="false"><span class="accent-swatch accent-swatch-coral"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-accent-option="cyan" aria-checked="false"><span class="accent-swatch accent-swatch-cyan"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-accent-option="slate" aria-checked="false"><span class="accent-swatch accent-swatch-slate"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
+      <button type="button" role="menuitemradio" data-accent-option="clay" aria-checked="false"><span class="accent-swatch accent-swatch-clay"></span><span class="accent-option-name"></span><span class="accent-check">✓</span></button>
     </div>
   </div>
 
   <div id="firstRunLanguageDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="firstRunLanguageTitle">
     <section class="first-run-language-dialog">
-      <img src="/src/assets/images/app-logo.png" alt="">
+      <img src="/src/assets/images/app-logo.png" data-themed-logo alt="">
       <span class="eyebrow">WELCOME · 欢迎</span>
       <h2 id="firstRunLanguageTitle">Choose your language<br><span>选择界面语言</span></h2>
       <p>The interface language can be changed later in Settings.<br>之后可随时在设置中更改界面语言。</p>
@@ -265,7 +268,7 @@
         <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
       </button>
       <div class="about-brand">
-        <img src="/src/assets/images/app-logo.png" alt="">
+        <img src="/src/assets/images/app-logo.png" data-themed-logo alt="">
         <div>
           <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
           <h2 id="aboutTitle" data-i18n="appName">MD阅读助手</h2>
@@ -298,7 +301,7 @@
         <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
       </button>
       <div class="update-brand">
-        <img src="/src/assets/images/app-logo.png" alt="">
+        <img src="/src/assets/images/app-logo.png" data-themed-logo alt="">
         <div>
           <span class="eyebrow" data-i18n="updateAvailableLabel">软件更新</span>
           <h2 id="updateTitle" data-i18n="updateAvailable">发现新版本</h2>

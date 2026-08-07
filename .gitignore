@@ -25,3 +25,5 @@ Thumbs.db
 # Local test and coverage output
 coverage/
 *.coverprofile
+__pycache__/
+*.py[cod]

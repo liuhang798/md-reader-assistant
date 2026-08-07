@@ -1,11 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"image"
+	"image/png"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -449,4 +454,104 @@ func TestReleaseVersionConsistency(t *testing.T) {
 			t.Errorf("%s does not contain release version %s", path, appVersion)
 		}
 	}
+}
+
+func TestApplicationIconAssetsUseTransparentBrightGreenBrand(t *testing.T) {
+	for _, path := range []string{
+		filepath.Join("build", "appicon.png"),
+		filepath.Join("frontend", "src", "assets", "images", "app-logo.png"),
+	} {
+		file, err := os.Open(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		icon, err := png.Decode(file)
+		file.Close()
+		if err != nil {
+			t.Fatalf("decode %s: %v", path, err)
+		}
+		assertTransparentBrightGreenIcon(t, path, icon)
+	}
+
+	windowsIcon, err := os.ReadFile(filepath.Join("build", "windows", "icon.ico"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootIcon, err := os.ReadFile(filepath.Join("build", "appicon.ico"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(rootIcon, windowsIcon) {
+		t.Fatal("build/appicon.ico and build/windows/icon.ico must be identical")
+	}
+
+	sizes, largestPNG, err := icoSizesAndLargestPNG(rootIcon)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantSizes := []int{16, 24, 32, 48, 64, 96, 128, 192, 256}
+	if !reflect.DeepEqual(sizes, wantSizes) {
+		t.Fatalf("Windows icon sizes = %v, want %v", sizes, wantSizes)
+	}
+	icon, err := png.Decode(bytes.NewReader(largestPNG))
+	if err != nil {
+		t.Fatalf("decode largest Windows icon: %v", err)
+	}
+	assertTransparentBrightGreenIcon(t, "build/windows/icon.ico", icon)
+}
+
+func assertTransparentBrightGreenIcon(t *testing.T, name string, icon image.Image) {
+	t.Helper()
+	bounds := icon.Bounds()
+	for _, point := range []image.Point{
+		bounds.Min,
+		{X: bounds.Max.X - 1, Y: bounds.Min.Y},
+		{X: bounds.Min.X, Y: bounds.Max.Y - 1},
+		{X: bounds.Max.X - 1, Y: bounds.Max.Y - 1},
+	} {
+		_, _, _, alpha := icon.At(point.X, point.Y).RGBA()
+		if alpha != 0 {
+			t.Fatalf("%s corner %v alpha = %d, want 0", name, point, alpha)
+		}
+	}
+
+	sampleX := bounds.Min.X + bounds.Dx()/2
+	sampleY := bounds.Min.Y + bounds.Dy()/8
+	red16, green16, blue16, alpha16 := icon.At(sampleX, sampleY).RGBA()
+	red, green, blue, alpha := uint8(red16>>8), uint8(green16>>8), uint8(blue16>>8), uint8(alpha16>>8)
+	if alpha < 250 || green < 150 || int(green)-int(red) < 60 || int(green)-int(blue) < 40 {
+		t.Fatalf("%s theme sample = rgba(%d,%d,%d,%d), want opaque bright green", name, red, green, blue, alpha)
+	}
+}
+
+func icoSizesAndLargestPNG(data []byte) ([]int, []byte, error) {
+	if len(data) < 6 || binary.LittleEndian.Uint16(data[0:2]) != 0 || binary.LittleEndian.Uint16(data[2:4]) != 1 {
+		return nil, nil, errors.New("invalid ICO header")
+	}
+	count := int(binary.LittleEndian.Uint16(data[4:6]))
+	if len(data) < 6+count*16 {
+		return nil, nil, errors.New("truncated ICO directory")
+	}
+	sizes := make([]int, 0, count)
+	var largest []byte
+	for index := 0; index < count; index++ {
+		offset := 6 + index*16
+		width := int(data[offset])
+		if width == 0 {
+			width = 256
+		}
+		sizes = append(sizes, width)
+		length := int(binary.LittleEndian.Uint32(data[offset+8 : offset+12]))
+		imageOffset := int(binary.LittleEndian.Uint32(data[offset+12 : offset+16]))
+		if imageOffset < 0 || length < 0 || imageOffset+length > len(data) {
+			return nil, nil, errors.New("invalid ICO image entry")
+		}
+		if width == 256 {
+			largest = data[imageOffset : imageOffset+length]
+		}
+	}
+	if len(largest) == 0 {
+		return nil, nil, errors.New("ICO has no 256px image")
+	}
+	return sizes, largest, nil
 }

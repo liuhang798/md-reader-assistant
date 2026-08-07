@@ -1,6 +1,7 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';
+import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage } from './appearance.js';
 
 const $ = selector => document.querySelector(selector);
 let codeEditor;
@@ -25,22 +26,7 @@ let editorDependenciesPromise;
 let editorInitializationPromise;
 let suppressEditorChanges = false;
 
-const THEMES = {
-  'classic-light': { mode: 'light', zhCN: '经典浅色', en: 'Classic Light' },
-  'classic-dark': { mode: 'dark', zhCN: '经典深色', en: 'Classic Dark' },
-  'wechat-green': { mode: 'light', zhCN: '青翠新语', en: 'Verdant Voice' },
-  'alipay-blue': { mode: 'light', zhCN: '云海湛蓝', en: 'Azure Cloud' },
-  'wisteria': { mode: 'light', zhCN: '紫藤雾色', en: 'Wisteria Mist' },
-  'amber-paper': { mode: 'light', zhCN: '琥珀书页', en: 'Amber Paper' },
-  'deep-ocean': { mode: 'dark', zhCN: '深海夜航', en: 'Deep Ocean' },
-  'amethyst-night': { mode: 'dark', zhCN: '墨夜紫晶', en: 'Amethyst Night' }
-};
-
-function normalizeTheme(theme) {
-  if (theme === 'light') return 'classic-light';
-  if (theme === 'dark') return 'classic-dark';
-  return THEMES[theme] ? theme : 'classic-light';
-}
+const initialAppearance = readAppearanceStorage(localStorage);
 
 const state = {
   currentFile: null,
@@ -49,7 +35,8 @@ const state = {
   explorerFiles: [],
   recentFiles: [],
   sidebarMode: localStorage.getItem('sidebarMode') === 'explorer' ? 'explorer' : 'recent',
-  theme: normalizeTheme(localStorage.getItem('theme')),
+  accentTheme: initialAppearance.accentTheme,
+  colorMode: initialAppearance.colorMode,
   fontScale: Number(localStorage.getItem('fontScale') || 1),
   language: localStorage.getItem('language') === 'en' ? 'en' : 'zh-CN',
   sidebarWidth: Number(localStorage.getItem('sidebarWidth') || 258),
@@ -67,7 +54,7 @@ const translations = {
   'zh-CN': {
     appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
-    themeTitle: '选择主题', chooseTheme: '选择主题', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
+    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
     library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
@@ -97,7 +84,7 @@ const translations = {
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
-    themeTitle: 'Choose theme', chooseTheme: 'Choose theme', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
+    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
     library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
@@ -155,9 +142,9 @@ function applyStaticTranslations() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(element => { element.placeholder = t(element.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
   document.querySelectorAll('[data-language]').forEach(button => button.classList.toggle('active', button.dataset.language === state.language));
-  document.querySelectorAll('[data-theme-option]').forEach(button => {
-    const name = THEMES[button.dataset.themeOption]?.[state.language === 'en' ? 'en' : 'zhCN'];
-    const label = button.querySelector('.theme-option-name');
+  document.querySelectorAll('[data-accent-option]').forEach(button => {
+    const name = ACCENT_THEMES[button.dataset.accentOption]?.[state.language === 'en' ? 'en' : 'zhCN'];
+    const label = button.querySelector('.accent-option-name');
     if (label && name) label.textContent = name;
   });
 }
@@ -194,7 +181,7 @@ const els = {
   breadcrumb: $('#breadcrumb'), readingTime: $('#readingTime'), progressBar: $('#progressBar'),
   appShell: $('.app-shell'), sidebar: $('#sidebar'), expandSidebar: $('#expandSidebar'), sidebarResizer: $('#sidebarResizer'), tocResizer: $('#tocResizer'), searchBar: $('#searchBar'),
   searchInput: $('#searchInput'), searchCount: $('#searchCount'), dropOverlay: $('#dropOverlay'),
-  moreMenu: $('#moreMenu'), themeMenu: $('#themeMenu'), toast: $('#toast'), editorView: $('#editorView'),
+  moreMenu: $('#moreMenu'), accentMenu: $('#accentMenu'), toast: $('#toast'), editorView: $('#editorView'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
@@ -438,20 +425,20 @@ async function initializeCodeEditor() {
     const editorTheme = EditorView.theme({
     '&': { height: '100%', backgroundColor: 'transparent', color: 'var(--text)' },
     '.cm-scroller': { overflow: 'auto', fontFamily: '"Cascadia Code", "Microsoft YaHei UI", Consolas, monospace' },
-    '.cm-content': { padding: '24px 32px 60px', caretColor: 'var(--green-deep)', lineHeight: '1.75' },
+    '.cm-content': { padding: '24px 32px 60px', caretColor: 'var(--accent-strong)', lineHeight: '1.75' },
     '.cm-line': { padding: '0 4px' },
-    '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--green-deep)' },
-    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { backgroundColor: 'color-mix(in srgb, var(--green) 28%, transparent)' },
-    '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--green-soft) 34%, transparent)' },
+    '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--accent-strong)' },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { backgroundColor: 'color-mix(in srgb, var(--accent) 28%, transparent)' },
+    '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--accent-soft) 34%, transparent)' },
     '.cm-gutters': { backgroundColor: 'var(--paper)', color: 'var(--faint)', borderRight: '1px solid var(--line)', minWidth: '48px' },
-    '.cm-activeLineGutter': { backgroundColor: 'var(--green-soft)', color: 'var(--green-deep)' },
-    '.cm-foldPlaceholder': { backgroundColor: 'var(--green-soft)', border: '1px solid var(--line)', color: 'var(--green-deep)' },
+    '.cm-activeLineGutter': { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-strong)' },
+    '.cm-foldPlaceholder': { backgroundColor: 'var(--accent-soft)', border: '1px solid var(--line)', color: 'var(--accent-strong)' },
     '.cm-panels': { backgroundColor: 'transparent', color: 'var(--text)' },
     '.cm-panels-bottom': { borderTop: '0' },
     '.cm-panel.cm-search': {
       display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px',
       padding: '12px 48px 12px 14px',
-      backgroundColor: 'color-mix(in srgb, var(--paper) 94%, var(--green-soft))',
+      backgroundColor: 'color-mix(in srgb, var(--paper) 94%, var(--accent-soft))',
       borderTop: '1px solid var(--line)', boxShadow: '0 -12px 30px rgba(32, 49, 39, .09)',
       fontFamily: '"Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif'
     },
@@ -463,7 +450,7 @@ async function initializeCodeEditor() {
       boxShadow: 'inset 0 1px 2px rgba(32, 49, 39, .04)', transition: 'border-color .15s, box-shadow .15s'
     },
     '.cm-panel.cm-search .cm-textfield:focus': {
-      borderColor: 'var(--green)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--green) 16%, transparent)'
+      borderColor: 'var(--accent)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent)'
     },
     '.cm-panel.cm-search .cm-button': {
       boxSizing: 'border-box', height: '32px', padding: '0 13px', border: '1px solid var(--line)',
@@ -471,26 +458,26 @@ async function initializeCodeEditor() {
       fontSize: '11.5px', fontWeight: '650', cursor: 'pointer', transition: 'background .15s, border-color .15s, color .15s, transform .15s'
     },
     '.cm-panel.cm-search .cm-button:hover': {
-      backgroundImage: 'none', backgroundColor: 'var(--green-soft)', borderColor: 'var(--green)', color: 'var(--green-deep)'
+      backgroundImage: 'none', backgroundColor: 'var(--accent-soft)', borderColor: 'var(--accent)', color: 'var(--accent-strong)'
     },
     '.cm-panel.cm-search .cm-button:active': { transform: 'translateY(1px)' },
     '.cm-panel.cm-search button[name="next"], .cm-panel.cm-search button[name="replace"]': {
-      backgroundImage: 'none', backgroundColor: 'var(--green-deep)', borderColor: 'var(--green-deep)', color: '#fff'
+      backgroundImage: 'none', backgroundColor: 'var(--accent-strong)', borderColor: 'var(--accent-strong)', color: 'var(--accent-contrast)'
     },
     '.cm-panel.cm-search button[name="next"]:hover, .cm-panel.cm-search button[name="replace"]:hover': {
-      backgroundImage: 'none', backgroundColor: 'var(--green)', borderColor: 'var(--green)', color: '#fff'
+      backgroundImage: 'none', backgroundColor: 'var(--accent)', borderColor: 'var(--accent)', color: 'var(--accent-contrast)'
     },
     '.cm-panel.cm-search label': {
       display: 'inline-flex', alignItems: 'center', gap: '5px', minHeight: '28px',
       color: 'var(--muted)', fontSize: '11px', fontWeight: '550', whiteSpace: 'nowrap', cursor: 'pointer'
     },
-    '.cm-panel.cm-search input[type="checkbox"]': { width: '14px', height: '14px', margin: '0', accentColor: 'var(--green-deep)' },
+    '.cm-panel.cm-search input[type="checkbox"]': { width: '14px', height: '14px', margin: '0', accentColor: 'var(--accent-strong)' },
     '.cm-panel.cm-search button[name="close"]': {
       position: 'absolute', top: '11px', right: '12px', display: 'grid', placeItems: 'center',
       width: '28px', height: '28px', padding: '0', border: '0', borderRadius: '8px',
       backgroundColor: 'transparent', color: 'var(--muted)', fontSize: '20px', lineHeight: '1', cursor: 'pointer'
     },
-    '.cm-panel.cm-search button[name="close"]:hover': { backgroundColor: 'var(--green-soft)', color: 'var(--green-deep)' },
+    '.cm-panel.cm-search button[name="close"]:hover': { backgroundColor: 'var(--accent-soft)', color: 'var(--accent-strong)' },
     '.cm-searchMatch': { backgroundColor: '#eadc7a66', outline: '1px solid #c7ad42' },
     '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: '#e2a64d88' }
   });
@@ -535,33 +522,50 @@ function showToast(message) {
   showToast.timer = setTimeout(() => els.toast.classList.add('hidden'), 1800);
 }
 
-function updateThemeSelection() {
-  document.querySelectorAll('[data-theme-option]').forEach(button => {
-    const active = button.dataset.themeOption === state.theme;
+function updateAccentSelection() {
+  document.querySelectorAll('[data-accent-option]').forEach(button => {
+    const active = button.dataset.accentOption === state.accentTheme;
     button.classList.toggle('active', active);
     button.setAttribute('aria-checked', String(active));
   });
 }
 
-function setTheme(themeId) {
-  state.theme = normalizeTheme(themeId);
-  document.documentElement.dataset.theme = state.theme;
-  localStorage.setItem('theme', state.theme);
-  updateThemeSelection();
-  window.leafMD.setTheme(THEMES[state.theme].mode === 'dark');
+function updateThemedLogos() {
+  const logo = ACCENT_THEMES[state.accentTheme].logo;
+  document.querySelectorAll('[data-themed-logo]').forEach(image => { image.src = logo; });
 }
 
-function closeThemeMenu() {
-  els.themeMenu.classList.add('hidden');
-  $('#themeButton').setAttribute('aria-expanded', 'false');
+function setAccentTheme(accentId) {
+  state.accentTheme = normalizeAccentTheme(accentId);
+  document.documentElement.dataset.accent = state.accentTheme;
+  localStorage.setItem('accentTheme', state.accentTheme);
+  updateAccentSelection();
+  updateThemedLogos();
 }
 
-function toggleThemeMenu() {
-  const opening = els.themeMenu.classList.contains('hidden');
+function setColorMode(mode) {
+  state.colorMode = normalizeColorMode(mode);
+  document.documentElement.dataset.colorMode = state.colorMode;
+  localStorage.setItem('colorMode', state.colorMode);
+  $('#colorModeButton').setAttribute('aria-pressed', String(state.colorMode === 'dark'));
+  window.leafMD.setTheme(state.colorMode === 'dark');
+}
+
+function toggleColorMode() {
+  setColorMode(state.colorMode === 'dark' ? 'light' : 'dark');
+}
+
+function closeAccentMenu() {
+  els.accentMenu.classList.add('hidden');
+  $('#accentButton').setAttribute('aria-expanded', 'false');
+}
+
+function toggleAccentMenu() {
+  const opening = els.accentMenu.classList.contains('hidden');
   els.moreMenu.classList.add('hidden');
-  els.themeMenu.classList.toggle('hidden', !opening);
-  $('#themeButton').setAttribute('aria-expanded', String(opening));
-  if (opening) requestAnimationFrame(() => els.themeMenu.querySelector('[aria-checked="true"]')?.focus());
+  els.accentMenu.classList.toggle('hidden', !opening);
+  $('#accentButton').setAttribute('aria-expanded', String(opening));
+  if (opening) requestAnimationFrame(() => els.accentMenu.querySelector('[aria-checked="true"]')?.focus());
 }
 
 function setFontScale(scale, silent = false) {
@@ -1236,7 +1240,8 @@ async function snoozeUpdates() {
 }
 
 async function initialize() {
-  setTheme(state.theme);
+  setAccentTheme(state.accentTheme);
+  setColorMode(state.colorMode);
   setFontScale(state.fontScale, true);
   const prefs = await window.leafMD.getPreferences();
   const needsLanguageSelection = await window.leafMD.needsLanguageSelection();
@@ -1263,17 +1268,18 @@ async function initialize() {
 $('#newFileButton').addEventListener('click', newFile);
 ['#openFileButton', '#welcomeOpenFile'].forEach(id => $(id).addEventListener('click', openFile));
 ['#openFolderButton', '#welcomeOpenFolder', '#folderCta'].forEach(id => $(id).addEventListener('click', openFolder));
-$('#themeButton').addEventListener('click', event => {
+$('#accentButton').addEventListener('click', event => {
   event.stopPropagation();
-  toggleThemeMenu();
+  toggleAccentMenu();
 });
-els.themeMenu.addEventListener('click', event => {
+$('#colorModeButton').addEventListener('click', toggleColorMode);
+els.accentMenu.addEventListener('click', event => {
   event.stopPropagation();
-  const button = event.target.closest('[data-theme-option]');
+  const button = event.target.closest('[data-accent-option]');
   if (!button) return;
-  setTheme(button.dataset.themeOption);
-  closeThemeMenu();
-  $('#themeButton').focus();
+  setAccentTheme(button.dataset.accentOption);
+  closeAccentMenu();
+  $('#accentButton').focus();
 });
 els.backToTop.addEventListener('click', () => $('.reader-pane').scrollTo({ top: 0, behavior: 'smooth' }));
 els.editButton.addEventListener('click', () => toggleEditor());
@@ -1303,7 +1309,7 @@ $('#printButton').addEventListener('click', () => {
 });
 $('#moreButton').addEventListener('click', event => {
   event.stopPropagation();
-  closeThemeMenu();
+  closeAccentMenu();
   els.moreMenu.classList.toggle('hidden');
 });
 $('#windowMinimise').addEventListener('click', () => window.leafMD.minimiseWindow());
@@ -1378,7 +1384,7 @@ els.moreMenu.addEventListener('click', event => {
 });
 document.addEventListener('click', () => {
   els.moreMenu.classList.add('hidden');
-  closeThemeMenu();
+  closeAccentMenu();
 });
 $('.reader-pane').addEventListener('scroll', updateActiveToc, { passive: true });
 
@@ -1395,7 +1401,7 @@ document.addEventListener('keydown', event => {
   else if (primaryModifier && (event.key === '+' || event.key === '=')) { event.preventDefault(); setFontScale(state.fontScale + .08); }
   else if (primaryModifier && event.key === '-') { event.preventDefault(); setFontScale(state.fontScale - .08); }
   else if (primaryModifier && event.key === '0') { event.preventDefault(); setFontScale(1); }
-  else if (event.key === 'Escape' && !els.themeMenu.classList.contains('hidden')) { closeThemeMenu(); $('#themeButton').focus(); }
+  else if (event.key === 'Escape' && !els.accentMenu.classList.contains('hidden')) { closeAccentMenu(); $('#accentButton').focus(); }
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
   else if (event.key === 'Escape' && !els.updateDialog.classList.contains('hidden')) closeUpdate();
   else if (event.key === 'Escape' && !els.aboutDialog.classList.contains('hidden')) closeAbout();

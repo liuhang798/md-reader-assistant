@@ -64,14 +64,14 @@ The macOS build uses native left-side window controls and application menus, inc
 - Recent documents update immediately and individual records can be removed; reopening an existing item keeps its list position.
 - On macOS, closing the main window leaves the app running in the background, and Markdown files opened from Finder display directly.
 - Simplified Chinese and English interface with persistent language selection.
-- Eight complete color themes—Classic Light, Classic Dark, Verdant Voice, Azure Cloud, Wisteria Mist, Amber Paper, Deep Ocean and Amethyst Night—apply consistently to reading, preview, editing, menus and dialogs, with the selection restored across launches.
+- Accent color and light/dark mode are independent: choose Fresh Green, Clear Blue, Vivid Orange, Vivid Violet, Coral Red, Lake Cyan, Mist Slate or Clay Brown, then pair it with either color mode. Both choices are restored across launches.
 - Synchronized reading/editor text zoom up to 200%, remembered across launches.
 - Switch the left sidebar between Recent and a refreshable resource explorer for Markdown folders.
 - Drag the library and document-outline dividers to customize panel widths; the layout is remembered locally.
 - The resource explorer remembers its selected folder and active view across launches; click the active Explorer tab again to choose another folder.
 - Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.
 - Single-instance file opening and unsaved-change protection.
-- A new split reading/editing brand icon with transparent rounded corners and no white square canvas, plus an About screen with the author email and a direct repository link.
+- A new split reading/editing brand icon with transparent rounded corners and no white square canvas. In-app Logos follow the selected accent while native system icons stay green; the About screen includes the author email and a direct repository link.
 - Automatic checks for the latest stable GitHub Release, with release notes, one-click access to downloads, manual checks, and a 30-day reminder pause.
 
 ## Screenshots
