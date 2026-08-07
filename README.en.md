@@ -43,14 +43,12 @@ On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the s
 
 The macOS build uses native left-side window controls and application menus, including standard Command shortcuts. Lazy editor loading and deferred explorer restoration reduce cold-start work.
 
-## What's new in 2.2.5
+## What's new in 2.2.6
 
-- `Ctrl/Cmd + F` now searches Markdown source directly inside the editor, highlights matches and scrolls to each result without leaving edit mode.
-- The find-and-replace panel follows the selected Simplified Chinese or English interface language and uses a polished toolbar that matches the application.
-- Drag the library and document-outline dividers to choose comfortable panel widths; both widths are restored at the next launch.
-- The Resource Explorer remembers the selected folder and active sidebar view between launches.
-- Click the already active Explorer tab to choose a different folder at any time.
-- Text zoom now resizes the reader, live preview, Markdown source and editor line numbers together up to 200%, and restores the selected scale on the next launch.
+- Accent color and light/dark mode are now independent controls that can be combined freely and remembered separately.
+- Added eight accent choices: Fresh Green, Clear Blue, Vivid Orange, Vivid Violet, Coral Red, Lake Cyan, Mist Slate and Clay Brown, with Fresh Green as the default.
+- Updated the brand icon to the bright-green book-and-feather mark with transparent rounded corners. In-app Logos follow the selected accent while native system icons remain green.
+- Migrates legacy complete-theme settings to the closest accent and color-mode combination automatically.
 
 ## Highlights
 
@@ -147,7 +145,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.2.5` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.2.6` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

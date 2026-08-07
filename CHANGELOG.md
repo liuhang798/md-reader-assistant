@@ -4,6 +4,8 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+## [2.2.6] - 2026-08-07
+
 ### 简体中文
 
 - 将主题颜色与白天/黑夜模式拆分为两个独立功能；新增清新绿、晴空蓝、活力橙、灵动紫、珊瑚红、湖水蓝、雾蓝灰和陶土棕 8 种强调色，可与两种明暗模式自由组合，图 1 绿色为默认颜色。
@@ -144,3 +146,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.2.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.3
 [2.2.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.4
 [2.2.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.5
+[2.2.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.6
