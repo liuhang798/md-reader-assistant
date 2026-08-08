@@ -163,27 +163,53 @@
           </div>
           <div id="editorFormatBar" class="editor-format-bar" role="toolbar" data-i18n-aria-label="formatToolbar">
             <button id="editorUndoButton" type="button" data-i18n-title="undoTitle" title="撤回 (Ctrl+Z)" disabled><svg viewBox="0 0 24 24"><path d="m9 8-5 4 5 4"/><path d="M5 12h8a6 6 0 0 1 6 6"/></svg></button>
-            <span class="format-divider"></span>
-            <select id="headingSelect" data-i18n-title="heading" title="标题">
+            <span class="format-divider" data-divider-before="heading"></span>
+            <select id="headingSelect" data-format-overflow="heading" data-format-group="heading" data-overflow-priority="100" data-i18n-title="heading" title="标题">
               <option value="" data-i18n="paragraph">正文</option>
               <option value="# " data-i18n="heading1">标题 1</option>
               <option value="## " data-i18n="heading2">标题 2</option>
               <option value="### " data-i18n="heading3">标题 3</option>
+              <option value="#### " data-i18n="heading4">标题 4</option>
+              <option value="##### " data-i18n="heading5">标题 5</option>
+              <option value="###### " data-i18n="heading6">标题 6</option>
             </select>
-            <span class="format-divider"></span>
-            <button type="button" data-format="bold" data-i18n-title="boldTitle" title="加粗 (Ctrl+B)"><strong>B</strong></button>
-            <button type="button" data-format="italic" data-i18n-title="italicTitle" title="斜体 (Ctrl+I)"><em>I</em></button>
-            <button type="button" data-format="link" data-i18n-title="linkTitle" title="插入链接 (Ctrl+K)"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2"/></svg></button>
-            <button type="button" data-format="inline-code" data-i18n-title="inlineCode" title="行内代码"><span class="code-label">&lt;/&gt;</span></button>
-            <button type="button" data-format="code-block" data-i18n-title="codeBlock" title="代码块"><svg viewBox="0 0 24 24"><path d="m8 9-3 3 3 3m8-6 3 3-3 3M14 5l-4 14"/></svg></button>
-            <span class="format-divider"></span>
-            <button type="button" data-format="quote" data-i18n-title="quote" title="引用"><svg viewBox="0 0 24 24"><path d="M6 17h4v-5H6V8h5M14 17h4v-5h-4V8h5"/></svg></button>
-            <button type="button" data-format="unordered-list" data-i18n-title="unorderedList" title="无序列表"><svg viewBox="0 0 24 24"><circle cx="5" cy="7" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="17" r="1"/><path d="M9 7h10M9 12h10M9 17h10"/></svg></button>
-            <button type="button" data-format="ordered-list" data-i18n-title="orderedList" title="有序列表"><span class="ordered-list-label">1.</span></button>
-            <button type="button" data-format="task-list" data-i18n-title="taskList" title="任务列表"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="5" height="5" rx="1"/><path d="m5 6.5 1 1 2-2M11 6.5h9M4 15h4v4H4zM11 17h9"/></svg></button>
-            <span class="format-divider"></span>
-            <button type="button" data-format="table" data-i18n-title="insertTable" title="插入表格"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16"/></svg></button>
-            <button type="button" data-format="image" data-i18n-title="insertImage" title="插入图片"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 2-2 6 5"/></svg></button>
+            <span class="format-divider" data-divider-before="inline"></span>
+            <button type="button" data-format="bold" data-format-overflow="bold" data-format-label="boldTitle" data-format-group="inline" data-overflow-priority="90" data-i18n-title="boldTitle" title="加粗 (Ctrl+B)"><strong>B</strong></button>
+            <button type="button" data-format="italic" data-format-overflow="italic" data-format-label="italicTitle" data-format-group="inline" data-overflow-priority="85" data-i18n-title="italicTitle" title="斜体 (Ctrl+I)"><em>I</em></button>
+            <button type="button" data-format="strikethrough" data-format-overflow="strikethrough" data-format-label="strikethroughTitle" data-format-group="inline" data-overflow-priority="80" data-i18n-title="strikethroughTitle" title="删除线 (Ctrl+Shift+X)"><span class="strikethrough-label">S</span></button>
+            <button type="button" data-format="highlight" data-format-overflow="highlight" data-format-label="highlightTitle" data-format-group="inline" data-overflow-priority="75" data-i18n-title="highlightTitle" title="高亮 (Ctrl+Shift+H)"><span class="highlight-label">H</span></button>
+            <button type="button" data-format="link" data-format-overflow="link" data-format-label="linkTitle" data-format-group="inline" data-overflow-priority="70" data-i18n-title="linkTitle" title="插入链接 (Ctrl+K)"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2"/></svg></button>
+            <button type="button" data-format="inline-code" data-format-overflow="inline-code" data-format-label="inlineCode" data-format-group="inline" data-overflow-priority="65" data-i18n-title="inlineCode" title="行内代码"><span class="code-label">&lt;/&gt;</span></button>
+            <button type="button" data-format="code-block" data-format-overflow="code-block" data-format-label="codeBlock" data-format-group="inline" data-overflow-priority="60" data-i18n-title="codeBlock" title="代码块"><svg viewBox="0 0 24 24"><path d="m8 9-3 3 3 3m8-6 3 3-3 3M14 5l-4 14"/></svg></button>
+            <span class="format-divider" data-divider-before="block"></span>
+            <button type="button" data-format="quote" data-format-overflow="quote" data-format-label="quote" data-format-group="block" data-overflow-priority="55" data-i18n-title="quote" title="引用"><svg viewBox="0 0 24 24"><path d="M6 17h4v-5H6V8h5M14 17h4v-5h-4V8h5"/></svg></button>
+            <button type="button" data-format="unordered-list" data-format-overflow="unordered-list" data-format-label="unorderedList" data-format-group="block" data-overflow-priority="50" data-i18n-title="unorderedList" title="无序列表"><svg viewBox="0 0 24 24"><circle cx="5" cy="7" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="17" r="1"/><path d="M9 7h10M9 12h10M9 17h10"/></svg></button>
+            <button type="button" data-format="ordered-list" data-format-overflow="ordered-list" data-format-label="orderedList" data-format-group="block" data-overflow-priority="45" data-i18n-title="orderedList" title="有序列表"><span class="ordered-list-label">1.</span></button>
+            <button type="button" data-format="task-list" data-format-overflow="task-list" data-format-label="taskList" data-format-group="block" data-overflow-priority="40" data-i18n-title="taskList" title="任务列表"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="5" height="5" rx="1"/><path d="m5 6.5 1 1 2-2M11 6.5h9M4 15h4v4H4zM11 17h9"/></svg></button>
+            <button type="button" data-format="horizontal-rule" data-format-overflow="horizontal-rule" data-format-label="horizontalRule" data-format-group="block" data-overflow-priority="30" data-i18n-title="horizontalRule" title="分隔线"><span class="horizontal-rule-label">―</span></button>
+            <span class="format-divider" data-divider-before="asset"></span>
+            <button type="button" data-format="table" data-format-overflow="table" data-format-label="insertTable" data-format-group="asset" data-overflow-priority="20" data-i18n-title="insertTable" title="插入表格"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16M15 4v16"/></svg></button>
+            <button type="button" data-format="image" data-format-overflow="image" data-format-label="insertImage" data-format-group="asset" data-overflow-priority="10" data-i18n-title="insertImage" title="插入图片"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 18 5-5 3 3 2-2 6 5"/></svg></button>
+            <span class="format-divider" data-divider-before="more"></span>
+            <select id="moreFormatSelect" data-i18n-title="moreFormats" title="更多格式">
+              <option value="" data-i18n="moreFormats">更多格式</option>
+              <optgroup id="overflowFormatGroup" data-i18n-label="toolbarOverflow" label="工具栏折叠" hidden></optgroup>
+              <optgroup data-i18n-label="extendedFormats" label="扩展格式">
+              <option value="bold-italic" data-i18n="boldItalic">粗斜体</option>
+              <option value="underline" data-i18n="underline">下划线</option>
+              <option value="superscript" data-i18n="superscript">上标</option>
+              <option value="subscript" data-i18n="subscript">下标</option>
+              <option value="hard-break" data-i18n="hardBreak">强制换行</option>
+              <option value="footnote" data-i18n="footnote">脚注</option>
+              <option value="reference-link" data-i18n="referenceLink">引用式链接</option>
+              <option value="collapsible" data-i18n="collapsible">折叠区块</option>
+              <option value="keyboard-key" data-i18n="keyboardKey">键盘按键</option>
+              <option value="autolink" data-i18n="autolink">自动链接</option>
+              <option value="escape" data-i18n="escapeSyntax">转义符号</option>
+              <option value="html-block" data-i18n="htmlBlock">HTML 区块</option>
+              <option value="comment" data-i18n="comment">注释</option>
+              </optgroup>
+            </select>
           </div>
           <div id="markdownEditor" data-i18n-aria-label="markdownEditorAria" aria-label="Markdown 编辑器"></div>
           <div class="editor-footer">
@@ -226,7 +252,7 @@
     <button data-action="print"><span class="menu-label" data-i18n="printDocument">打印文档</span> <span>Ctrl P</span></button>
     <hr>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span> <span>GitHub</span></button>
-    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.2.6</span></button>
+    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.3.0</span></button>
   </div>
 
   <div id="accentMenu" class="popover accent-menu hidden no-drag" role="menu" aria-labelledby="accentMenuLabel">
@@ -272,7 +298,7 @@
         <div>
           <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
           <h2 id="aboutTitle" data-i18n="appName">MD阅读助手</h2>
-          <span class="about-version" data-i18n="aboutVersion">版本 2.2.6</span>
+          <span class="about-version" data-i18n="aboutVersion">版本 2.3.0</span>
         </div>
       </div>
       <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。</p>
@@ -309,9 +335,9 @@
         </div>
       </div>
       <div class="update-versions" aria-label="Version change">
-        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.2.6</strong></span>
+        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.3.0</strong></span>
         <svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
-        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.2.6</strong></span>
+        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.3.0</strong></span>
       </div>
       <div class="release-notes-panel">
         <strong data-i18n="releaseNotes">更新说明</strong>

@@ -41,25 +41,26 @@ It is a good fit for reading long Markdown documents, editing README files, main
 
 On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup. Its selected language is also used by the app, so first launch does not ask for it again.
 
-The macOS build uses native left-side window controls and application menus, including standard Command shortcuts. Lazy editor loading and deferred explorer restoration reduce cold-start work.
+The macOS build follows the computer's light/dark appearance automatically, updating the interface and native title bar whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
-## What's new in 2.2.6
+## What's new in 2.3.0
 
-- Accent color and light/dark mode are now independent controls that can be combined freely and remembered separately.
-- Added eight accent choices: Fresh Green, Clear Blue, Vivid Orange, Vivid Violet, Coral Red, Lake Cyan, Mist Slate and Clay Brown, with Fresh Green as the default.
-- Updated the brand icon to the bright-green book-and-feather mark with transparent rounded corners. In-app Logos follow the selected accent while native system icons remain green.
-- Migrates legacy complete-theme settings to the closest accent and color-mode combination automatically.
+- On macOS, the Logo and application name align left automatically in fullscreen and restore the traffic-light safe area on exit; the slim title bar supports both light and dark appearances.
+- Fixed intermittent fullscreen closing and added standard macOS behavior for `Command + W` to close the window and `Command + Q` to quit.
+- New documents are stored in the user's `Documents/MD Reader Assistant` folder so reinstalls cannot overwrite them, while unavailable Recent files are clearly marked.
+- The Markdown toolbar collapses overflow into More Formats and adds editing and preview support for highlights, footnotes, superscript, subscript, collapsible sections and more.
+- Native red, yellow and green window controls remain vertically centered in the slim title bar.
 
 ## Highlights
 
 - Read and edit Markdown with the same calm, polished interface.
 - Split editing mode: live preview on the left, syntax-highlighted editor on the right.
-- Formatting toolbar for headings, quotes, bold, italic, links, ordered/unordered/task lists, tables, images, inline code and code blocks, including `Ctrl/Cmd + B`, `Ctrl/Cmd + I` and `Ctrl/Cmd + K`.
+- The formatting toolbar covers H1–H6, bold, italic, strikethrough, highlight, links, inline/fenced code, quotes, lists, tasks, horizontal rules, tables and images. When space runs out, controls move into More Formats instead of creating a horizontal scrollbar. More Formats also adds bold italic, underline, superscript, subscript, hard breaks, footnotes, reference links, autolinks, syntax escaping, HTML/collapsible blocks, keyboard keys and comments. Common actions support `Ctrl/Cmd + B`, `Ctrl/Cmd + I`, `Ctrl/Cmd + K`, `Ctrl/Cmd + Shift + X` and `Ctrl/Cmd + Shift + H`.
 - Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
 - `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls to the selected result; the polished find-and-replace panel follows the selected Chinese or English interface language.
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Clickable table of contents, active section tracking, search, print and back-to-top.
-- Recent documents update immediately and individual records can be removed; reopening an existing item keeps its list position.
+- Recent documents update immediately and individual records can be removed; reopening an existing item keeps its list position. Deleted, moved or temporarily unavailable source files are shown muted with a strikethrough and cannot be opened, but are not removed automatically.
 - On macOS, closing the main window leaves the app running in the background, and Markdown files opened from Finder display directly.
 - Simplified Chinese and English interface with persistent language selection.
 - Accent color and light/dark mode are independent: choose Fresh Green, Clear Blue, Vivid Orange, Vivid Violet, Coral Red, Lake Cyan, Mist Slate or Clay Brown, then pair it with either color mode. Both choices are restored across launches.
@@ -71,6 +72,17 @@ The macOS build uses native left-side window controls and application menus, inc
 - Single-instance file opening and unsaved-change protection.
 - A new split reading/editing brand icon with transparent rounded corners and no white square canvas. In-app Logos follow the selected accent while native system icons stay green; the About screen includes the author email and a direct repository link.
 - Automatic checks for the latest stable GitHub Release, with release notes, one-click access to downloads, manual checks, and a 30-day reminder pause.
+
+## Markdown format support
+
+| Category | Editable and previewable formats |
+|---|---|
+| Text | Bold, italic, bold italic, strikethrough, highlight, underline, superscript, subscript, inline code, keyboard keys and Markdown escaping |
+| Structure | H1–H6, paragraphs, quotes, horizontal rules, hard breaks, fenced code, HTML/collapsible blocks and HTML comments |
+| Lists and data | Bulleted lists, numbered lists, task lists and tables |
+| References | Inline links, reference links, autolinks, images and footnotes |
+
+Preview is based on CommonMark/GFM. Highlight uses `==text==`; footnotes use `[^1]` and `[^1]: Content`. Underline, superscript, subscript, collapsible sections and keyboard keys use portable safe HTML tags that are sanitized by DOMPurify before display.
 
 ## Screenshots
 
@@ -103,7 +115,7 @@ Version 2.0 and later replace Electron with Go and Wails while retaining the exi
 - `packaging/`: Linux desktop integration and package metadata.
 - `scripts/`: repeatable project asset-maintenance scripts.
 
-New Markdown documents are created immediately beside the installed application. If that location is read-only, the app silently uses `Documents/MD Reader Assistant`. Saving a new document under another name removes its auto-created draft and duplicate Recent entry. Local images referenced by absolute or relative paths are loaded securely through the Go backend for reliable previewing.
+New Markdown documents do not require a location prompt. On macOS they are always stored in the user's `Documents/MD Reader Assistant` folder so application upgrades cannot overwrite them. Portable Windows and Linux builds retain the application-directory preference with a Documents fallback. Saving a new document under another name removes its auto-created draft and duplicate Recent entry. Local images referenced by absolute or relative paths are loaded securely through the Go backend for reliable previewing.
 
 ## Downloads
 
@@ -145,7 +157,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.2.6` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.3.0` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

@@ -1,7 +1,8 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';
-import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage } from './appearance.js';
+import { ACCENT_THEMES, colorModeFromSystem, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage } from './appearance.js';
+import { escapeMarkdownText, highlightExtension, nextFootnoteNumber, prepareFootnotes, renderFootnoteSection } from './markdown-formats.js';
 
 const $ = selector => document.querySelector(selector);
 let codeEditor;
@@ -54,7 +55,7 @@ const translations = {
   'zh-CN': {
     appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
-    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
+    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '跟随 macOS 系统外观（自动）', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
     library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
@@ -64,27 +65,28 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
     zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', printDocument: '打印文档', copy: '复制', copied: '已复制',
-    bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyExplorer: '请先打开一个文件夹',
+    bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyExplorer: '请先打开一个文件夹',
     markdownDocument: 'Markdown 文档', removeRecentTitle: '删除最近阅读记录', removeRecentAria: '删除 {name} 的最近阅读记录',
     discardConfirm: '当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？', previewError: '暂时无法渲染当前内容',
     readingTime: '约 {minutes} 分钟 · {words} 字', renderFailed: 'Markdown 渲染失败', openFailed: '无法打开这个文件',
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.2.6', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。',
+    aboutVersion: '版本 2.3.0', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
     remindLater: '稍后提醒', snooze30Days: '30 天内不再提醒', updateSnoozed: '未来 30 天不再自动提醒更新', openDownloadPage: '打开下载页面', alreadyLatest: '当前已是最新版本', updateCheckFailed: '检查更新失败，请稍后重试',
-    formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3',
-    boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
+    formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3', heading4: '标题 4', heading5: '标题 5', heading6: '标题 6',
+    boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', strikethroughTitle: '删除线 (Ctrl+Shift+X)', highlightTitle: '高亮 (Ctrl+Shift+H)', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', horizontalRule: '分隔线', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
+    moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
     markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试',
     resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度'
   },
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
-    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
+    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Follow macOS appearance automatically', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
     library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
@@ -94,20 +96,21 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
     zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
-    bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyExplorer: 'Open a folder to browse files',
+    bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyExplorer: 'Open a folder to browse files',
     markdownDocument: 'Markdown document', removeRecentTitle: 'Remove recent record', removeRecentAria: 'Remove {name} from Recent',
     discardConfirm: 'This document has unsaved changes.\n\nDiscard the changes and continue?', previewError: 'The current content cannot be rendered',
     readingTime: 'About {minutes} min · {words} words', renderFailed: 'Markdown rendering failed', openFailed: 'Unable to open this file',
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.2.6', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, document navigation, and recent reading.',
+    aboutVersion: 'Version 2.3.0', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, document navigation, and recent reading.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
     remindLater: 'Remind me later', snooze30Days: 'Don’t remind me for 30 days', updateSnoozed: 'Automatic update reminders paused for 30 days', openDownloadPage: 'Open download page', alreadyLatest: 'You’re using the latest version', updateCheckFailed: 'Unable to check for updates. Try again later.',
-    formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3',
-    boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
+    formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3', heading4: 'Heading 4', heading5: 'Heading 5', heading6: 'Heading 6',
+    boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', strikethroughTitle: 'Strikethrough (Ctrl+Shift+X)', highlightTitle: 'Highlight (Ctrl+Shift+H)', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', horizontalRule: 'Horizontal rule', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
+    moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
     markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.',
     resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline'
   }
@@ -141,12 +144,14 @@ function applyStaticTranslations() {
   document.querySelectorAll('[data-i18n-title]').forEach(element => { element.title = t(element.dataset.i18nTitle); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(element => { element.placeholder = t(element.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
+  document.querySelectorAll('[data-i18n-label]').forEach(element => { element.label = t(element.dataset.i18nLabel); });
   document.querySelectorAll('[data-language]').forEach(button => button.classList.toggle('active', button.dataset.language === state.language));
   document.querySelectorAll('[data-accent-option]').forEach(button => {
     const name = ACCENT_THEMES[button.dataset.accentOption]?.[state.language === 'en' ? 'en' : 'zhCN'];
     const label = button.querySelector('.accent-option-name');
     if (label && name) label.textContent = name;
   });
+  scheduleFormatToolbarLayout();
 }
 
 function setLanguage(language, silent = false, persist = true) {
@@ -192,6 +197,7 @@ const els = {
 marked.use({
   gfm: true,
   breaks: false,
+  extensions: [highlightExtension],
   renderer: {
     link({ href, title, tokens }) {
       const text = this.parser.parseInline(tokens);
@@ -351,6 +357,26 @@ function runFormatCommand(command) {
   if (!codeEditor || !state.currentFile) return false;
   if (command === 'bold') return wrapSelection('**', '**', t('boldTitle').split(' ')[0]);
   if (command === 'italic') return wrapSelection('*', '*', t('italicTitle').split(' ')[0]);
+  if (command === 'bold-italic') return wrapSelection('***', '***', t('boldItalic'));
+  if (command === 'strikethrough') return wrapSelection('~~', '~~', t('strikethroughTitle').split(' ')[0]);
+  if (command === 'highlight') return wrapSelection('==', '==', t('highlightTitle').split(' ')[0]);
+  if (command === 'underline') return wrapSelection('<u>', '</u>', t('underline'));
+  if (command === 'superscript') return wrapSelection('<sup>', '</sup>', t('superscript'));
+  if (command === 'subscript') return wrapSelection('<sub>', '</sub>', t('subscript'));
+  if (command === 'keyboard-key') return wrapSelection('<kbd>', '</kbd>', state.language === 'en' ? 'Key' : '按键');
+  if (command === 'comment') return wrapSelection('<!-- ', ' -->', state.language === 'en' ? 'comment' : '注释');
+  if (command === 'autolink') return wrapSelection('<', '>', 'https://example.com');
+  if (command === 'escape') {
+    const selection = codeEditor.state.selection.main;
+    const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || '*';
+    const escaped = escapeMarkdownText(selected);
+    return replaceSelection(escaped, 0, escaped.length);
+  }
+  if (command === 'html-block') {
+    const selection = codeEditor.state.selection.main;
+    const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || (state.language === 'en' ? 'Content' : '内容');
+    return replaceSelection(`<div>\n${selected}\n</div>`, 6, selected.length);
+  }
   if (command === 'link') {
     const selection = codeEditor.state.selection.main;
     const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || (state.language === 'en' ? 'link text' : '链接文字');
@@ -363,10 +389,105 @@ function runFormatCommand(command) {
     const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || 'code';
     return replaceSelection(`\`\`\`\n${selected}\n\`\`\``, 4, selected.length);
   }
+  if (command === 'horizontal-rule') return replaceSelection('\n\n---\n\n', 5, 0);
+  if (command === 'hard-break') return replaceSelection('  \n', 3, 0);
+  if (command === 'footnote') {
+    const selection = codeEditor.state.selection.main;
+    const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || t('footnoteText');
+    const number = nextFootnoteNumber(codeEditor.state.doc.toString());
+    const reference = `[^${number}]`;
+    return replaceSelection(`${reference}\n\n${reference}: ${selected}`, 0, reference.length);
+  }
+  if (command === 'reference-link') {
+    const selection = codeEditor.state.selection.main;
+    const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || (state.language === 'en' ? 'link text' : '链接文字');
+    const name = t('referenceName');
+    return replaceSelection(`[${selected}][${name}]\n\n[${name}]: https://`, 1, selected.length);
+  }
+  if (command === 'collapsible') {
+    const selection = codeEditor.state.selection.main;
+    const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || (state.language === 'en' ? 'Content' : '折叠内容');
+    const summary = t('collapsibleTitle');
+    return replaceSelection(`<details>\n<summary>${summary}</summary>\n\n${selected}\n\n</details>`, 19, summary.length);
+  }
   if (['quote', 'unordered-list', 'ordered-list', 'task-list'].includes(command)) return formatSelectedLines(command);
   if (command === 'table') { openTableDialog(); return true; }
   if (command === 'image') { insertImage(); return true; }
   return false;
+}
+
+let formatToolbarLayoutFrame;
+let formatToolbarResizeObserver;
+
+function syncFormatDividers() {
+  const bar = $('#editorFormatBar');
+  if (!bar) return;
+  const directFormats = [...bar.querySelectorAll('[data-format-overflow]')];
+  bar.querySelectorAll('[data-divider-before]').forEach(divider => {
+    const target = divider.dataset.dividerBefore;
+    const hasVisibleTarget = target === 'more'
+      ? directFormats.some(element => !element.hidden)
+      : directFormats.some(element => element.dataset.formatGroup === target && !element.hidden);
+    divider.hidden = !hasVisibleTarget;
+  });
+}
+
+function rebuildOverflowFormatOptions() {
+  const group = $('#overflowFormatGroup');
+  const bar = $('#editorFormatBar');
+  if (!group || !bar) return;
+  group.replaceChildren();
+  for (const element of bar.querySelectorAll('[data-format-overflow][hidden]')) {
+    if (element.id === 'headingSelect') {
+      for (const heading of element.options) {
+        const option = document.createElement('option');
+        option.value = `heading:${heading.value}`;
+        option.textContent = t(heading.dataset.i18n);
+        group.append(option);
+      }
+      continue;
+    }
+    const option = document.createElement('option');
+    option.value = element.dataset.formatOverflow;
+    option.textContent = t(element.dataset.formatLabel).replace(/\s+\([^)]*\)$/, '');
+    group.append(option);
+  }
+  group.hidden = group.children.length === 0;
+}
+
+function layoutFormatToolbar() {
+  const bar = $('#editorFormatBar');
+  if (!bar || bar.clientWidth === 0) return;
+  const candidates = [...bar.querySelectorAll('[data-format-overflow]')];
+  candidates.forEach(element => { element.hidden = false; });
+  syncFormatDividers();
+
+  const byOverflowPriority = [...candidates].sort((first, second) =>
+    Number(first.dataset.overflowPriority) - Number(second.dataset.overflowPriority)
+  );
+  for (const candidate of byOverflowPriority) {
+    if (bar.scrollWidth <= bar.clientWidth + 1) break;
+    candidate.hidden = true;
+    syncFormatDividers();
+  }
+  rebuildOverflowFormatOptions();
+}
+
+function scheduleFormatToolbarLayout() {
+  cancelAnimationFrame(formatToolbarLayoutFrame);
+  formatToolbarLayoutFrame = requestAnimationFrame(layoutFormatToolbar);
+}
+
+function initializeFormatToolbarOverflow() {
+  const bar = $('#editorFormatBar');
+  if (!bar) return;
+  if ('ResizeObserver' in window) {
+    formatToolbarResizeObserver = new ResizeObserver(scheduleFormatToolbarLayout);
+    formatToolbarResizeObserver.observe(bar);
+  } else {
+    window.addEventListener('resize', scheduleFormatToolbarLayout);
+  }
+  scheduleFormatToolbarLayout();
 }
 
 function openTableDialog() {
@@ -420,7 +541,9 @@ async function initializeCodeEditor() {
     { key: 'Mod-f', run: view => openSearchPanel(view) },
     { key: 'Mod-b', run: () => runFormatCommand('bold') },
     { key: 'Mod-i', run: () => runFormatCommand('italic') },
-    { key: 'Mod-k', run: () => runFormatCommand('link') }
+    { key: 'Mod-k', run: () => runFormatCommand('link') },
+    { key: 'Mod-Shift-x', run: () => runFormatCommand('strikethrough') },
+    { key: 'Mod-Shift-h', run: () => runFormatCommand('highlight') }
   ]);
     const editorTheme = EditorView.theme({
     '&': { height: '100%', backgroundColor: 'transparent', color: 'var(--text)' },
@@ -543,16 +666,73 @@ function setAccentTheme(accentId) {
   updateThemedLogos();
 }
 
-function setColorMode(mode) {
+function setColorMode(mode, persist = true) {
   state.colorMode = normalizeColorMode(mode);
   document.documentElement.dataset.colorMode = state.colorMode;
-  localStorage.setItem('colorMode', state.colorMode);
+  if (persist) localStorage.setItem('colorMode', state.colorMode);
   $('#colorModeButton').setAttribute('aria-pressed', String(state.colorMode === 'dark'));
   window.leafMD.setTheme(state.colorMode === 'dark');
 }
 
 function toggleColorMode() {
+  if (document.documentElement.dataset.platform === 'darwin') {
+    syncMacSystemColorMode();
+    showToast(t('systemColorModeTitle'));
+    return;
+  }
   setColorMode(state.colorMode === 'dark' ? 'light' : 'dark');
+}
+
+let macSystemColorScheme;
+
+function syncMacSystemColorMode() {
+  if (!macSystemColorScheme) return;
+  setColorMode(colorModeFromSystem(macSystemColorScheme.matches), false);
+}
+
+function initializeMacSystemColorMode() {
+  if (document.documentElement.dataset.platform !== 'darwin' || !window.matchMedia) return false;
+  macSystemColorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+  const button = $('#colorModeButton');
+  button.dataset.i18nTitle = 'systemColorModeTitle';
+  button.dataset.i18nAriaLabel = 'systemColorModeTitle';
+  button.title = t('systemColorModeTitle');
+  button.setAttribute('aria-label', t('systemColorModeTitle'));
+  button.dataset.systemManaged = 'true';
+  const handleSystemColorModeChange = () => syncMacSystemColorMode();
+  if (macSystemColorScheme.addEventListener) macSystemColorScheme.addEventListener('change', handleSystemColorModeChange);
+  else macSystemColorScheme.addListener(handleSystemColorModeChange);
+  syncMacSystemColorMode();
+  return true;
+}
+
+let macWindowModePollTimer;
+let macWindowModePollDeadline = 0;
+
+async function syncMacWindowFullscreen() {
+  if (document.documentElement.dataset.platform !== 'darwin') return;
+  try {
+    const fullscreen = await window.leafMD.isWindowFullscreen();
+    document.documentElement.dataset.windowFullscreen = fullscreen ? 'true' : 'false';
+  } catch (error) {
+    console.warn('Unable to read macOS fullscreen state', error);
+  }
+}
+
+function scheduleMacWindowModeSync() {
+  if (document.documentElement.dataset.platform !== 'darwin') return;
+  macWindowModePollDeadline = performance.now() + 1800;
+  if (macWindowModePollTimer) return;
+
+  const poll = async () => {
+    await syncMacWindowFullscreen();
+    if (performance.now() < macWindowModePollDeadline) {
+      macWindowModePollTimer = setTimeout(poll, 32);
+    } else {
+      macWindowModePollTimer = undefined;
+    }
+  };
+  macWindowModePollTimer = setTimeout(poll, 0);
 }
 
 function closeAccentMenu() {
@@ -580,7 +760,29 @@ function fileIcon() {
 }
 
 function recentEntry(doc) {
-  return { path: doc.path, name: doc.name, directory: null };
+  return { path: doc.path, name: doc.name, directory: null, exists: true };
+}
+
+function recentFilesFromPreferences(prefs) {
+  const statusByPath = new Map((prefs.recentFileStatuses || []).map(status => [status.path, status.exists !== false]));
+  return (prefs.recentFiles || []).map(filePath => ({
+    path: filePath,
+    name: filePath.split(/[\\/]/).pop(),
+    directory: null,
+    exists: statusByPath.get(filePath) !== false
+  }));
+}
+
+async function refreshRecentFileStatuses() {
+  try {
+    state.recentFiles = recentFilesFromPreferences(await window.leafMD.getPreferences());
+    if (state.sidebarMode === 'recent') {
+      state.files = [...state.recentFiles];
+      renderFileList();
+    }
+  } catch (error) {
+    console.warn('Unable to refresh recent file statuses', error);
+  }
 }
 
 function addRecentDocument(doc) {
@@ -666,13 +868,17 @@ function renderFileList() {
   }
   els.fileList.innerHTML = state.files.map(file => {
     const active = state.currentFile?.path === file.path ? ' active' : '';
+    const missing = state.sidebarMode === 'recent' && file.exists === false;
     const sub = state.sidebarMode === 'explorer'
       ? (file.directory && file.directory !== '.' ? file.directory : t('markdownDocument'))
-      : t('recentOpened');
+      : t(missing ? 'recentMissing' : 'recentOpened');
     const removeButton = state.sidebarMode === 'recent'
       ? `<button class="recent-remove" data-path="${encodeURIComponent(file.path)}" title="${t('removeRecentTitle')}" aria-label="${escapeHtml(t('removeRecentAria', { name: file.name }))}"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg></button>`
       : '';
-    return `<div class="file-row"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"><span class="file-icon">${fileIcon()}</span><span class="file-copy"><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
+    const unavailableAttributes = missing
+      ? ` disabled title="${escapeHtml(t('recentMissingTitle'))}" aria-label="${escapeHtml(t('recentMissingAria', { name: file.name }))}"`
+      : '';
+    return `<div class="file-row${missing ? ' missing' : ''}"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"${unavailableAttributes}><span class="file-icon">${fileIcon()}</span><span class="file-copy"><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
   }).join('');
   els.fileList.querySelectorAll('.file-item').forEach(button => {
     button.addEventListener('click', () => loadFile(decodeURIComponent(button.dataset.path)));
@@ -690,7 +896,7 @@ function escapeHtml(value = '') {
 }
 
 function renderToc() {
-  const headings = [...els.content.querySelectorAll('h1, h2, h3, h4')];
+  const headings = [...els.content.querySelectorAll('h1, h2, h3, h4, h5, h6')];
   headings.forEach((heading, index) => heading.id = slugify(heading.textContent, index));
   els.toc.innerHTML = headings.map(heading => `<a href="#${heading.id}" data-target="${heading.id}" class="level-${heading.tagName.slice(1)}">${escapeHtml(heading.textContent)}</a>`).join('');
   els.tocPanel.classList.toggle('hidden', headings.length < 2);
@@ -708,7 +914,7 @@ function renderToc() {
 }
 
 function updateActiveToc() {
-  const headings = [...els.content.querySelectorAll('h1, h2, h3, h4')];
+  const headings = [...els.content.querySelectorAll('h1, h2, h3, h4, h5, h6')];
   const reader = $('.reader-pane');
   const max = reader.scrollHeight - reader.clientHeight;
   let active = headings[0];
@@ -752,7 +958,9 @@ function maybeDiscardChanges() {
 }
 
 function renderMarkdownTo(container, doc, content) {
-  let html = marked.parse(content);
+  const prepared = prepareFootnotes(content);
+  let html = marked.parse(prepared.markdown);
+  html += renderFootnoteSection(prepared.notes, text => marked.parseInline(text), t('footnotes'));
   html = DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'rel'] });
   container.innerHTML = html;
   container.querySelectorAll('img').forEach(img => {
@@ -1163,7 +1371,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.2.6';
+  $('#currentVersion').textContent = info.currentVersion || '2.3.0';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -1241,16 +1449,13 @@ async function snoozeUpdates() {
 
 async function initialize() {
   setAccentTheme(state.accentTheme);
-  setColorMode(state.colorMode);
+  if (!initializeMacSystemColorMode()) setColorMode(state.colorMode);
   setFontScale(state.fontScale, true);
+  scheduleMacWindowModeSync();
   const prefs = await window.leafMD.getPreferences();
   const needsLanguageSelection = await window.leafMD.needsLanguageSelection();
   setLanguage(prefs.language || state.language, true, !needsLanguageSelection);
-  state.recentFiles = (prefs.recentFiles || []).map(filePath => ({
-    path: filePath,
-    name: filePath.split(/[\\/]/).pop(),
-    directory: null
-  }));
+  state.recentFiles = recentFilesFromPreferences(prefs);
   const savedExplorerRoot = String(prefs.explorerRoot || '').trim();
   state.root = savedExplorerRoot || null;
   state.explorerFiles = [];
@@ -1285,7 +1490,10 @@ els.backToTop.addEventListener('click', () => $('.reader-pane').scrollTo({ top: 
 els.editButton.addEventListener('click', () => toggleEditor());
 els.saveButton.addEventListener('click', () => saveDocument(false));
 $('#saveAsButton').addEventListener('click', () => saveDocument(true));
-els.recentTab.addEventListener('click', () => setSidebarMode('recent'));
+els.recentTab.addEventListener('click', () => {
+  setSidebarMode('recent');
+  refreshRecentFileStatuses();
+});
 els.explorerTab.addEventListener('click', () => {
   if (!state.root || state.sidebarMode === 'explorer') openFolder();
   else setSidebarMode('explorer');
@@ -1350,6 +1558,11 @@ els.tableDialog.addEventListener('click', event => {
 });
 $('#headingSelect').addEventListener('change', event => {
   formatSelectedLines('heading', event.target.value);
+  event.target.value = '';
+});
+$('#moreFormatSelect').addEventListener('change', event => {
+  if (event.target.value.startsWith('heading:')) formatSelectedLines('heading', event.target.value.slice(8));
+  else if (event.target.value) runFormatCommand(event.target.value);
   event.target.value = '';
 });
 els.editorUndoButton.addEventListener('click', () => {
@@ -1433,7 +1646,10 @@ window.leafMD.onFileDrop(paths => {
   else showToast(t('dropUnsupported'));
 });
 
+initializeFormatToolbarOverflow();
 initializePaneResizers();
+window.addEventListener('resize', scheduleMacWindowModeSync);
+window.addEventListener('focus', scheduleMacWindowModeSync);
 initialize();
 setInterval(() => {
   if (state.editing && state.dirty && state.currentFile?.path && !state.saving) saveDocument(false, { auto: true, silent: true });

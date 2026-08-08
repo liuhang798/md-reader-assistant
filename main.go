@@ -7,6 +7,7 @@ import (
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
+	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
@@ -18,12 +19,7 @@ var assets embed.FS
 
 func main() {
 	app := NewApp()
-	var applicationMenu *menu.Menu
-	if goruntime.GOOS == "darwin" {
-		applicationMenu = menu.NewMenu()
-		applicationMenu.Append(menu.AppMenu())
-		applicationMenu.Append(menu.EditMenu())
-	}
+	applicationMenu := buildApplicationMenu(goruntime.GOOS)
 
 	err := wails.Run(&options.App{
 		Title:             appNameZH,
@@ -47,12 +43,26 @@ func main() {
 			Theme: windows.SystemDefault, DisableFramelessWindowDecorations: false,
 			IsZoomControlEnabled: false, DisablePinchZoom: true,
 		},
-		Mac:  &mac.Options{TitleBar: mac.TitleBarHiddenInset(), OnFileOpen: app.onFileOpen},
+		Mac:  &mac.Options{TitleBar: mac.TitleBarHidden(), OnFileOpen: app.onFileOpen},
 		Bind: []interface{}{app},
 	})
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
+}
+
+func buildApplicationMenu(platform string) *menu.Menu {
+	if platform != "darwin" {
+		return nil
+	}
+	applicationMenu := menu.NewMenu()
+	applicationMenu.Append(menu.AppMenu()) // Includes the conventional Command+Q quit action.
+	fileMenu := applicationMenu.AddSubmenu("File")
+	fileMenu.AddText("Close Window", keys.CmdOrCtrl("w"), func(_ *menu.CallbackData) {
+		closeMacWindow()
+	})
+	applicationMenu.Append(menu.EditMenu())
+	return applicationMenu
 }
 
 func hideWindowOnClose(platform string) bool {

@@ -79,3 +79,8 @@ test('invalid new appearance values fall back independently to green and light',
     { accentTheme: 'green', colorMode: 'light' },
   );
 });
+
+test('system appearance maps directly to light and dark color modes', () => {
+  assert.equal(appearance.colorModeFromSystem?.(false), 'light');
+  assert.equal(appearance.colorModeFromSystem?.(true), 'dark');
+});

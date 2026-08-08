@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 )
 
 func TestCreateNewMarkdownFileUsesFirstWritableDirectory(t *testing.T) {
@@ -37,6 +39,78 @@ func TestCreateNewMarkdownFileUsesFirstWritableDirectory(t *testing.T) {
 	}
 	if filepath.Base(secondPath) != "New document-20260721-123456-2.md" {
 		t.Fatalf("collision did not get a unique suffix: %q", filepath.Base(secondPath))
+	}
+}
+
+func TestMacNewDocumentsNeverUseTheReplaceableApplicationBundle(t *testing.T) {
+	executable := filepath.Join(string(filepath.Separator), "Applications", "MD阅读助手.app", "Contents", "MacOS", "MDReaderAssistant")
+	home := filepath.Join(string(filepath.Separator), "Users", "reader")
+	config := filepath.Join(home, "Library", "Application Support")
+
+	directories := newDocumentDirectories("darwin", executable, home, config)
+	want := []string{
+		filepath.Join(home, "Documents", appNameEN),
+		filepath.Join(config, appNameEN, "Documents"),
+	}
+	if !reflect.DeepEqual(directories, want) {
+		t.Fatalf("macOS document directories = %#v, want %#v", directories, want)
+	}
+	for _, directory := range directories {
+		if strings.Contains(filepath.ToSlash(directory), ".app/Contents/") {
+			t.Fatalf("macOS user document would be stored inside the application bundle: %q", directory)
+		}
+	}
+}
+
+func TestOtherPlatformsRetainPortableExecutableDirectoryPreference(t *testing.T) {
+	executable := filepath.Join(string(filepath.Separator), "opt", "md-reader", "MDReaderAssistant")
+	home := filepath.Join(string(filepath.Separator), "Users", "reader")
+	config := filepath.Join(home, ".config")
+
+	for _, platform := range []string{"windows", "linux"} {
+		directories := newDocumentDirectories(platform, executable, home, config)
+		if len(directories) != 3 || directories[0] != filepath.Dir(executable) {
+			t.Fatalf("%s portable directory preference changed: %#v", platform, directories)
+		}
+	}
+}
+
+func TestRecoveredMacDraftReferencesMoveToTheSafeDocumentsDirectory(t *testing.T) {
+	app := testApp(t)
+	home := t.TempDir()
+	legacyPath := filepath.Join(string(filepath.Separator), "Applications", "MD阅读助手.app", "Contents", "MacOS", "新建文档-20260808-211433.md")
+	recoveredPath := filepath.Join(home, "Documents", appNameEN, filepath.Base(legacyPath))
+	if err := os.MkdirAll(filepath.Dir(recoveredPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(recoveredPath, []byte("recovered"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.updatePreferences(func(prefs *Preferences) {
+		prefs.RecentFiles = []string{legacyPath}
+		prefs.DraftFiles = []string{legacyPath}
+		prefs.LastFile = legacyPath
+	}); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err := app.readPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	prefs = app.migrateLegacyBundledDraftReferences("darwin", home, prefs)
+	if !reflect.DeepEqual(prefs.RecentFiles, []string{recoveredPath}) {
+		t.Fatalf("recent references were not migrated: %#v", prefs.RecentFiles)
+	}
+	if !reflect.DeepEqual(prefs.DraftFiles, []string{recoveredPath}) {
+		t.Fatalf("draft references were not migrated: %#v", prefs.DraftFiles)
+	}
+	if prefs.LastFile != recoveredPath {
+		t.Fatalf("last file = %q, want %q", prefs.LastFile, recoveredPath)
+	}
+
+	unchanged := app.migrateLegacyBundledDraftReferences("windows", home, prefs)
+	if !reflect.DeepEqual(unchanged, prefs) {
+		t.Fatal("legacy macOS migration affected another platform")
 	}
 }
 
@@ -226,6 +300,46 @@ func TestReadingExistingRecentFileKeepsItsPosition(t *testing.T) {
 	}
 }
 
+func TestGetPreferencesMarksMissingRecentFilesWithoutRemovingThem(t *testing.T) {
+	app := testApp(t)
+	dir := t.TempDir()
+	existingPath := filepath.Join(dir, "existing.md")
+	missingPath := filepath.Join(dir, "deleted.md")
+	if err := os.WriteFile(existingPath, []byte("# Existing"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(existingPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(missingPath); err != nil {
+		t.Fatal(err)
+	}
+
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantFiles := []string{missingPath, existingPath}
+	if !reflect.DeepEqual(prefs.RecentFiles, wantFiles) {
+		t.Fatalf("missing recent file was removed or reordered: got %#v, want %#v", prefs.RecentFiles, wantFiles)
+	}
+	wantStatuses := []RecentFileStatus{
+		{Path: missingPath, Exists: false},
+		{Path: existingPath, Exists: true},
+	}
+	if !reflect.DeepEqual(prefs.RecentFileStatuses, wantStatuses) {
+		t.Fatalf("unexpected recent file statuses: got %#v, want %#v", prefs.RecentFileStatuses, wantStatuses)
+	}
+
+	data, err := os.ReadFile(app.preferencePath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(data, []byte("recentFileStatuses")) {
+		t.Fatalf("derived existence statuses were persisted: %s", data)
+	}
+}
+
 func TestFileOpenBeforeFrontendReadyBecomesInitialDocument(t *testing.T) {
 	app := testApp(t)
 	filePath := filepath.Join(t.TempDir(), "opened-from-finder.md")
@@ -259,6 +373,30 @@ func TestHideWindowOnCloseOnlyOnMacOS(t *testing.T) {
 		if hideWindowOnClose(platform) {
 			t.Fatalf("%s close button must keep the existing quit behaviour", platform)
 		}
+	}
+}
+
+func TestMacApplicationMenuProvidesConventionalCloseAndQuitShortcuts(t *testing.T) {
+	applicationMenu := buildApplicationMenu("darwin")
+	if applicationMenu == nil || len(applicationMenu.Items) != 3 {
+		t.Fatalf("unexpected macOS application menu: %#v", applicationMenu)
+	}
+	if applicationMenu.Items[0].Role == 0 {
+		t.Fatal("the native app menu containing Command+Q must remain present")
+	}
+	fileMenu := applicationMenu.Items[1]
+	if fileMenu.Label != "File" || fileMenu.SubMenu == nil || len(fileMenu.SubMenu.Items) != 1 {
+		t.Fatalf("unexpected File menu: %#v", fileMenu)
+	}
+	closeItem := fileMenu.SubMenu.Items[0]
+	if closeItem.Label != "Close Window" || closeItem.Accelerator == nil || closeItem.Accelerator.Key != "w" {
+		t.Fatalf("unexpected close-window item: %#v", closeItem)
+	}
+	if len(closeItem.Accelerator.Modifiers) != 1 || closeItem.Accelerator.Modifiers[0] != keys.CmdOrCtrlKey {
+		t.Fatalf("close-window shortcut is not Command+W: %#v", closeItem.Accelerator)
+	}
+	if buildApplicationMenu("windows") != nil || buildApplicationMenu("linux") != nil {
+		t.Fatal("the native macOS application menu must not affect other platforms")
 	}
 }
 

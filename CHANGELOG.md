@@ -4,13 +4,37 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-08-08
+
 ### 简体中文
 
+- macOS 现在自动跟随电脑的白天/黑夜外观：启动时立即采用系统模式，系统外观变化时界面和原生标题栏同步切换，不再被旧的本地明暗设置覆盖。
+- 修复 macOS 半屏平铺或调整窗口尺寸时原生红、黄、绿按钮短暂上下跳动，以及退出全屏时 Logo 和软件名称复位延迟造成的画面重叠。
+- macOS 进入全屏后，Logo 与软件名称会自动向左对齐到内容边距；退出全屏后恢复窗口按钮安全间距，切换过程平滑且不依赖屏幕尺寸猜测。
+- macOS 原生红、黄、绿窗口按钮现在会在 42px 轻薄标题栏内垂直居中，并在窗口缩放、重新获得焦点及进出全屏后保持对齐。
+- 修复 macOS 新建文档被错误保存在可替换的 `.app` 应用包内、导致重新安装后显示丢失的问题；新文档现在固定保存到用户“文稿/MD Reader Assistant”，不会随应用升级被覆盖，已恢复的旧草稿也会自动更新最近阅读路径。
+- 最近阅读会检测原文件是否仍然存在；已删除、移动或暂时无法访问的文档会显示为灰色删除线并禁用打开，同时保留清理记录按钮，避免外接磁盘未挂载时误删历史。
+- Markdown 格式工具栏取消横向滚动条，窗口宽度不足时会按优先级自动把格式收进“更多格式”；同时补充粗斜体、自动链接、Markdown 转义和 HTML 区块。
+- macOS 新增标准 `Command + W` 关闭窗口快捷键，行为与红色关闭按钮一致；保留 `Command + Q` 真正退出应用及未保存内容确认。
+- 补全 Markdown 编辑格式：新增 H4–H6、删除线、高亮、下划线、上下标、分隔线、强制换行、脚注、引用式链接、折叠区块、键盘按键和注释；高亮与脚注已同步支持安全实时预览。
+- 修复 macOS 全屏状态下点击红色关闭按钮偶发无法隐藏窗口的问题；应用会先完成退出全屏动画，再可靠隐藏并继续在后台运行。
+- macOS 顶部工具条改为更轻薄的原生隐藏标题栏布局，移除额外 Toolbar 空间，并分别适配白天与黑夜模式。
 - 移除阅读页与实时预览中行内代码的色块背景，保留清晰的代码文字颜色。
 - 左侧当前选中的文档卡片新增随主题变化的轻量描边，让当前文档更易识别。
 
 ### English
 
+- macOS now follows the computer's light/dark appearance automatically at launch and whenever the system setting changes, keeping the interface and native title bar in sync without letting an old local mode override the system.
+- Fixed native macOS traffic lights briefly jumping vertically during tiling or window resizing, and removed the delayed Logo/title reset that could overlap the controls while leaving fullscreen.
+- On macOS, the Logo and application name now move left to the content margin in fullscreen and restore the traffic-light safe area when returning to a window, using the native fullscreen state rather than screen-size guesses.
+- Centered the native macOS red, yellow and green window controls vertically within the compact 42 px title bar, retaining alignment after resize, focus and fullscreen transitions.
+- Fixed new macOS documents being stored inside the replaceable `.app` bundle and appearing lost after reinstalling. New documents now live in the user's `Documents/MD Reader Assistant` folder and survive application upgrades, while references to recovered legacy drafts are migrated automatically.
+- Recent now detects whether each source file is still available. Deleted, moved or temporarily unavailable documents appear muted with a strikethrough and cannot be opened, while their remove-record action remains available so disconnected drives do not erase history automatically.
+- Removed horizontal scrolling from the Markdown toolbar. Controls now collapse into More Formats by priority when space is limited, with new bold-italic, autolink, Markdown escaping and HTML-block actions.
+- Added the standard macOS `Command + W` close-window shortcut with the same behavior as the red close button, while retaining `Command + Q` for quitting with unsaved-change confirmation.
+- Completed the Markdown editing set with H4–H6, strikethrough, highlight, underline, superscript, subscript, horizontal rules, hard breaks, footnotes, reference links, collapsible sections, keyboard keys and comments, including safe live rendering for highlights and footnotes.
+- Fixed an intermittent macOS issue where the red close button could fail to hide a fullscreen window. The app now completes the fullscreen exit before hiding in the background.
+- Reworked the macOS top bar into a slimmer native hidden-titlebar layout without the extra Toolbar space, with dedicated light and dark appearances.
 - Removed the filled background from inline code in reading and live-preview views while preserving a clear code text color.
 - Added a lightweight theme-colored frame to the selected sidebar document card for clearer current-document identification.
 
@@ -159,3 +183,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.2.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.4
 [2.2.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.5
 [2.2.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.6
+[2.3.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.0

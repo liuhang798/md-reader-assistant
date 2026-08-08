@@ -25,7 +25,7 @@ import (
 const (
 	appNameZH  = "MD阅读助手"
 	appNameEN  = "MD Reader Assistant"
-	appVersion = "2.2.6"
+	appVersion = "2.3.0"
 	maxRecent  = 10
 )
 
@@ -56,14 +56,20 @@ type FolderResult struct {
 	Files []FolderFile `json:"files"`
 }
 
+type RecentFileStatus struct {
+	Path   string `json:"path"`
+	Exists bool   `json:"exists"`
+}
+
 type Preferences struct {
-	RecentFiles         []string `json:"recentFiles"`
-	DraftFiles          []string `json:"draftFiles,omitempty"`
-	LastFile            string   `json:"lastFile,omitempty"`
-	ExplorerRoot        string   `json:"explorerRoot,omitempty"`
-	Language            string   `json:"language"`
-	LastUpdateCheck     string   `json:"lastUpdateCheck,omitempty"`
-	SuppressUpdateUntil string   `json:"suppressUpdateUntil,omitempty"`
+	RecentFiles         []string           `json:"recentFiles"`
+	RecentFileStatuses  []RecentFileStatus `json:"recentFileStatuses,omitempty"`
+	DraftFiles          []string           `json:"draftFiles,omitempty"`
+	LastFile            string             `json:"lastFile,omitempty"`
+	ExplorerRoot        string             `json:"explorerRoot,omitempty"`
+	Language            string             `json:"language"`
+	LastUpdateCheck     string             `json:"lastUpdateCheck,omitempty"`
+	SuppressUpdateUntil string             `json:"suppressUpdateUntil,omitempty"`
 }
 
 type App struct {
@@ -87,7 +93,10 @@ func (a *App) startup(ctx context.Context) {
 	a.mu.Lock()
 	a.ctx = ctx
 	a.mu.Unlock()
+	installMacFullscreenCloseWorkaround()
 	prefs, _ := a.readPreferences()
+	home, _ := os.UserHomeDir()
+	prefs = a.migrateLegacyBundledDraftReferences(goruntime.GOOS, home, prefs)
 	a.language = normaliseLanguage(prefs.Language)
 	a.restoreDrafts(prefs.DraftFiles)
 }
@@ -284,20 +293,14 @@ func (a *App) OpenFile() (*Document, error) {
 	return a.ReadFile(filePath)
 }
 
-// NewFile creates the document silently beside the application. Installed
-// copies use a per-user directory, but a Documents fallback keeps this safe
-// for portable/read-only installations as well.
+// NewFile creates a document without prompting for a location. macOS keeps
+// user documents outside the replaceable .app bundle, while other platforms
+// retain the portable executable-directory preference with safe fallbacks.
 func (a *App) NewFile() (*Document, error) {
-	directories := make([]string, 0, 3)
-	if executable, err := os.Executable(); err == nil {
-		directories = append(directories, filepath.Dir(executable))
-	}
-	if home, err := os.UserHomeDir(); err == nil {
-		directories = append(directories, filepath.Join(home, "Documents", appNameEN))
-	}
-	if config, err := os.UserConfigDir(); err == nil {
-		directories = append(directories, filepath.Join(config, appNameEN, "Documents"))
-	}
+	executable, _ := os.Executable()
+	home, _ := os.UserHomeDir()
+	config, _ := os.UserConfigDir()
+	directories := newDocumentDirectories(goruntime.GOOS, executable, home, config)
 	baseName := strings.TrimSuffix(a.text("newDocument"), filepath.Ext(a.text("newDocument")))
 	filePath, err := createNewMarkdownFile(directories, baseName, time.Now())
 	if err != nil {
@@ -305,6 +308,60 @@ func (a *App) NewFile() (*Document, error) {
 	}
 	a.markDraft(filePath)
 	return a.readDocument(filePath, true)
+}
+
+func newDocumentDirectories(platform, executablePath, homeDir, configDir string) []string {
+	directories := make([]string, 0, 3)
+	if platform != "darwin" && strings.TrimSpace(executablePath) != "" {
+		directories = append(directories, filepath.Dir(executablePath))
+	}
+	if strings.TrimSpace(homeDir) != "" {
+		directories = append(directories, filepath.Join(homeDir, "Documents", appNameEN))
+	}
+	if strings.TrimSpace(configDir) != "" {
+		directories = append(directories, filepath.Join(configDir, appNameEN, "Documents"))
+	}
+	return directories
+}
+
+func (a *App) migrateLegacyBundledDraftReferences(platform, homeDir string, prefs Preferences) Preferences {
+	if platform != "darwin" || strings.TrimSpace(homeDir) == "" {
+		return prefs
+	}
+	safeDirectory := filepath.Join(homeDir, "Documents", appNameEN)
+	replacements := make(map[string]string)
+	for _, oldPath := range prefs.DraftFiles {
+		cleaned := filepath.Clean(oldPath)
+		if !strings.Contains(filepath.ToSlash(cleaned), ".app/Contents/MacOS/") {
+			continue
+		}
+		recoveredPath := filepath.Join(safeDirectory, filepath.Base(cleaned))
+		if info, err := os.Stat(recoveredPath); err == nil && !info.IsDir() {
+			replacements[draftPathKey(cleaned)] = recoveredPath
+		}
+	}
+	if len(replacements) == 0 {
+		return prefs
+	}
+	updated, err := a.updatePreferences(func(current *Preferences) {
+		for index, filePath := range current.RecentFiles {
+			if replacement, ok := replacements[draftPathKey(filePath)]; ok {
+				current.RecentFiles[index] = replacement
+			}
+		}
+		for index, filePath := range current.DraftFiles {
+			if replacement, ok := replacements[draftPathKey(filePath)]; ok {
+				current.DraftFiles[index] = replacement
+			}
+		}
+		if replacement, ok := replacements[draftPathKey(current.LastFile)]; ok {
+			current.LastFile = replacement
+		}
+	})
+	if err != nil {
+		return prefs
+	}
+	return updated
 }
 
 func (a *App) markDraft(filePath string) {
@@ -647,7 +704,24 @@ func (a *App) collectMarkdownFiles(root, current string, depth int, result *[]Fo
 }
 
 func (a *App) GetPreferences() (Preferences, error) {
-	return a.readPreferences()
+	prefs, err := a.readPreferences()
+	if err != nil {
+		return prefs, err
+	}
+	prefs.RecentFileStatuses = recentFileStatuses(prefs.RecentFiles)
+	return prefs, nil
+}
+
+func recentFileStatuses(paths []string) []RecentFileStatus {
+	statuses := make([]RecentFileStatus, 0, len(paths))
+	for _, filePath := range paths {
+		info, err := os.Stat(filepath.Clean(filePath))
+		statuses = append(statuses, RecentFileStatus{
+			Path:   filePath,
+			Exists: err == nil && !info.IsDir(),
+		})
+	}
+	return statuses
 }
 
 // NeedsLanguageSelection is true only when an installer has explicitly marked

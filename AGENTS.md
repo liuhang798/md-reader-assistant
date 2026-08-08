@@ -6,7 +6,7 @@
 
 - 项目名称：MD阅读助手 / MD Reader Assistant
 - 仓库：`https://github.com/liuhang798/md-reader-assistant`
-- 当前版本：`2.2.6`
+- 当前版本：`2.3.0`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
 - 支持平台：Windows x64、macOS Universal、Linux x64
@@ -146,7 +146,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 ### 文档
 
 - `OpenFile()`：显示系统选择窗口并读取文档。
-- `NewFile()`：静默创建唯一文件名，优先写入应用目录，不可写时回退到用户 Documents。
+- `NewFile()`：静默创建唯一文件名；macOS 固定写入用户 `Documents/MD Reader Assistant`，避免 `.app` 升级覆盖用户文档；Windows/Linux 便携版优先写入应用目录，不可写时回退到用户 Documents。
 - `ReadFile(path)`：读取指定文件并写入最近阅读。
 - `SaveFile(path, content)`：覆盖保存。
 - `SaveAs(currentPath, content)`：另存并处理临时草稿替换。
@@ -310,7 +310,7 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 - `build/windows/installer/project.nsi`
 - `CHANGELOG.md`、`README.md`、`README.en.md`、`README.zh-CN.md`、`RELEASING.md`
 
-标签必须与版本完全一致，例如 `v2.2.6`。`.github/workflows/release.yml` 会：
+标签必须与版本完全一致，例如 `v2.3.0`。`.github/workflows/release.yml` 会：
 
 1. 验证标签与 `wails.json`。
 2. 构建 Windows x64 安装程序。

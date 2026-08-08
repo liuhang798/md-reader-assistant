@@ -70,6 +70,14 @@ test('dark mode alone controls sun and moon icon visibility', () => {
   assert.doesNotMatch(styles, /data-accent=[^\n]*\.sun-icon/);
 });
 
+test('macOS follows system appearance and keeps other platforms manually switchable', () => {
+  assert.match(renderer, /window\.matchMedia\('\(prefers-color-scheme: dark\)'\)/);
+  assert.match(renderer, /macSystemColorScheme\.addEventListener\('change', handleSystemColorModeChange\)/);
+  assert.match(renderer, /setColorMode\(colorModeFromSystem\(macSystemColorScheme\.matches\), false\)/);
+  assert.match(renderer, /dataset\.platform === 'darwin'[\s\S]*syncMacSystemColorMode\(\)/);
+  assert.match(renderer, /setColorMode\(state\.colorMode === 'dark' \? 'light' : 'dark'\)/);
+});
+
 test('toolbar icon keyboard focus uses the selected accent instead of browser default', () => {
   assert.match(styles, /\.icon-button:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--accent\)/s);
 });
