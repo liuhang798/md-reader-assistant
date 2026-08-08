@@ -4,6 +4,16 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+### 简体中文
+
+- 移除阅读页与实时预览中行内代码的色块背景，保留清晰的代码文字颜色。
+- 左侧当前选中的文档卡片新增随主题变化的轻量描边，让当前文档更易识别。
+
+### English
+
+- Removed the filled background from inline code in reading and live-preview views while preserving a clear code text color.
+- Added a lightweight theme-colored frame to the selected sidebar document card for clearer current-document identification.
+
 ## [2.2.6] - 2026-08-07
 
 ### 简体中文

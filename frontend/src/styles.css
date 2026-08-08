@@ -218,7 +218,7 @@ body.resizing-panes .sidebar, body.resizing-panes .toc-panel { transition: none;
 .file-row { position: relative; margin-bottom: 3px; }
 .file-item { width: 100%; border: 0; background: transparent; border-radius: 10px; padding: 9px 38px 9px 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
 .file-item:hover { background: color-mix(in srgb, var(--paper) 62%, transparent); }
-.file-item.active { background: var(--paper-strong); box-shadow: 0 2px 10px rgba(43, 52, 45, .05); }
+.file-item.active { background: var(--paper-strong); box-shadow: inset 0 0 0 1px var(--accent), 0 2px 10px rgba(43, 52, 45, .05); }
 .file-icon { width: 32px; height: 34px; flex: 0 0 auto; border-radius: 7px; background: var(--accent-soft); color: var(--accent-strong); display: grid; place-items: center; }
 .file-icon svg { width: 17px; height: 17px; }
 .file-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -289,7 +289,7 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-wid
 .markdown-body table { width: 100%; border-collapse: collapse; margin: 1.8em 0; font-family: "Segoe UI", sans-serif; font-size: .88em; }
 .markdown-body th, .markdown-body td { padding: 10px 13px; border: 1px solid var(--line); text-align: left; }
 .markdown-body th { background: var(--panel); font-weight: 650; }
-.markdown-body code:not(.hljs) { font-family: "Cascadia Code", Consolas, monospace; background: var(--accent-soft); color: var(--accent-strong); border-radius: 5px; padding: .15em .38em; font-size: .86em; }
+.markdown-body code:not(.hljs) { font-family: "Cascadia Code", Consolas, monospace; background: transparent; color: var(--accent-strong); border-radius: 0; padding: 0; font-size: .86em; }
 .code-block { margin: 1.8em 0; background: var(--code); border-radius: 11px; overflow: hidden; box-shadow: 0 10px 26px rgba(15, 22, 17, .15); }
 .code-header { height: 37px; display: flex; align-items: center; justify-content: space-between; padding: 0 13px 0 16px; color: #869087; border-bottom: 1px solid rgba(255,255,255,.06); font-family: "Segoe UI", sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: .8px; }
 .copy-code { color: #aab2aa; border: 0; background: transparent; cursor: pointer; font-size: 10px; }

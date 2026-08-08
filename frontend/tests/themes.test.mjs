@@ -74,6 +74,10 @@ test('toolbar icon keyboard focus uses the selected accent instead of browser de
   assert.match(styles, /\.icon-button:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--accent\)/s);
 });
 
+test('selected sidebar document has a theme-colored frame without changing its size', () => {
+  assert.match(styles, /\.file-item\.active\s*\{[^}]*box-shadow:\s*inset 0 0 0 1px var\(--accent\)/s);
+});
+
 test('prominent accent surfaces use restrained shadows', () => {
   assert.match(styles, /\.brand-mark\s*\{[^}]*box-shadow:\s*0 1px 4px rgba\(37, 54, 41, \.10\)/s);
   assert.match(styles, /\.primary\s*\{[^}]*box-shadow:\s*0 2px 8px color-mix\(in srgb, var\(--accent\) 10%, transparent\)/s);
