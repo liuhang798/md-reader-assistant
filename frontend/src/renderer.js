@@ -678,7 +678,8 @@ function toggleColorMode() {
   setColorMode(state.colorMode === 'dark' ? 'light' : 'dark');
 }
 
-let macWindowModeTimers = [];
+let macWindowModePollTimer;
+let macWindowModePollDeadline = 0;
 
 async function syncMacWindowFullscreen() {
   if (document.documentElement.dataset.platform !== 'darwin') return;
@@ -692,8 +693,18 @@ async function syncMacWindowFullscreen() {
 
 function scheduleMacWindowModeSync() {
   if (document.documentElement.dataset.platform !== 'darwin') return;
-  macWindowModeTimers.forEach(clearTimeout);
-  macWindowModeTimers = [80, 400, 900, 1500].map(delay => setTimeout(syncMacWindowFullscreen, delay));
+  macWindowModePollDeadline = performance.now() + 1800;
+  if (macWindowModePollTimer) return;
+
+  const poll = async () => {
+    await syncMacWindowFullscreen();
+    if (performance.now() < macWindowModePollDeadline) {
+      macWindowModePollTimer = setTimeout(poll, 32);
+    } else {
+      macWindowModePollTimer = undefined;
+    }
+  };
+  macWindowModePollTimer = setTimeout(poll, 0);
 }
 
 function closeAccentMenu() {

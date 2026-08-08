@@ -27,6 +27,8 @@ test('native macOS traffic lights stay vertically centered in the custom title b
   assert.match(macNativeSource, /NSWindowCloseButton[\s\S]*NSWindowMiniaturizeButton[\s\S]*NSWindowZoomButton/);
   assert.match(macNativeSource, /NSWindowDidResizeNotification/);
   assert.match(macNativeSource, /NSWindowDidExitFullScreenNotification/);
+  assert.doesNotMatch(macNativeSource, /mdaScheduleTrafficLightCentering/);
+  assert.match(macNativeSource, /usingBlock:[\s\S]*mdaCenterTrafficLights\(window\);/);
 });
 
 test('macOS fullscreen moves the brand left and restores windowed spacing automatically', () => {
@@ -34,6 +36,8 @@ test('macOS fullscreen moves the brand left and restores windowed spacing automa
   assert.match(bridgeSource, /isWindowFullscreen:\s*\(\)\s*=>/);
   assert.match(rendererSource, /document\.documentElement\.dataset\.windowFullscreen = fullscreen \? 'true' : 'false'/);
   assert.match(rendererSource, /window\.addEventListener\('resize', scheduleMacWindowModeSync\)/);
-  assert.match(rendererSource, /\[80, 400, 900, 1500\]\.map\(delay => setTimeout\(syncMacWindowFullscreen, delay\)\)/);
+  assert.match(rendererSource, /macWindowModePollDeadline = performance\.now\(\) \+ 1800/);
+  assert.match(rendererSource, /macWindowModePollTimer = setTimeout\(poll, 32\)/);
   assert.match(styles, /data-platform="darwin"\]\[data-window-fullscreen="true"\]\s+\.titlebar\s*\{\s*padding-left:\s*14px;/);
+  assert.doesNotMatch(styles, /transition:\s*padding-left/);
 });

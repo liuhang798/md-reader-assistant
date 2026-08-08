@@ -8,6 +8,7 @@ All notable changes to MD Reader Assistant are documented here.
 
 ### 简体中文
 
+- 修复 macOS 半屏平铺或调整窗口尺寸时原生红、黄、绿按钮短暂上下跳动，以及退出全屏时 Logo 和软件名称复位延迟造成的画面重叠。
 - macOS 进入全屏后，Logo 与软件名称会自动向左对齐到内容边距；退出全屏后恢复窗口按钮安全间距，切换过程平滑且不依赖屏幕尺寸猜测。
 - macOS 原生红、黄、绿窗口按钮现在会在 42px 轻薄标题栏内垂直居中，并在窗口缩放、重新获得焦点及进出全屏后保持对齐。
 - 修复 macOS 新建文档被错误保存在可替换的 `.app` 应用包内、导致重新安装后显示丢失的问题；新文档现在固定保存到用户“文稿/MD Reader Assistant”，不会随应用升级被覆盖，已恢复的旧草稿也会自动更新最近阅读路径。
@@ -22,6 +23,7 @@ All notable changes to MD Reader Assistant are documented here.
 
 ### English
 
+- Fixed native macOS traffic lights briefly jumping vertically during tiling or window resizing, and removed the delayed Logo/title reset that could overlap the controls while leaving fullscreen.
 - On macOS, the Logo and application name now move left to the content margin in fullscreen and restore the traffic-light safe area when returning to a window, using the native fullscreen state rather than screen-size guesses.
 - Centered the native macOS red, yellow and green window controls vertically within the compact 42 px title bar, retaining alignment after resize, focus and fullscreen transitions.
 - Fixed new macOS documents being stored inside the replaceable `.app` bundle and appearing lost after reinstalling. New documents now live in the user's `Documents/MD Reader Assistant` folder and survive application upgrades, while references to recovered legacy drafts are migrated automatically.

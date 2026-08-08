@@ -41,7 +41,7 @@ It is a good fit for reading long Markdown documents, editing README files, main
 
 On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup. Its selected language is also used by the app, so first launch does not ask for it again.
 
-The macOS build centers its native left-side window controls vertically within a slim light/dark-aware top bar. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area on exit. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
+The macOS build centers its native left-side window controls vertically within a slim light/dark-aware top bar. The controls stay stable during tiling and resizing; in fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
 ## What's new in 2.3.0
 

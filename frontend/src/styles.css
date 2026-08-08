@@ -173,7 +173,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   padding-right: 14px;
   background: var(--mac-titlebar-bg);
   border-bottom-color: var(--mac-titlebar-line);
-  transition: padding-left .18s ease, background .25s ease, border-color .25s ease;
+  transition: background .25s ease, border-color .25s ease;
 }
 :root[data-platform="darwin"][data-window-fullscreen="true"] .titlebar { padding-left: 14px; }
 :root[data-platform="darwin"] .brand {

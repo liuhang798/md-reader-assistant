@@ -43,12 +43,6 @@ static void mdaCenterTrafficLights(NSWindow *window) {
     }
 }
 
-static void mdaScheduleTrafficLightCentering(NSWindow *window) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        mdaCenterTrafficLights(window);
-    });
-}
-
 static void mdaInstallTrafficLightCentering(NSWindow *window) {
     mdaCenterTrafficLights(window);
     if (objc_getAssociatedObject(window, &mdaTrafficLightObserversKey) != nil) {
@@ -65,7 +59,10 @@ static void mdaInstallTrafficLightCentering(NSWindow *window) {
     ];
     for (NSNotificationName name in names) {
         id token = [center addObserverForName:name object:window queue:NSOperationQueue.mainQueue usingBlock:^(__unused NSNotification *notification) {
-            mdaScheduleTrafficLightCentering(window);
+            // AppKit lays out the traffic lights during resize and tiling. Apply
+            // our compact-titlebar position in the same notification turn so a
+            // stale native frame is never painted before the correction.
+            mdaCenterTrafficLights(window);
         }];
         [tokens addObject:token];
     }
