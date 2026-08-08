@@ -32,6 +32,10 @@ export function normalizeColorMode(value) {
   return value === 'dark' ? 'dark' : DEFAULT_APPEARANCE.colorMode;
 }
 
+export function colorModeFromSystem(prefersDark) {
+  return prefersDark ? 'dark' : 'light';
+}
+
 export function readAppearanceStorage(storage) {
   const legacy = LEGACY_THEMES[storage.getItem('theme')] ?? DEFAULT_APPEARANCE;
   const savedAccent = storage.getItem('accentTheme');

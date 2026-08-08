@@ -1,7 +1,7 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';
-import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage } from './appearance.js';
+import { ACCENT_THEMES, colorModeFromSystem, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage } from './appearance.js';
 import { escapeMarkdownText, highlightExtension, nextFootnoteNumber, prepareFootnotes, renderFootnoteSection } from './markdown-formats.js';
 
 const $ = selector => document.querySelector(selector);
@@ -55,7 +55,7 @@ const translations = {
   'zh-CN': {
     appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
-    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
+    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '跟随 macOS 系统外观（自动）', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
     library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
@@ -86,7 +86,7 @@ const translations = {
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
-    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
+    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Follow macOS appearance automatically', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
     library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
@@ -666,16 +666,44 @@ function setAccentTheme(accentId) {
   updateThemedLogos();
 }
 
-function setColorMode(mode) {
+function setColorMode(mode, persist = true) {
   state.colorMode = normalizeColorMode(mode);
   document.documentElement.dataset.colorMode = state.colorMode;
-  localStorage.setItem('colorMode', state.colorMode);
+  if (persist) localStorage.setItem('colorMode', state.colorMode);
   $('#colorModeButton').setAttribute('aria-pressed', String(state.colorMode === 'dark'));
   window.leafMD.setTheme(state.colorMode === 'dark');
 }
 
 function toggleColorMode() {
+  if (document.documentElement.dataset.platform === 'darwin') {
+    syncMacSystemColorMode();
+    showToast(t('systemColorModeTitle'));
+    return;
+  }
   setColorMode(state.colorMode === 'dark' ? 'light' : 'dark');
+}
+
+let macSystemColorScheme;
+
+function syncMacSystemColorMode() {
+  if (!macSystemColorScheme) return;
+  setColorMode(colorModeFromSystem(macSystemColorScheme.matches), false);
+}
+
+function initializeMacSystemColorMode() {
+  if (document.documentElement.dataset.platform !== 'darwin' || !window.matchMedia) return false;
+  macSystemColorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+  const button = $('#colorModeButton');
+  button.dataset.i18nTitle = 'systemColorModeTitle';
+  button.dataset.i18nAriaLabel = 'systemColorModeTitle';
+  button.title = t('systemColorModeTitle');
+  button.setAttribute('aria-label', t('systemColorModeTitle'));
+  button.dataset.systemManaged = 'true';
+  const handleSystemColorModeChange = () => syncMacSystemColorMode();
+  if (macSystemColorScheme.addEventListener) macSystemColorScheme.addEventListener('change', handleSystemColorModeChange);
+  else macSystemColorScheme.addListener(handleSystemColorModeChange);
+  syncMacSystemColorMode();
+  return true;
 }
 
 let macWindowModePollTimer;
@@ -1421,7 +1449,7 @@ async function snoozeUpdates() {
 
 async function initialize() {
   setAccentTheme(state.accentTheme);
-  setColorMode(state.colorMode);
+  if (!initializeMacSystemColorMode()) setColorMode(state.colorMode);
   setFontScale(state.fontScale, true);
   scheduleMacWindowModeSync();
   const prefs = await window.leafMD.getPreferences();

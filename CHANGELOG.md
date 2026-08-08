@@ -8,6 +8,7 @@ All notable changes to MD Reader Assistant are documented here.
 
 ### 简体中文
 
+- macOS 现在自动跟随电脑的白天/黑夜外观：启动时立即采用系统模式，系统外观变化时界面和原生标题栏同步切换，不再被旧的本地明暗设置覆盖。
 - 修复 macOS 半屏平铺或调整窗口尺寸时原生红、黄、绿按钮短暂上下跳动，以及退出全屏时 Logo 和软件名称复位延迟造成的画面重叠。
 - macOS 进入全屏后，Logo 与软件名称会自动向左对齐到内容边距；退出全屏后恢复窗口按钮安全间距，切换过程平滑且不依赖屏幕尺寸猜测。
 - macOS 原生红、黄、绿窗口按钮现在会在 42px 轻薄标题栏内垂直居中，并在窗口缩放、重新获得焦点及进出全屏后保持对齐。
@@ -23,6 +24,7 @@ All notable changes to MD Reader Assistant are documented here.
 
 ### English
 
+- macOS now follows the computer's light/dark appearance automatically at launch and whenever the system setting changes, keeping the interface and native title bar in sync without letting an old local mode override the system.
 - Fixed native macOS traffic lights briefly jumping vertically during tiling or window resizing, and removed the delayed Logo/title reset that could overlap the controls while leaving fullscreen.
 - On macOS, the Logo and application name now move left to the content margin in fullscreen and restore the traffic-light safe area when returning to a window, using the native fullscreen state rather than screen-size guesses.
 - Centered the native macOS red, yellow and green window controls vertically within the compact 42 px title bar, retaining alignment after resize, focus and fullscreen transitions.
