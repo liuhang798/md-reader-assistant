@@ -43,13 +43,12 @@ On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the s
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
-## What's new in 2.3.0
+## What's new in 2.3.1
 
-- On macOS, the Logo and application name align left automatically in fullscreen and restore the traffic-light safe area on exit; the slim title bar supports both light and dark appearances.
-- Fixed intermittent fullscreen closing and added standard macOS behavior for `Command + W` to close the window and `Command + Q` to quit.
-- New documents are stored in the user's `Documents/MD Reader Assistant` folder so reinstalls cannot overwrite them, while unavailable Recent files are clearly marked.
-- The Markdown toolbar collapses overflow into More Formats and adds editing and preview support for highlights, footnotes, superscript, subscript, collapsible sections and more.
-- Native red, yellow and green window controls remain vertically centered in the slim title bar.
+- While following the macOS light/dark appearance automatically, a temporary manual switch is now allowed until the next system appearance change.
+- Fixed an intermittent issue where clicking the Dock icon while the app was in the background did not show or focus the window.
+- Recent now provides a right-click menu with Edit, Show in Folder and Remove.
+- Fixed an intermittent issue where the close button in fullscreen only exited fullscreen without hiding the window.
 
 ## Highlights
 
@@ -157,7 +156,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.3.0` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.3.1` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

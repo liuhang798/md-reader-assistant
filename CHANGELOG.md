@@ -4,6 +4,10 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [2.3.1] - 2026-08-09
+
 ### 简体中文
 
 - macOS 自动跟随系统白天/黑夜模式时，现在允许用户临时手动切换；临时选择会保持到系统下一次外观变化，随后自动恢复跟随。
@@ -198,3 +202,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.2.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.5
 [2.2.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.6
 [2.3.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.0
+[2.3.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.1

@@ -28,7 +28,7 @@
 !define INFO_PROJECTNAME    "md-reader-assistant"
 !define INFO_COMPANYNAME    "LeafMD Open Source"
 !define INFO_PRODUCTNAME    "MD阅读助手"
-!define INFO_PRODUCTVERSION "2.3.0"
+!define INFO_PRODUCTVERSION "2.3.1"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
