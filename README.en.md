@@ -43,12 +43,9 @@ On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the s
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
-## What's new in 2.3.1
+## What's new in 2.3.2
 
-- While following the macOS light/dark appearance automatically, a temporary manual switch is now allowed until the next system appearance change.
-- Fixed an intermittent issue where clicking the Dock icon while the app was in the background did not show or focus the window.
-- Recent now provides a right-click menu with Edit, Show in Folder and Remove.
-- Fixed an intermittent issue where the close button in fullscreen only exited fullscreen without hiding the window.
+- Fixed a macOS issue where, after closing the window from fullscreen and hiding the app, clicking the Dock icon could not bring the window back. Fullscreen close now behaves exactly like a windowed close, so the Dock can reliably restore the window.
 
 ## Highlights
 
@@ -156,7 +153,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.3.1` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.3.2` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
 
 ## Project documentation
 

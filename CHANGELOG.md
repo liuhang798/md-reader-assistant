@@ -6,6 +6,16 @@ All notable changes to MD Reader Assistant are documented here.
 
 _Nothing yet._
 
+## [2.3.2] - 2026-08-09
+
+### 简体中文
+
+- 修复 macOS 全屏关闭后应用进入后台，再次点击 Dock 图标无法恢复窗口的问题；全屏关闭现在只隐藏应用而不主动隐藏窗口，与普通关闭行为一致，Dock 恢复时再取消应用隐藏并检查全屏残留状态。
+
+### English
+
+- Fixed a macOS issue where, after closing the window from fullscreen and hiding the app, clicking the Dock icon could not bring the window back. Fullscreen close now hides the application only, matching the normal close behaviour, and the Dock reopen path unhides the application first and clears any leftover fullscreen state.
+
 ## [2.3.1] - 2026-08-09
 
 ### 简体中文
@@ -203,3 +213,4 @@ _Nothing yet._
 [2.2.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.6
 [2.3.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.0
 [2.3.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.1
+[2.3.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.2

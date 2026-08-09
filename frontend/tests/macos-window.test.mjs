@@ -45,11 +45,14 @@ test('macOS fullscreen moves the brand left and restores windowed spacing automa
 test('fullscreen close waits for the native exit notification before hiding the window', () => {
   assert.match(macNativeSource, /notification\.name isEqualToString:NSWindowDidExitFullScreenNotification/);
   assert.match(macNativeSource, /mdaFinishFullscreenClose\(window\)/);
-  assert.match(macNativeSource, /\[window orderOut:nil\]/);
   assert.match(macNativeSource, /\[NSApp hide:nil\]/);
   assert.match(macNativeSource, /mdaScheduleFullscreenCloseFallback\(window\)/);
   assert.match(macNativeSource, /mdaFullscreenClosePending && window == mdaFullscreenCloseWindow/);
   assert.doesNotMatch(macNativeSource, /mdaHideAfterFullscreenExit/);
+  // The fullscreen close must hide the app only (like a windowed close).
+  // Ordering the window out here leaves it in a stale fullscreen space and
+  // breaks the Dock reopen path, so it must not appear in this function.
+  assert.doesNotMatch(macNativeSource, /mdaFinishFullscreenClose[\s\S]*\[window orderOut:nil\]/);
 });
 
 test('clicking the macOS Dock icon restores and foregrounds the reader window', () => {
@@ -60,4 +63,10 @@ test('clicking the macOS Dock icon restores and foregrounds the reader window', 
   assert.match(macNativeSource, /\[window makeKeyAndOrderFront:nil\]/);
   assert.match(macNativeSource, /\[application activateIgnoringOtherApps:YES\]/);
   assert.match(macNativeSource, /mdaInstallApplicationReopenHandler\(\)/);
+});
+
+test('Dock reopen unhides the application first so a fullscreen-closed window can appear again', () => {
+  assert.match(macNativeSource, /static void mdaBringApplicationWindowToFront[\s\S]*?\[NSApp unhide:nil\][\s\S]*?\[window makeKeyAndOrderFront:nil\]/);
+  assert.match(macNativeSource, /static void mdaBringApplicationWindowToFront[\s\S]*?mdaWindowIsFullscreen\(window\)[\s\S]*?\[window toggleFullScreen:nil\][\s\S]*?\[window makeKeyAndOrderFront:nil\]/);
+  assert.match(macNativeSource, /static void mdaBringApplicationWindowToFront[\s\S]*?\[NSApp unhide:nil\]/);
 });

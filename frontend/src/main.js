@@ -54,13 +54,13 @@ window.leafMD = {
       ? {
           checked: true,
           available: true,
-          currentVersion: '2.3.1',
+          currentVersion: '2.3.2',
           latestVersion: '2.4.0',
           releaseName: 'MD阅读助手 2.4.0',
           releaseNotes: '新增阅读模式快捷操作\n优化大文档加载性能\n修复若干已知问题',
           releaseUrl: 'https://github.com/liuhang798/md-reader-assistant/releases/latest'
         }
-      : { checked: true, available: false, currentVersion: '2.3.1', latestVersion: '2.3.1' }),
+      : { checked: true, available: false, currentVersion: '2.3.2', latestVersion: '2.3.2' }),
   snoozeUpdates: days => desktopRuntime ? Backend.SnoozeUpdates(days) : resolved(),
   pathForFile: file => file?.path || '',
   onOpenFile: callback => desktopRuntime ? EventsOn('file:open-from-main', callback) : () => {},

@@ -107,9 +107,25 @@ static void mdaBringApplicationWindowToFront(NSApplication *application) {
     if (window == nil) {
         return;
     }
+
+    // The app may have been hidden by the standard hide-on-close behaviour or
+    // by the fullscreen close workaround. Unhide it first, otherwise ordering
+    // the window front keeps it invisible while the application stays hidden.
+    [NSApp unhide:nil];
+
     if (window.miniaturized) {
         [window deminiaturize:nil];
     }
+
+    // A window hidden right after leaving fullscreen can still carry the
+    // fullscreen style mask when the close fell back to the timer path, or
+    // when the exit animation was interrupted. Ordering such a window front
+    // from a Dock click would keep it in the invisible fullscreen space, so
+    // leave fullscreen before restoring it.
+    if (mdaWindowIsFullscreen(window)) {
+        [window toggleFullScreen:nil];
+    }
+
     [window makeKeyAndOrderFront:nil];
     [application activateIgnoringOtherApps:YES];
 }
@@ -154,10 +170,15 @@ static void mdaFinishFullscreenClose(NSWindow *window) {
     mdaFullscreenCloseWindow = nil;
     // NSWindowDidExitFullScreen is delivered after the transition completes,
     // but defer one more main-loop turn so AppKit cannot re-order the window
-    // after our hide request. orderOut guarantees the window itself disappears
-    // even if hiding the application is ignored during a rare transition race.
+    // after our hide request.
+    //
+    // Hide only the application, exactly like the standard windowed hide-on-
+    // close path. Ordering the window out as well used to leave a window that
+    // had just left fullscreen attached to a stale fullscreen space, so the
+    // Dock reopen (unhide + makeKeyAndOrderFront) could not bring it back.
+    // Hiding the application hides its windows too, and the 3 s fallback
+    // re-runs this if the first hide is lost during a transition race.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 80 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        [window orderOut:nil];
         [NSApp hide:nil];
     });
 }
