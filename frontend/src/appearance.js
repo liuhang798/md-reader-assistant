@@ -36,6 +36,17 @@ export function colorModeFromSystem(prefersDark) {
   return prefersDark ? 'dark' : 'light';
 }
 
+export function resolveMacColorMode(prefersDark, temporaryMode = null) {
+  return temporaryMode === 'light' || temporaryMode === 'dark'
+    ? temporaryMode
+    : colorModeFromSystem(prefersDark);
+}
+
+export function temporaryMacColorModeAfterToggle(currentMode, prefersDark) {
+  const nextMode = normalizeColorMode(currentMode) === 'dark' ? 'light' : 'dark';
+  return nextMode === colorModeFromSystem(prefersDark) ? null : nextMode;
+}
+
 export function readAppearanceStorage(storage) {
   const legacy = LEGACY_THEMES[storage.getItem('theme')] ?? DEFAULT_APPEARANCE;
   const savedAccent = storage.getItem('accentTheme');

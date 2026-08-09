@@ -41,3 +41,23 @@ test('macOS fullscreen moves the brand left and restores windowed spacing automa
   assert.match(styles, /data-platform="darwin"\]\[data-window-fullscreen="true"\]\s+\.titlebar\s*\{\s*padding-left:\s*14px;/);
   assert.doesNotMatch(styles, /transition:\s*padding-left/);
 });
+
+test('fullscreen close waits for the native exit notification before hiding the window', () => {
+  assert.match(macNativeSource, /notification\.name isEqualToString:NSWindowDidExitFullScreenNotification/);
+  assert.match(macNativeSource, /mdaFinishFullscreenClose\(window\)/);
+  assert.match(macNativeSource, /\[window orderOut:nil\]/);
+  assert.match(macNativeSource, /\[NSApp hide:nil\]/);
+  assert.match(macNativeSource, /mdaScheduleFullscreenCloseFallback\(window\)/);
+  assert.match(macNativeSource, /mdaFullscreenClosePending && window == mdaFullscreenCloseWindow/);
+  assert.doesNotMatch(macNativeSource, /mdaHideAfterFullscreenExit/);
+});
+
+test('clicking the macOS Dock icon restores and foregrounds the reader window', () => {
+  assert.match(macNativeSource, /applicationShouldHandleReopen:hasVisibleWindows:/);
+  assert.match(macNativeSource, /class_addMethod\(delegateClass, selector, \(IMP\)mdaApplicationShouldHandleReopen/);
+  assert.match(macNativeSource, /for \(NSWindow \*candidate in NSApp\.windows\)/);
+  assert.match(macNativeSource, /\[window deminiaturize:nil\]/);
+  assert.match(macNativeSource, /\[window makeKeyAndOrderFront:nil\]/);
+  assert.match(macNativeSource, /\[application activateIgnoringOtherApps:YES\]/);
+  assert.match(macNativeSource, /mdaInstallApplicationReopenHandler\(\)/);
+});

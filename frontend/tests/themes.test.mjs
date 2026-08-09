@@ -70,11 +70,13 @@ test('dark mode alone controls sun and moon icon visibility', () => {
   assert.doesNotMatch(styles, /data-accent=[^\n]*\.sun-icon/);
 });
 
-test('macOS follows system appearance and keeps other platforms manually switchable', () => {
+test('macOS allows a temporary override and resumes following at the next system appearance change', () => {
   assert.match(renderer, /window\.matchMedia\('\(prefers-color-scheme: dark\)'\)/);
   assert.match(renderer, /macSystemColorScheme\.addEventListener\('change', handleSystemColorModeChange\)/);
-  assert.match(renderer, /setColorMode\(colorModeFromSystem\(macSystemColorScheme\.matches\), false\)/);
-  assert.match(renderer, /dataset\.platform === 'darwin'[\s\S]*syncMacSystemColorMode\(\)/);
+  assert.match(renderer, /temporaryMacColorModeAfterToggle\(state\.colorMode, macSystemColorScheme\.matches\)/);
+  assert.match(renderer, /setColorMode\(nextMode, false\)/);
+  assert.match(renderer, /handleSystemColorModeChange = \(\) => syncMacSystemColorMode\(true\)/);
+  assert.match(renderer, /if \(clearTemporaryOverride\) macTemporaryColorMode = null/);
   assert.match(renderer, /setColorMode\(state\.colorMode === 'dark' \? 'light' : 'dark'\)/);
 });
 

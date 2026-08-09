@@ -451,6 +451,14 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .popover .language-option.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 650; }
 .popover .language-option.active .language-check { opacity: 1; }
 .popover hr { border: 0; height: 1px; background: var(--line); margin: 5px; }
+.recent-context-menu { z-index: 90; right: auto; width: 190px; }
+.recent-context-menu button { align-items: center; justify-content: flex-start; gap: 10px; color: var(--text); }
+.recent-context-menu button svg { width: 16px; height: 16px; flex: 0 0 16px; color: var(--muted); }
+.recent-context-menu button:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+.recent-context-menu button:disabled { cursor: not-allowed; opacity: .42; }
+.recent-context-menu button:disabled:hover { background: transparent; }
+.recent-context-menu .danger-menu-item { color: #b05e55; }
+.recent-context-menu .danger-menu-item svg { color: currentColor; }
 .accent-menu { right: 216px; width: 306px; padding: 10px; border-radius: 14px; }
 .accent-menu .popover-label { padding: 4px 5px 10px; }
 .accent-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

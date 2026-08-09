@@ -84,3 +84,17 @@ test('system appearance maps directly to light and dark color modes', () => {
   assert.equal(appearance.colorModeFromSystem?.(false), 'light');
   assert.equal(appearance.colorModeFromSystem?.(true), 'dark');
 });
+
+test('macOS temporary mode overrides the current system appearance only when present', () => {
+  assert.equal(appearance.resolveMacColorMode?.(false), 'light');
+  assert.equal(appearance.resolveMacColorMode?.(true), 'dark');
+  assert.equal(appearance.resolveMacColorMode?.(false, 'dark'), 'dark');
+  assert.equal(appearance.resolveMacColorMode?.(true, 'light'), 'light');
+});
+
+test('macOS toggle keeps only a mode that differs from the current system appearance', () => {
+  assert.equal(appearance.temporaryMacColorModeAfterToggle?.('light', false), 'dark');
+  assert.equal(appearance.temporaryMacColorModeAfterToggle?.('dark', false), null);
+  assert.equal(appearance.temporaryMacColorModeAfterToggle?.('dark', true), 'light');
+  assert.equal(appearance.temporaryMacColorModeAfterToggle?.('light', true), null);
+});

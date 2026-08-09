@@ -5,9 +5,9 @@ export namespace main {
 	    name: string;
 	    directory: string;
 	    content: string;
-        modifiedAt: string;
-        size: number;
-        replacedPath?: string;
+	    modifiedAt: string;
+	    size: number;
+	    replacedPath?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Document(source);
@@ -19,9 +19,9 @@ export namespace main {
 	        this.name = source["name"];
 	        this.directory = source["directory"];
 	        this.content = source["content"];
-            this.modifiedAt = source["modifiedAt"];
-            this.size = source["size"];
-            this.replacedPath = source["replacedPath"];
+	        this.modifiedAt = source["modifiedAt"];
+	        this.size = source["size"];
+	        this.replacedPath = source["replacedPath"];
 	    }
 	}
 	export class FolderFile {
@@ -76,6 +76,20 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class RecentFileStatus {
+	    path: string;
+	    exists: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new RecentFileStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.exists = source["exists"];
+	    }
+	}
 	export class Preferences {
 	    recentFiles: string[];
 	    recentFileStatuses?: RecentFileStatus[];
@@ -101,7 +115,7 @@ export namespace main {
 	        this.lastUpdateCheck = source["lastUpdateCheck"];
 	        this.suppressUpdateUntil = source["suppressUpdateUntil"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -120,20 +134,7 @@ export namespace main {
 		    return a;
 		}
 	}
-	export class RecentFileStatus {
-	    path: string;
-	    exists: boolean;
-
-	    static createFrom(source: any = {}) {
-	        return new RecentFileStatus(source);
-	    }
-
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.path = source["path"];
-	        this.exists = source["exists"];
-	    }
-	}
+	
 	export class UpdateInfo {
 	    checked: boolean;
 	    suppressed: boolean;
@@ -164,3 +165,4 @@ export namespace main {
 	}
 
 }
+

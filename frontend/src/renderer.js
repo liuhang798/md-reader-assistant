@@ -1,7 +1,7 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';
-import { ACCENT_THEMES, colorModeFromSystem, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage } from './appearance.js';
+import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage, resolveMacColorMode, temporaryMacColorModeAfterToggle } from './appearance.js';
 import { escapeMarkdownText, highlightExtension, nextFootnoteNumber, prepareFootnotes, renderFootnoteSection } from './markdown-formats.js';
 
 const $ = selector => document.querySelector(selector);
@@ -55,7 +55,7 @@ const translations = {
   'zh-CN': {
     appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
-    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '跟随 macOS 系统外观（自动）', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
+    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '临时切换白天/黑夜模式；系统下次切换时恢复自动跟随', temporaryColorModeChanged: '已临时切换为{mode}模式；系统下次切换时恢复自动跟随', lightModeName: '白天', darkModeName: '黑夜', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
     library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
@@ -65,8 +65,8 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
     zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', printDocument: '打印文档', copy: '复制', copied: '已复制',
-    bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyExplorer: '请先打开一个文件夹',
-    markdownDocument: 'Markdown 文档', removeRecentTitle: '删除最近阅读记录', removeRecentAria: '删除 {name} 的最近阅读记录',
+    bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', recentContextHint: '右键打开文档操作菜单', recentContextMenuTitle: '最近阅读文档操作', recentEdit: '编辑', recentReveal: '打开所在文件夹', recentRemove: '移除', recentRevealFailed: '无法打开文件所在目录', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyExplorer: '请先打开一个文件夹',
+    markdownDocument: 'Markdown 文档', removeRecentTitle: '移除最近阅读记录', removeRecentAria: '从最近阅读中移除 {name}',
     discardConfirm: '当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？', previewError: '暂时无法渲染当前内容',
     readingTime: '约 {minutes} 分钟 · {words} 字', renderFailed: 'Markdown 渲染失败', openFailed: '无法打开这个文件',
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
@@ -86,7 +86,7 @@ const translations = {
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
-    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Follow macOS appearance automatically', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
+    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Temporarily switch light/dark mode; automatic following resumes at the next system appearance change', temporaryColorModeChanged: 'Temporarily switched to {mode} mode; automatic following resumes at the next system appearance change', lightModeName: 'light', darkModeName: 'dark', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
     library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
@@ -96,7 +96,7 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
     zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
-    bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyExplorer: 'Open a folder to browse files',
+    bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', recentContextHint: 'Right-click for document actions', recentContextMenuTitle: 'Recent document actions', recentEdit: 'Edit', recentReveal: 'Show in Folder', recentRemove: 'Remove', recentRevealFailed: 'Unable to show the file in its folder', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyExplorer: 'Open a folder to browse files',
     markdownDocument: 'Markdown document', removeRecentTitle: 'Remove recent record', removeRecentAria: 'Remove {name} from Recent',
     discardConfirm: 'This document has unsaved changes.\n\nDiscard the changes and continue?', previewError: 'The current content cannot be rendered',
     readingTime: 'About {minutes} min · {words} words', renderFailed: 'Markdown rendering failed', openFailed: 'Unable to open this file',
@@ -186,7 +186,7 @@ const els = {
   breadcrumb: $('#breadcrumb'), readingTime: $('#readingTime'), progressBar: $('#progressBar'),
   appShell: $('.app-shell'), sidebar: $('#sidebar'), expandSidebar: $('#expandSidebar'), sidebarResizer: $('#sidebarResizer'), tocResizer: $('#tocResizer'), searchBar: $('#searchBar'),
   searchInput: $('#searchInput'), searchCount: $('#searchCount'), dropOverlay: $('#dropOverlay'),
-  moreMenu: $('#moreMenu'), accentMenu: $('#accentMenu'), toast: $('#toast'), editorView: $('#editorView'),
+  moreMenu: $('#moreMenu'), accentMenu: $('#accentMenu'), recentContextMenu: $('#recentContextMenu'), toast: $('#toast'), editorView: $('#editorView'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
@@ -675,19 +675,27 @@ function setColorMode(mode, persist = true) {
 }
 
 function toggleColorMode() {
-  if (document.documentElement.dataset.platform === 'darwin') {
-    syncMacSystemColorMode();
-    showToast(t('systemColorModeTitle'));
+  if (document.documentElement.dataset.platform === 'darwin' && macSystemColorScheme) {
+    macTemporaryColorMode = temporaryMacColorModeAfterToggle(state.colorMode, macSystemColorScheme.matches);
+    const nextMode = resolveMacColorMode(macSystemColorScheme.matches, macTemporaryColorMode);
+    setColorMode(nextMode, false);
+    if (macTemporaryColorMode) {
+      showToast(t('temporaryColorModeChanged', { mode: t(`${nextMode}ModeName`) }));
+    } else {
+      showToast(t('systemColorModeTitle'));
+    }
     return;
   }
   setColorMode(state.colorMode === 'dark' ? 'light' : 'dark');
 }
 
 let macSystemColorScheme;
+let macTemporaryColorMode = null;
 
-function syncMacSystemColorMode() {
+function syncMacSystemColorMode(clearTemporaryOverride = false) {
   if (!macSystemColorScheme) return;
-  setColorMode(colorModeFromSystem(macSystemColorScheme.matches), false);
+  if (clearTemporaryOverride) macTemporaryColorMode = null;
+  setColorMode(resolveMacColorMode(macSystemColorScheme.matches, macTemporaryColorMode), false);
 }
 
 function initializeMacSystemColorMode() {
@@ -699,7 +707,7 @@ function initializeMacSystemColorMode() {
   button.title = t('systemColorModeTitle');
   button.setAttribute('aria-label', t('systemColorModeTitle'));
   button.dataset.systemManaged = 'true';
-  const handleSystemColorModeChange = () => syncMacSystemColorMode();
+  const handleSystemColorModeChange = () => syncMacSystemColorMode(true);
   if (macSystemColorScheme.addEventListener) macSystemColorScheme.addEventListener('change', handleSystemColorModeChange);
   else macSystemColorScheme.addListener(handleSystemColorModeChange);
   syncMacSystemColorMode();
@@ -740,9 +748,37 @@ function closeAccentMenu() {
   $('#accentButton').setAttribute('aria-expanded', 'false');
 }
 
+function closeRecentContextMenu() {
+  els.recentContextMenu.classList.add('hidden');
+  delete els.recentContextMenu.dataset.path;
+}
+
+function openRecentContextMenu(event, filePath, missing) {
+  event.preventDefault();
+  event.stopPropagation();
+  els.moreMenu.classList.add('hidden');
+  closeAccentMenu();
+
+  els.recentContextMenu.dataset.path = encodeURIComponent(filePath);
+  els.recentContextMenu.querySelectorAll('[data-recent-action]').forEach(button => {
+    const disabled = missing && button.dataset.recentAction !== 'remove';
+    button.disabled = disabled;
+    button.setAttribute('aria-disabled', String(disabled));
+  });
+  els.recentContextMenu.classList.remove('hidden');
+
+  const menuRect = els.recentContextMenu.getBoundingClientRect();
+  const left = Math.max(8, Math.min(event.clientX, window.innerWidth - menuRect.width - 8));
+  const top = Math.max(8, Math.min(event.clientY, window.innerHeight - menuRect.height - 8));
+  els.recentContextMenu.style.left = `${left}px`;
+  els.recentContextMenu.style.top = `${top}px`;
+  requestAnimationFrame(() => els.recentContextMenu.querySelector('button:not(:disabled)')?.focus());
+}
+
 function toggleAccentMenu() {
   const opening = els.accentMenu.classList.contains('hidden');
   els.moreMenu.classList.add('hidden');
+  closeRecentContextMenu();
   els.accentMenu.classList.toggle('hidden', !opening);
   $('#accentButton').setAttribute('aria-expanded', String(opening));
   if (opening) requestAnimationFrame(() => els.accentMenu.querySelector('[aria-checked="true"]')?.focus());
@@ -862,6 +898,7 @@ function restoreExplorerAfterFirstPaint(savedRoot) {
 }
 
 function renderFileList() {
+  closeRecentContextMenu();
   if (!state.files.length) {
     els.fileList.innerHTML = `<div class="empty-list">${t(state.sidebarMode === 'explorer' ? 'emptyExplorer' : 'emptyRecent')}</div>`;
     return;
@@ -875,14 +912,21 @@ function renderFileList() {
     const removeButton = state.sidebarMode === 'recent'
       ? `<button class="recent-remove" data-path="${encodeURIComponent(file.path)}" title="${t('removeRecentTitle')}" aria-label="${escapeHtml(t('removeRecentAria', { name: file.name }))}"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg></button>`
       : '';
-    const unavailableAttributes = missing
+    const itemAttributes = missing
       ? ` disabled title="${escapeHtml(t('recentMissingTitle'))}" aria-label="${escapeHtml(t('recentMissingAria', { name: file.name }))}"`
-      : '';
-    return `<div class="file-row${missing ? ' missing' : ''}"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"${unavailableAttributes}><span class="file-icon">${fileIcon()}</span><span class="file-copy"><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
+      : state.sidebarMode === 'recent' ? ` title="${escapeHtml(t('recentContextHint'))}"` : '';
+    return `<div class="file-row${missing ? ' missing' : ''}" data-path="${encodeURIComponent(file.path)}"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"${itemAttributes}><span class="file-icon">${fileIcon()}</span><span class="file-copy"><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
   }).join('');
   els.fileList.querySelectorAll('.file-item').forEach(button => {
     button.addEventListener('click', () => loadFile(decodeURIComponent(button.dataset.path)));
   });
+  if (state.sidebarMode === 'recent') {
+    els.fileList.querySelectorAll('.file-row').forEach(row => {
+      row.addEventListener('contextmenu', event => {
+        openRecentContextMenu(event, decodeURIComponent(row.dataset.path), row.classList.contains('missing'));
+      });
+    });
+  }
   els.fileList.querySelectorAll('.recent-remove').forEach(button => {
     button.addEventListener('click', event => {
       event.stopPropagation();
@@ -893,6 +937,26 @@ function renderFileList() {
 
 function escapeHtml(value = '') {
   return value.replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+}
+
+async function revealFileInFolder(filePath) {
+  try {
+    await window.leafMD.showInFolder(filePath);
+  } catch (error) {
+    console.warn('Unable to show file in folder', error);
+    showToast(t('recentRevealFailed'));
+  }
+}
+
+async function editRecentDocument(filePath) {
+  if (!maybeDiscardChanges()) return;
+  try {
+    displayDocument(await window.leafMD.readFile(filePath));
+    await toggleEditor(true);
+  } catch (error) {
+    showToast(t('openFailed'));
+    console.error(error);
+  }
 }
 
 function renderToc() {
@@ -1510,7 +1574,7 @@ els.searchInput.addEventListener('keydown', event => {
   if (event.key === 'Enter') goToSearch(event.shiftKey ? -1 : 1);
   if (event.key === 'Escape') closeSearch();
 });
-$('#revealButton').addEventListener('click', () => state.currentFile && window.leafMD.showInFolder(state.currentFile.path));
+$('#revealButton').addEventListener('click', () => state.currentFile && revealFileInFolder(state.currentFile.path));
 $('#printButton').addEventListener('click', () => {
   if (state.editing) toggleEditor(false);
   window.leafMD.print();
@@ -1518,6 +1582,7 @@ $('#printButton').addEventListener('click', () => {
 $('#moreButton').addEventListener('click', event => {
   event.stopPropagation();
   closeAccentMenu();
+  closeRecentContextMenu();
   els.moreMenu.classList.toggle('hidden');
 });
 $('#windowMinimise').addEventListener('click', () => window.leafMD.minimiseWindow());
@@ -1595,10 +1660,25 @@ els.moreMenu.addEventListener('click', event => {
   if (action === 'about') openAbout();
   els.moreMenu.classList.add('hidden');
 });
+els.recentContextMenu.addEventListener('click', async event => {
+  event.stopPropagation();
+  const button = event.target.closest('[data-recent-action]');
+  const encodedPath = els.recentContextMenu.dataset.path;
+  if (!button || button.disabled || !encodedPath) return;
+  const action = button.dataset.recentAction;
+  const filePath = decodeURIComponent(encodedPath);
+  closeRecentContextMenu();
+  if (action === 'edit') await editRecentDocument(filePath);
+  else if (action === 'reveal') await revealFileInFolder(filePath);
+  else if (action === 'remove') await removeRecentRecord(filePath);
+});
 document.addEventListener('click', () => {
   els.moreMenu.classList.add('hidden');
   closeAccentMenu();
+  closeRecentContextMenu();
 });
+els.fileList.addEventListener('scroll', closeRecentContextMenu, { passive: true });
+window.addEventListener('resize', closeRecentContextMenu);
 $('.reader-pane').addEventListener('scroll', updateActiveToc, { passive: true });
 
 document.addEventListener('keydown', event => {
@@ -1614,6 +1694,7 @@ document.addEventListener('keydown', event => {
   else if (primaryModifier && (event.key === '+' || event.key === '=')) { event.preventDefault(); setFontScale(state.fontScale + .08); }
   else if (primaryModifier && event.key === '-') { event.preventDefault(); setFontScale(state.fontScale - .08); }
   else if (primaryModifier && event.key === '0') { event.preventDefault(); setFontScale(1); }
+  else if (event.key === 'Escape' && !els.recentContextMenu.classList.contains('hidden')) closeRecentContextMenu();
   else if (event.key === 'Escape' && !els.accentMenu.classList.contains('hidden')) { closeAccentMenu(); $('#accentButton').focus(); }
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
   else if (event.key === 'Escape' && !els.updateDialog.classList.contains('hidden')) closeUpdate();

@@ -11,10 +11,15 @@ package main
 #import <objc/runtime.h>
 
 typedef BOOL (*MDAWindowShouldCloseIMP)(id, SEL, NSWindow *);
+typedef BOOL (*MDAApplicationShouldHandleReopenIMP)(id, SEL, NSApplication *, BOOL);
 
 static MDAWindowShouldCloseIMP mdaOriginalWindowShouldClose = NULL;
+static MDAApplicationShouldHandleReopenIMP mdaOriginalApplicationShouldHandleReopen = NULL;
 static BOOL mdaFullscreenClosePending = NO;
+static NSWindow *mdaFullscreenCloseWindow = nil;
 static char mdaTrafficLightObserversKey;
+
+static void mdaFinishFullscreenClose(NSWindow *window);
 
 static void mdaCenterTrafficLights(NSWindow *window) {
     if (window == nil || window.contentView == nil) {
@@ -58,11 +63,14 @@ static void mdaInstallTrafficLightCentering(NSWindow *window) {
         NSWindowDidExitFullScreenNotification,
     ];
     for (NSNotificationName name in names) {
-        id token = [center addObserverForName:name object:window queue:NSOperationQueue.mainQueue usingBlock:^(__unused NSNotification *notification) {
+        id token = [center addObserverForName:name object:window queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *notification) {
             // AppKit lays out the traffic lights during resize and tiling. Apply
             // our compact-titlebar position in the same notification turn so a
             // stale native frame is never painted before the correction.
             mdaCenterTrafficLights(window);
+            if ([notification.name isEqualToString:NSWindowDidExitFullScreenNotification]) {
+                mdaFinishFullscreenClose(window);
+            }
         }];
         [tokens addObject:token];
     }
@@ -77,30 +85,107 @@ static BOOL mdaWindowIsFullscreen(NSWindow *window) {
     return (window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen;
 }
 
-static void mdaHideAfterFullscreenExit(NSWindow *window, NSInteger attemptsRemaining) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        if (!mdaWindowIsFullscreen(window) || attemptsRemaining <= 0) {
-            [NSApp hide:nil];
-            mdaFullscreenClosePending = NO;
-            return;
+static NSWindow *mdaApplicationWindow(void) {
+    NSWindow *window = NSApp.mainWindow ?: NSApp.keyWindow;
+    if (window != nil) {
+        return window;
+    }
+
+    // A window hidden with orderOut is no longer main or key, but Wails keeps
+    // the native NSWindow alive. Search the application's windows so a Dock
+    // click can restore the exact same reader window.
+    for (NSWindow *candidate in NSApp.windows) {
+        if (candidate.canBecomeMainWindow) {
+            return candidate;
         }
-        mdaHideAfterFullscreenExit(window, attemptsRemaining - 1);
+    }
+    return nil;
+}
+
+static void mdaBringApplicationWindowToFront(NSApplication *application) {
+    NSWindow *window = mdaApplicationWindow();
+    if (window == nil) {
+        return;
+    }
+    if (window.miniaturized) {
+        [window deminiaturize:nil];
+    }
+    [window makeKeyAndOrderFront:nil];
+    [application activateIgnoringOtherApps:YES];
+}
+
+static BOOL mdaApplicationShouldHandleReopen(id delegate, SEL selector, NSApplication *application, BOOL hasVisibleWindows) {
+    if (mdaOriginalApplicationShouldHandleReopen != NULL) {
+        mdaOriginalApplicationShouldHandleReopen(delegate, selector, application, hasVisibleWindows);
+    }
+    mdaBringApplicationWindowToFront(application);
+    return YES;
+}
+
+static void mdaInstallApplicationReopenHandler(void) {
+    id delegate = NSApp.delegate;
+    if (delegate == nil) {
+        return;
+    }
+
+    Class delegateClass = object_getClass(delegate);
+    SEL selector = @selector(applicationShouldHandleReopen:hasVisibleWindows:);
+    Method method = class_getInstanceMethod(delegateClass, selector);
+    if (method != NULL && method_getImplementation(method) == (IMP)mdaApplicationShouldHandleReopen) {
+        return;
+    }
+
+    const char *types = method != NULL ? method_getTypeEncoding(method) : "c@:@c";
+    if (method != NULL) {
+        mdaOriginalApplicationShouldHandleReopen = (MDAApplicationShouldHandleReopenIMP)method_getImplementation(method);
+    }
+    if (!class_addMethod(delegateClass, selector, (IMP)mdaApplicationShouldHandleReopen, types)) {
+        method = class_getInstanceMethod(delegateClass, selector);
+        method_setImplementation(method, (IMP)mdaApplicationShouldHandleReopen);
+    }
+}
+
+static void mdaFinishFullscreenClose(NSWindow *window) {
+    if (!mdaFullscreenClosePending || window == nil || window != mdaFullscreenCloseWindow) {
+        return;
+    }
+
+    mdaFullscreenClosePending = NO;
+    mdaFullscreenCloseWindow = nil;
+    // NSWindowDidExitFullScreen is delivered after the transition completes,
+    // but defer one more main-loop turn so AppKit cannot re-order the window
+    // after our hide request. orderOut guarantees the window itself disappears
+    // even if hiding the application is ignored during a rare transition race.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 80 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        [window orderOut:nil];
+        [NSApp hide:nil];
+    });
+}
+
+static void mdaScheduleFullscreenCloseFallback(NSWindow *window) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        // The native notification is authoritative. This only covers an
+        // interrupted animation or a notification that AppKit failed to send.
+        mdaFinishFullscreenClose(window);
     });
 }
 
 static BOOL mdaWindowShouldClose(id delegate, SEL selector, NSWindow *window) {
+    if (mdaFullscreenClosePending && window == mdaFullscreenCloseWindow) {
+        return NO;
+    }
     if (mdaWindowIsFullscreen(window)) {
-        if (!mdaFullscreenClosePending) {
-            mdaFullscreenClosePending = YES;
-            [window toggleFullScreen:nil];
-            mdaHideAfterFullscreenExit(window, 40);
-        }
+        mdaFullscreenClosePending = YES;
+        mdaFullscreenCloseWindow = window;
+        [window toggleFullScreen:nil];
+        mdaScheduleFullscreenCloseFallback(window);
         return NO;
     }
     return mdaOriginalWindowShouldClose(delegate, selector, window);
 }
 
 static void mdaInstallWindowAdjustments(NSInteger attemptsRemaining) {
+    mdaInstallApplicationReopenHandler();
     NSWindow *window = NSApp.mainWindow ?: NSApp.keyWindow;
     if (window == nil) {
         if (attemptsRemaining > 0) {

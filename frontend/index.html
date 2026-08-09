@@ -255,6 +255,22 @@
     <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.3.0</span></button>
   </div>
 
+  <div id="recentContextMenu" class="popover recent-context-menu hidden no-drag" role="menu" data-i18n-aria-label="recentContextMenuTitle" aria-label="最近阅读文档操作">
+    <button type="button" role="menuitem" data-recent-action="edit">
+      <svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13 7 4 4"/></svg>
+      <span class="menu-label" data-i18n="recentEdit">编辑</span>
+    </button>
+    <button type="button" role="menuitem" data-recent-action="reveal">
+      <svg viewBox="0 0 24 24"><path d="M3.5 7.5h6l2-2h9v13h-17v-11Z"/><path d="M3.5 9.5h17"/></svg>
+      <span class="menu-label" data-i18n="recentReveal">打开所在文件夹</span>
+    </button>
+    <hr>
+    <button type="button" role="menuitem" class="danger-menu-item" data-recent-action="remove">
+      <svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg>
+      <span class="menu-label" data-i18n="recentRemove">移除</span>
+    </button>
+  </div>
+
   <div id="accentMenu" class="popover accent-menu hidden no-drag" role="menu" aria-labelledby="accentMenuLabel">
     <div id="accentMenuLabel" class="popover-label" data-i18n="chooseAccentTheme">选择主题颜色</div>
     <div class="accent-options">

@@ -4,6 +4,20 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
+### 简体中文
+
+- macOS 自动跟随系统白天/黑夜模式时，现在允许用户临时手动切换；临时选择会保持到系统下一次外观变化，随后自动恢复跟随。
+- 修复 macOS 应用在后台运行时点击 Dock 图标偶发不显示窗口或窗口未置于最前方的问题；隐藏或最小化的主窗口现在会恢复并获得焦点。
+- 左侧“最近阅读”现在使用右键菜单提供“编辑”“打开所在文件夹”和“移除”；“编辑”会直接打开对应 Markdown 文档并进入编辑模式，不存在的记录仍可移除。
+- 修复 macOS 全屏状态下点击左上角关闭按钮偶发只退出全屏、窗口仍然显示的问题；现在会等待原生全屏退出通知后可靠隐藏窗口，并保留超时兜底。
+
+### English
+
+- While following the macOS light/dark appearance automatically, the app now allows a temporary manual switch that remains active until the next system appearance change, when automatic following resumes.
+- Fixed an intermittent macOS issue where clicking the Dock icon while the app was running in the background did not show the window or bring it to the front. Hidden and minimized main windows are now restored and focused.
+- Recent now provides a right-click menu with Edit, Show in Folder and Remove. Edit opens the selected Markdown document directly in editing mode, while unavailable records can still be removed.
+- Fixed an intermittent macOS issue where clicking the top-left close button in fullscreen only exited fullscreen and left the window visible. The app now waits for the native fullscreen-exit notification before reliably hiding the window, with a timeout fallback.
+
 ## [2.3.0] - 2026-08-08
 
 ### 简体中文
