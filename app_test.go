@@ -340,6 +340,122 @@ func TestGetPreferencesMarksMissingRecentFilesWithoutRemovingThem(t *testing.T) 
 	}
 }
 
+func TestFavoritesPersistAndRemainIndependentFromRecentFiles(t *testing.T) {
+	app := testApp(t)
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "favorite.md")
+	if err := os.WriteFile(filePath, []byte("# Favorite"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.ReadFile(filePath); err != nil {
+		t.Fatal(err)
+	}
+
+	prefs, err := app.AddFavorite(filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFiles, []string{filePath}) {
+		t.Fatalf("favorite was not added: %#v", prefs.FavoriteFiles)
+	}
+	if _, err := app.AddFavorite(strings.ToUpper(filePath)); err != nil {
+		t.Fatal(err)
+	}
+
+	// A new App instance proves the record was written to disk rather than
+	// being held only in memory.
+	restarted := &App{language: "zh-CN", preferencesOverride: app.preferencesOverride}
+	prefs, err = restarted.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFiles, []string{filePath}) {
+		t.Fatalf("favorite was not persisted or was duplicated: %#v", prefs.FavoriteFiles)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFileStatuses, []RecentFileStatus{{Path: filePath, Exists: true}}) {
+		t.Fatalf("unexpected favorite status: %#v", prefs.FavoriteFileStatuses)
+	}
+
+	if _, err := restarted.RemoveRecent(filePath); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err = restarted.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefs.RecentFiles) != 0 || !reflect.DeepEqual(prefs.FavoriteFiles, []string{filePath}) {
+		t.Fatalf("removing Recent changed Favorites: recent=%#v favorites=%#v", prefs.RecentFiles, prefs.FavoriteFiles)
+	}
+
+	if _, err := restarted.RemoveFavorite(filePath); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filePath); err != nil {
+		t.Fatalf("removing a favorite deleted the original file: %v", err)
+	}
+}
+
+func TestFavoriteStatusesKeepMissingFilesAvailableForRemoval(t *testing.T) {
+	app := testApp(t)
+	missingPath := filepath.Join(t.TempDir(), "moved.md")
+	if _, err := app.AddFavorite(missingPath); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFiles, []string{missingPath}) {
+		t.Fatalf("missing favorite was discarded: %#v", prefs.FavoriteFiles)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFileStatuses, []RecentFileStatus{{Path: missingPath, Exists: false}}) {
+		t.Fatalf("missing favorite status = %#v", prefs.FavoriteFileStatuses)
+	}
+	data, err := os.ReadFile(app.preferencePath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(data, []byte("favoriteFileStatuses")) {
+		t.Fatalf("derived favorite statuses were persisted: %s", data)
+	}
+
+	prefs, err = app.RemoveFavorite(missingPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefs.FavoriteFiles) != 0 {
+		t.Fatalf("missing favorite could not be removed: %#v", prefs.FavoriteFiles)
+	}
+}
+
+func TestReplacingFavoritedDraftMigratesFavoriteToSavedDocument(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	draftPath := filepath.Join(root, "New document-20260810-120000.md")
+	savedPath := filepath.Join(root, "notes.md")
+	if err := os.WriteFile(draftPath, []byte("draft"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(savedPath, []byte("saved"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	app.markDraft(draftPath)
+	if _, err := app.AddFavorite(draftPath); err != nil {
+		t.Fatal(err)
+	}
+
+	if replacedPath, err := app.replaceDraft(draftPath, savedPath); err != nil || replacedPath != draftPath {
+		t.Fatalf("replaceDraft() = %q, %v; want %q, nil", replacedPath, err, draftPath)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFiles, []string{savedPath}) {
+		t.Fatalf("draft favorite was not migrated: %#v", prefs.FavoriteFiles)
+	}
+}
+
 func TestFileOpenBeforeFrontendReadyBecomesInitialDocument(t *testing.T) {
 	app := testApp(t)
 	filePath := filepath.Join(t.TempDir(), "opened-from-finder.md")

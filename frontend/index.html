@@ -78,16 +78,19 @@
           <span class="eyebrow" data-i18n="library">文档库</span>
           <h2 id="libraryName">最近阅读</h2>
         </div>
-        <button id="collapseSidebar" class="small-icon" data-i18n-title="collapseSidebar" title="收起侧栏">
-          <svg viewBox="0 0 24 24"><path d="m14 7-5 5 5 5"/></svg>
-        </button>
+        <div class="sidebar-heading-actions">
+          <button id="refreshExplorer" class="small-icon hidden" type="button" data-i18n-title="refreshExplorer" title="刷新资源浏览器">
+            <svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M18.2 16a8 8 0 1 1 .5-8.4L20 12"/></svg>
+          </button>
+          <button id="collapseSidebar" class="small-icon" data-i18n-title="collapseSidebar" title="收起侧栏">
+            <svg viewBox="0 0 24 24"><path d="m14 7-5 5 5 5"/></svg>
+          </button>
+        </div>
       </div>
       <div class="sidebar-tabs" role="tablist" data-i18n-aria-label="libraryViews">
         <button id="recentTab" class="sidebar-tab active" type="button" role="tab" aria-selected="true" data-i18n="recentReading">最近阅读</button>
+        <button id="favoritesTab" class="sidebar-tab" type="button" role="tab" aria-selected="false" data-i18n="favoritesTab">收藏</button>
         <button id="explorerTab" class="sidebar-tab" type="button" role="tab" aria-selected="false" data-i18n="resourceExplorer" data-i18n-title="explorerTabTitle" title="打开资源浏览器；再次点击可更改文件夹">资源浏览器</button>
-        <button id="refreshExplorer" class="small-icon hidden" type="button" data-i18n-title="refreshExplorer" title="刷新资源浏览器">
-          <svg viewBox="0 0 24 24"><path d="M20 7v5h-5"/><path d="M18.2 16a8 8 0 1 1 .5-8.4L20 12"/></svg>
-        </button>
       </div>
       <div id="fileList" class="file-list"></div>
       <button id="folderCta" class="folder-cta">
@@ -260,12 +263,16 @@
       <svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13 7 4 4"/></svg>
       <span class="menu-label" data-i18n="recentEdit">编辑</span>
     </button>
+    <button id="favoriteContextAction" type="button" role="menuitem" data-recent-action="favorite">
+      <svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg>
+      <span id="favoriteContextLabel" class="menu-label" data-i18n="favoriteDocument">收藏文档</span>
+    </button>
     <button type="button" role="menuitem" data-recent-action="reveal">
       <svg viewBox="0 0 24 24"><path d="M3.5 7.5h6l2-2h9v13h-17v-11Z"/><path d="M3.5 9.5h17"/></svg>
       <span class="menu-label" data-i18n="recentReveal">打开所在文件夹</span>
     </button>
-    <hr>
-    <button type="button" role="menuitem" class="danger-menu-item" data-recent-action="remove">
+    <hr id="recentRemoveDivider">
+    <button id="recentRemoveAction" type="button" role="menuitem" class="danger-menu-item" data-recent-action="remove">
       <svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg>
       <span class="menu-label" data-i18n="recentRemove">移除</span>
     </button>
@@ -317,7 +324,7 @@
           <span class="about-version" data-i18n="aboutVersion">版本 2.3.3</span>
         </div>
       </div>
-      <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。</p>
+      <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。</p>
       <div class="about-details">
         <a class="about-detail" href="mailto:lh805798@163.com" data-external="mailto:lh805798@163.com">
           <span class="about-detail-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4.5 7 7.5 6 7.5-6"/></svg></span>

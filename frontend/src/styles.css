@@ -236,15 +236,15 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 body.resizing-panes, body.resizing-panes * { cursor: col-resize !important; user-select: none !important; }
 body.resizing-panes .sidebar, body.resizing-panes .toc-panel { transition: none; }
 .sidebar-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 8px 18px; min-width: 225px; }
+.sidebar-heading-actions { display: flex; align-items: center; gap: 2px; }
 .eyebrow { display: block; color: var(--faint); font-size: 10px; font-weight: 750; letter-spacing: 1.4px; text-transform: uppercase; }
 .sidebar-heading h2 { margin: 5px 0 0; font-size: 18px; letter-spacing: -.3px; }
 .small-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: var(--muted); }
 .small-icon svg { width: 17px; }
-.sidebar-tabs { min-width: 229px; display: grid; grid-template-columns: 1fr 1fr 30px; align-items: center; gap: 4px; margin: -4px 5px 12px; padding: 4px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 58%, transparent); }
-.sidebar-tab { height: 30px; padding: 0 7px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; white-space: nowrap; }
+.sidebar-tabs { min-width: 229px; display: grid; grid-template-columns: 1fr .72fr 1.16fr; align-items: center; gap: 4px; margin: -4px 5px 12px; padding: 4px; border-radius: 10px; background: color-mix(in srgb, var(--paper) 58%, transparent); }
+.sidebar-tab { min-width: 0; height: 30px; padding: 0 5px; border: 0; border-radius: 7px; overflow: hidden; text-overflow: ellipsis; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; white-space: nowrap; }
 .sidebar-tab:hover { color: var(--text); }
 .sidebar-tab.active { color: var(--accent-strong); background: var(--paper-strong); box-shadow: 0 2px 7px rgba(43, 52, 45, .07); font-weight: 650; }
-.sidebar-tabs .small-icon { width: 30px; height: 30px; }
 .file-list { flex: 1; overflow: auto; padding: 1px 0; min-width: 229px; }
 .empty-list { padding: 30px 10px; color: var(--faint); text-align: center; font-size: 13px; }
 .file-row { position: relative; margin-bottom: 3px; }

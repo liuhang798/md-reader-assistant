@@ -4,6 +4,7 @@ import hljs from 'highlight.js/lib/common';
 import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage, resolveMacColorMode, temporaryMacColorModeAfterToggle } from './appearance.js';
 import { previewWheelZoomDirection } from './font-wheel-zoom.js';
 import { escapeMarkdownText, highlightExtension, nextFootnoteNumber, prepareFootnotes, renderFootnoteSection } from './markdown-formats.js';
+import { filesFromPreferencePaths, normalizeSidebarMode, sameDocumentPath } from './library-state.js';
 
 const $ = selector => document.querySelector(selector);
 let codeEditor;
@@ -36,7 +37,8 @@ const state = {
   files: [],
   explorerFiles: [],
   recentFiles: [],
-  sidebarMode: localStorage.getItem('sidebarMode') === 'explorer' ? 'explorer' : 'recent',
+  favoriteFiles: [],
+  sidebarMode: normalizeSidebarMode(localStorage.getItem('sidebarMode')),
   accentTheme: initialAppearance.accentTheme,
   colorMode: initialAppearance.colorMode,
   fontScale: Number(localStorage.getItem('fontScale') || 1),
@@ -57,7 +59,7 @@ const translations = {
     appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
     accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '临时切换白天/黑夜模式；系统下次切换时恢复自动跟随', temporaryColorModeChanged: '已临时切换为{mode}模式；系统下次切换时恢复自动跟随', lightModeName: '白天', darkModeName: '黑夜', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
-    library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', resourceExplorer: '资源浏览器', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
+    library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', favoriteDocuments: '收藏文档', resourceExplorer: '资源浏览器', recentTab: '最近', favoritesTab: '收藏', explorerTab: '资源', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
     openFolder: '打开文件夹', quickOpenHint: '快速打开，也可以将文件拖到这里', revealFile: '定位文件', revealFileTitle: '在资源管理器中显示',
@@ -66,14 +68,14 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
     zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', printDocument: '打印文档', copy: '复制', copied: '已复制',
-    bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', recentContextHint: '右键打开文档操作菜单', recentContextMenuTitle: '最近阅读文档操作', recentEdit: '编辑', recentReveal: '打开所在文件夹', recentRemove: '移除', recentRevealFailed: '无法打开文件所在目录', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyExplorer: '请先打开一个文件夹',
+    bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', favorited: '已收藏', favoriteDocument: '收藏文档', unfavoriteDocument: '取消收藏', favoriteAdded: '已收藏文档', favoriteRemoved: '已取消收藏，原文件未删除', recentContextHint: '右键打开文档操作菜单', recentContextMenuTitle: '文档操作', recentEdit: '编辑', recentReveal: '打开所在文件夹', recentRemove: '移除', recentRevealFailed: '无法打开文件所在目录', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyFavorites: '还没有收藏文档', emptyExplorer: '请先打开一个文件夹',
     markdownDocument: 'Markdown 文档', removeRecentTitle: '移除最近阅读记录', removeRecentAria: '从最近阅读中移除 {name}',
     discardConfirm: '当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？', previewError: '暂时无法渲染当前内容',
     readingTime: '约 {minutes} 分钟 · {words} 字', renderFailed: 'Markdown 渲染失败', openFailed: '无法打开这个文件',
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.3.3', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航和最近阅读。',
+    aboutVersion: '版本 2.3.3', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
@@ -88,7 +90,7 @@ const translations = {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
     accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Temporarily switch light/dark mode; automatic following resumes at the next system appearance change', temporaryColorModeChanged: 'Temporarily switched to {mode} mode; automatic following resumes at the next system appearance change', lightModeName: 'light', darkModeName: 'dark', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
-    library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', resourceExplorer: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
+    library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', favoriteDocuments: 'Favorites', resourceExplorer: 'Explorer', recentTab: 'Recent', favoritesTab: 'Favorites', explorerTab: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
     openFolder: 'Open Folder', quickOpenHint: 'Quick open, or drop a file here', revealFile: 'Show File', revealFileTitle: 'Show in File Explorer',
@@ -97,14 +99,14 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
     zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
-    bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', recentContextHint: 'Right-click for document actions', recentContextMenuTitle: 'Recent document actions', recentEdit: 'Edit', recentReveal: 'Show in Folder', recentRemove: 'Remove', recentRevealFailed: 'Unable to show the file in its folder', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyExplorer: 'Open a folder to browse files',
+    bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', favorited: 'Favorited', favoriteDocument: 'Add to Favorites', unfavoriteDocument: 'Remove from Favorites', favoriteAdded: 'Document added to Favorites', favoriteRemoved: 'Removed from Favorites. The original file was not deleted.', recentContextHint: 'Right-click for document actions', recentContextMenuTitle: 'Document actions', recentEdit: 'Edit', recentReveal: 'Show in Folder', recentRemove: 'Remove', recentRevealFailed: 'Unable to show the file in its folder', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyFavorites: 'No favorite documents', emptyExplorer: 'Open a folder to browse files',
     markdownDocument: 'Markdown document', removeRecentTitle: 'Remove recent record', removeRecentAria: 'Remove {name} from Recent',
     discardConfirm: 'This document has unsaved changes.\n\nDiscard the changes and continue?', previewError: 'The current content cannot be rendered',
     readingTime: 'About {minutes} min · {words} words', renderFailed: 'Markdown rendering failed', openFailed: 'Unable to open this file',
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.3.3', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, document navigation, and recent reading.',
+    aboutVersion: 'Version 2.3.3', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
@@ -162,7 +164,7 @@ function setLanguage(language, silent = false, persist = true) {
   const persistence = persist ? window.leafMD.setLanguage(state.language) : Promise.resolve(state.language);
   els.editButtonLabel.textContent = t(state.editing ? 'preview' : 'edit');
   if (!state.currentFile) els.editorFileName.textContent = t('untitledDocument');
-  if (!state.root) els.libraryName.textContent = t('recentReading');
+  updateLibraryHeading();
   if (codeEditor) {
     const reopenSearch = searchPanelOpen(codeEditor.state);
     if (reopenSearch) closeSearchPanel(codeEditor);
@@ -191,7 +193,7 @@ const els = {
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
-  recentTab: $('#recentTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'),
+  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'),
   editorUndoButton: $('#editorUndoButton')
 };
 
@@ -761,8 +763,15 @@ function openRecentContextMenu(event, filePath, missing) {
   closeAccentMenu();
 
   els.recentContextMenu.dataset.path = encodeURIComponent(filePath);
+  const isFavorite = state.favoriteFiles.some(file => sameDocumentPath(file.path, filePath));
+  const favoriteButton = $('#favoriteContextAction');
+  favoriteButton.dataset.favoriteState = isFavorite ? 'remove' : 'add';
+  $('#favoriteContextLabel').textContent = t(isFavorite ? 'unfavoriteDocument' : 'favoriteDocument');
+  $('#recentRemoveDivider').classList.toggle('hidden', state.sidebarMode !== 'recent');
+  $('#recentRemoveAction').classList.toggle('hidden', state.sidebarMode !== 'recent');
   els.recentContextMenu.querySelectorAll('[data-recent-action]').forEach(button => {
-    const disabled = missing && button.dataset.recentAction !== 'remove';
+    const favoriteRemoval = button.dataset.recentAction === 'favorite' && isFavorite;
+    const disabled = missing && button.dataset.recentAction !== 'remove' && !favoriteRemoval;
     button.disabled = disabled;
     button.setAttribute('aria-disabled', String(disabled));
   });
@@ -813,29 +822,31 @@ function recentEntry(doc) {
 }
 
 function recentFilesFromPreferences(prefs) {
-  const statusByPath = new Map((prefs.recentFileStatuses || []).map(status => [status.path, status.exists !== false]));
-  return (prefs.recentFiles || []).map(filePath => ({
-    path: filePath,
-    name: filePath.split(/[\\/]/).pop(),
-    directory: null,
-    exists: statusByPath.get(filePath) !== false
-  }));
+  return filesFromPreferencePaths(prefs.recentFiles, prefs.recentFileStatuses);
 }
 
-async function refreshRecentFileStatuses() {
+function favoriteFilesFromPreferences(prefs) {
+  return filesFromPreferencePaths(prefs.favoriteFiles, prefs.favoriteFileStatuses);
+}
+
+function applyLibraryPreferences(prefs) {
+  state.recentFiles = recentFilesFromPreferences(prefs);
+  state.favoriteFiles = favoriteFilesFromPreferences(prefs);
+  if (state.sidebarMode === 'recent') state.files = [...state.recentFiles];
+  if (state.sidebarMode === 'favorites') state.files = [...state.favoriteFiles];
+}
+
+async function refreshLibraryFileStatuses() {
   try {
-    state.recentFiles = recentFilesFromPreferences(await window.leafMD.getPreferences());
-    if (state.sidebarMode === 'recent') {
-      state.files = [...state.recentFiles];
-      renderFileList();
-    }
+    applyLibraryPreferences(await window.leafMD.getPreferences());
+    renderFileList();
   } catch (error) {
-    console.warn('Unable to refresh recent file statuses', error);
+    console.warn('Unable to refresh library file statuses', error);
   }
 }
 
 function addRecentDocument(doc) {
-  const existingIndex = state.recentFiles.findIndex(file => file.path === doc.path);
+  const existingIndex = state.recentFiles.findIndex(file => sameDocumentPath(file.path, doc.path));
   if (existingIndex >= 0) {
     state.recentFiles[existingIndex] = recentEntry(doc);
   } else {
@@ -846,23 +857,42 @@ function addRecentDocument(doc) {
 
 async function removeRecentRecord(filePath) {
   await window.leafMD.removeRecent(filePath);
-  state.recentFiles = state.recentFiles.filter(file => file.path !== filePath);
+  state.recentFiles = state.recentFiles.filter(file => !sameDocumentPath(file.path, filePath));
   if (state.sidebarMode === 'recent') state.files = [...state.recentFiles];
   renderFileList();
   showToast(t('recentRemoved'));
 }
 
+async function setFavoriteRecord(filePath, shouldFavorite) {
+  if (shouldFavorite) await window.leafMD.addFavorite(filePath);
+  else await window.leafMD.removeFavorite(filePath);
+  applyLibraryPreferences(await window.leafMD.getPreferences());
+  renderFileList();
+  showToast(t(shouldFavorite ? 'favoriteAdded' : 'favoriteRemoved'));
+}
+
+function updateLibraryHeading() {
+  if (state.sidebarMode === 'explorer') {
+    els.libraryName.textContent = state.root ? state.root.split(/[\\/]/).pop() : t('resourceExplorer');
+  } else {
+    els.libraryName.textContent = t(state.sidebarMode === 'favorites' ? 'favoriteDocuments' : 'recentReading');
+  }
+}
+
 function setSidebarMode(mode) {
-  state.sidebarMode = mode === 'explorer' ? 'explorer' : 'recent';
+  state.sidebarMode = normalizeSidebarMode(mode);
   localStorage.setItem('sidebarMode', state.sidebarMode);
   const explorer = state.sidebarMode === 'explorer';
-  state.files = explorer ? [...state.explorerFiles] : [...state.recentFiles];
-  els.recentTab.classList.toggle('active', !explorer);
+  const favorites = state.sidebarMode === 'favorites';
+  state.files = explorer ? [...state.explorerFiles] : favorites ? [...state.favoriteFiles] : [...state.recentFiles];
+  els.recentTab.classList.toggle('active', state.sidebarMode === 'recent');
+  els.favoritesTab.classList.toggle('active', favorites);
   els.explorerTab.classList.toggle('active', explorer);
-  els.recentTab.setAttribute('aria-selected', String(!explorer));
+  els.recentTab.setAttribute('aria-selected', String(state.sidebarMode === 'recent'));
+  els.favoritesTab.setAttribute('aria-selected', String(favorites));
   els.explorerTab.setAttribute('aria-selected', String(explorer));
   els.refreshExplorer.classList.toggle('hidden', !explorer || !state.root);
-  els.libraryName.textContent = explorer && state.root ? state.root.split(/[\\/]/).pop() : t(explorer ? 'resourceExplorer' : 'recentReading');
+  updateLibraryHeading();
   renderFileList();
 }
 
@@ -913,33 +943,35 @@ function restoreExplorerAfterFirstPaint(savedRoot) {
 function renderFileList() {
   closeRecentContextMenu();
   if (!state.files.length) {
-    els.fileList.innerHTML = `<div class="empty-list">${t(state.sidebarMode === 'explorer' ? 'emptyExplorer' : 'emptyRecent')}</div>`;
+    const emptyKey = state.sidebarMode === 'explorer' ? 'emptyExplorer' : state.sidebarMode === 'favorites' ? 'emptyFavorites' : 'emptyRecent';
+    els.fileList.innerHTML = `<div class="empty-list">${t(emptyKey)}</div>`;
     return;
   }
   els.fileList.innerHTML = state.files.map(file => {
-    const active = state.currentFile?.path === file.path ? ' active' : '';
-    const missing = state.sidebarMode === 'recent' && file.exists === false;
+    const active = sameDocumentPath(state.currentFile?.path, file.path) ? ' active' : '';
+    const missing = state.sidebarMode !== 'explorer' && file.exists === false;
     const sub = state.sidebarMode === 'explorer'
       ? (file.directory && file.directory !== '.' ? file.directory : t('markdownDocument'))
-      : t(missing ? 'recentMissing' : 'recentOpened');
+      : t(missing ? 'recentMissing' : state.sidebarMode === 'favorites' ? 'favorited' : 'recentOpened');
     const removeButton = state.sidebarMode === 'recent'
       ? `<button class="recent-remove" data-path="${encodeURIComponent(file.path)}" title="${t('removeRecentTitle')}" aria-label="${escapeHtml(t('removeRecentAria', { name: file.name }))}"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg></button>`
       : '';
     const itemAttributes = missing
-      ? ` disabled title="${escapeHtml(t('recentMissingTitle'))}" aria-label="${escapeHtml(t('recentMissingAria', { name: file.name }))}"`
-      : state.sidebarMode === 'recent' ? ` title="${escapeHtml(t('recentContextHint'))}"` : '';
+      ? ` aria-disabled="true" data-missing="true" title="${escapeHtml(t('recentMissingTitle'))}" aria-label="${escapeHtml(t('recentMissingAria', { name: file.name }))}"`
+      : ` title="${escapeHtml(t('recentContextHint'))}"`;
     return `<div class="file-row${missing ? ' missing' : ''}" data-path="${encodeURIComponent(file.path)}"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"${itemAttributes}><span class="file-icon">${fileIcon()}</span><span class="file-copy"><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
   }).join('');
   els.fileList.querySelectorAll('.file-item').forEach(button => {
-    button.addEventListener('click', () => loadFile(decodeURIComponent(button.dataset.path)));
-  });
-  if (state.sidebarMode === 'recent') {
-    els.fileList.querySelectorAll('.file-row').forEach(row => {
-      row.addEventListener('contextmenu', event => {
-        openRecentContextMenu(event, decodeURIComponent(row.dataset.path), row.classList.contains('missing'));
-      });
+    button.addEventListener('click', () => {
+      if (button.dataset.missing === 'true') return;
+      loadFile(decodeURIComponent(button.dataset.path));
     });
-  }
+  });
+  els.fileList.querySelectorAll('.file-row').forEach(row => {
+    row.addEventListener('contextmenu', event => {
+      openRecentContextMenu(event, decodeURIComponent(row.dataset.path), row.classList.contains('missing'));
+    });
+  });
   els.fileList.querySelectorAll('.recent-remove').forEach(button => {
     button.addEventListener('click', event => {
       event.stopPropagation();
@@ -1195,9 +1227,13 @@ async function saveDocument(saveAs = false, options = {}) {
     if (!saved) return;
     const unchangedSinceSave = !state.editing || editorContent() === editingContent;
     if (saved.replacedPath) {
-      state.recentFiles = state.recentFiles.filter(file => file.path !== saved.replacedPath);
-      state.explorerFiles = state.explorerFiles.filter(file => file.path !== saved.replacedPath);
+      state.recentFiles = state.recentFiles.filter(file => !sameDocumentPath(file.path, saved.replacedPath));
+      state.explorerFiles = state.explorerFiles.filter(file => !sameDocumentPath(file.path, saved.replacedPath));
+      state.favoriteFiles = state.favoriteFiles.map(file => sameDocumentPath(file.path, saved.replacedPath)
+        ? { ...file, path: saved.path, name: saved.name, exists: true }
+        : file);
       if (state.sidebarMode === 'explorer') state.files = [...state.explorerFiles];
+      if (state.sidebarMode === 'favorites') state.files = [...state.favoriteFiles];
     }
     state.currentFile = saved;
     state.currentFile.content = unchangedSinceSave ? editingContent : editorContent();
@@ -1532,11 +1568,11 @@ async function initialize() {
   const prefs = await window.leafMD.getPreferences();
   const needsLanguageSelection = await window.leafMD.needsLanguageSelection();
   setLanguage(prefs.language || state.language, true, !needsLanguageSelection);
-  state.recentFiles = recentFilesFromPreferences(prefs);
+  applyLibraryPreferences(prefs);
   const savedExplorerRoot = String(prefs.explorerRoot || '').trim();
   state.root = savedExplorerRoot || null;
   state.explorerFiles = [];
-  setSidebarMode(state.sidebarMode === 'explorer' && state.root ? 'explorer' : 'recent');
+  setSidebarMode(state.sidebarMode === 'explorer' && !state.root ? 'recent' : state.sidebarMode);
   const initialFile = await window.leafMD.getInitialFile();
   if (initialFile?.path) {
     displayDocument(initialFile);
@@ -1569,7 +1605,11 @@ els.saveButton.addEventListener('click', () => saveDocument(false));
 $('#saveAsButton').addEventListener('click', () => saveDocument(true));
 els.recentTab.addEventListener('click', () => {
   setSidebarMode('recent');
-  refreshRecentFileStatuses();
+  refreshLibraryFileStatuses();
+});
+els.favoritesTab.addEventListener('click', () => {
+  setSidebarMode('favorites');
+  refreshLibraryFileStatuses();
 });
 els.explorerTab.addEventListener('click', () => {
   if (!state.root || state.sidebarMode === 'explorer') openFolder();
@@ -1682,6 +1722,7 @@ els.recentContextMenu.addEventListener('click', async event => {
   const filePath = decodeURIComponent(encodedPath);
   closeRecentContextMenu();
   if (action === 'edit') await editRecentDocument(filePath);
+  else if (action === 'favorite') await setFavoriteRecord(filePath, button.dataset.favoriteState === 'add');
   else if (action === 'reveal') await revealFileInFolder(filePath);
   else if (action === 'remove') await removeRecentRecord(filePath);
 });

@@ -26,7 +26,7 @@
 - **Lightweight by design:** the Windows installer is only about **7 MB**, built with Go and Wails instead of Electron.
 - **Local-first and private:** open and edit ordinary Markdown files on your computer—no account, proprietary vault or cloud lock-in.
 - **Reading and editing together:** switch from a focused Markdown reader to split-view editing with live preview and syntax highlighting.
-- **Practical desktop integration:** recent files, resource explorer, autosave, native dialogs, file associations and update notifications.
+- **Practical desktop integration:** recent files, document favorites, resource explorer, autosave, native dialogs, file associations and update notifications.
 - **Cross-platform and open source:** one MIT-licensed Markdown desktop app for Windows, macOS and Linux.
 
 It is a good fit for reading long Markdown documents, editing README files, maintaining technical notes and working with local documentation folders.
@@ -45,8 +45,11 @@ The macOS build follows the computer's light/dark appearance automatically while
 
 ## What's new in 2.3.3
 
-- Added mouse-wheel text zoom for document previews: `Ctrl + wheel` on Windows/Linux and `Command + wheel` on macOS, available in both the reader and live preview with persistent sizing.
-- Fixed Windows upgrade installation failures caused by Explorer locking shortcut or Markdown file-association icons. If an old app instance is still running, setup can close it and continue.
+- Preview text can be zoomed with `Ctrl + wheel` on Windows/Linux or `Command + wheel` on macOS, and the selected size is remembered in both reader and live-preview modes.
+- Fixed Windows upgrades being interrupted when Explorer locked an old shortcut or Markdown association icon; the installer can now offer to close a running older version and continue.
+- Added a persistent Favorites view. Right-click documents in Recent or Explorer to add or remove them from Favorites.
+- Favorites survive restarts and remain independent from Recent; removing a favorite never deletes the original document.
+- Moved, deleted, or temporarily unavailable favorites remain visible as unavailable records so they can still be cleaned up.
 
 ## Highlights
 
@@ -58,11 +61,12 @@ The macOS build follows the computer's light/dark appearance automatically while
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Clickable table of contents, active section tracking, search, print and back-to-top.
 - Recent documents update immediately and individual records can be removed. Right-click a record for Edit, Show in Folder and Remove; Edit opens the Markdown document directly in editing mode, while reopening an existing item keeps its list position. Deleted, moved or temporarily unavailable source files are shown muted with a strikethrough and cannot be opened, but can still be removed from the menu.
+- Favorite documents from Recent or Explorer and manage them in a dedicated persistent Favorites view with Open, Edit, Show in Folder, and Remove from Favorites actions.
 - On macOS, closing the main window leaves the app running in the background. Clicking the Dock icon again restores and foregrounds the window, and Markdown files opened from Finder display directly.
 - Simplified Chinese and English interface with persistent language selection.
 - Accent color and light/dark mode are independent: choose Fresh Green, Clear Blue, Vivid Orange, Vivid Violet, Coral Red, Lake Cyan, Mist Slate or Clay Brown, then pair it with either color mode. Both choices are restored across launches.
 - Synchronized reading/editor text zoom up to 200%, remembered across launches.
-- Switch the left sidebar between Recent and a refreshable resource explorer for Markdown folders.
+- Switch the left sidebar among Recent, Favorites, and a refreshable resource explorer for Markdown folders.
 - Drag the library and document-outline dividers to customize panel widths; the layout is remembered locally.
 - The resource explorer remembers its selected folder and active view across launches; click the active Explorer tab again to choose another folder.
 - Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.

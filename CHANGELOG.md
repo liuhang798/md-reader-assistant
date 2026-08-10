@@ -10,11 +10,19 @@ All notable changes to MD Reader Assistant are documented here.
 
 - 新增文档预览鼠标滚轮缩放：Windows/Linux 使用 `Ctrl + 滚轮`，macOS 使用 `Command + 滚轮`；支持阅读页和编辑模式实时预览，并自动记忆字号。
 - 修复 Windows 同版本覆盖安装时，旧快捷方式或 Markdown 文件关联图标被资源管理器占用而导致安装中断的问题；两类关联现在都直接使用程序内置图标，并安全延迟清理旧图标文件。升级时若检测到旧版仍在运行，安装器会提供确认关闭并继续安装的选项。
+- 新增持久化文档收藏：可在“最近阅读”和“资源浏览器”中右键收藏或取消收藏，并通过侧栏“收藏”视图集中打开、编辑和定位文档。
+- 收藏记录与最近阅读互不影响；取消收藏只移除记录，绝不会删除用户原文件。
+- 已移动、删除或磁盘暂时不可用的收藏仍会保留并显示为不可用，方便用户随时取消收藏。
+- 新建草稿另存为正式文档后，已有收藏会自动迁移到新路径，避免留下失效或重复记录。
 
 ### English
 
 - Added mouse-wheel text zoom for document previews: `Ctrl + wheel` on Windows/Linux and `Command + wheel` on macOS. It works in both the reader and live preview and preserves the selected text size.
 - Fixed Windows same-version reinstalls failing when Explorer kept old shortcut or Markdown file-association icons locked. Both associations now use the icon embedded in the executable, while legacy icons are safely removed or deferred until reboot. If the old application is still running, the installer offers to close it and continue.
+- Added persistent document favorites. Right-click documents in Recent or Explorer to add or remove them, then manage them from the new Favorites sidebar view.
+- Favorites remain independent from Recent, and removing a favorite never deletes the original file.
+- Moved, deleted, or temporarily unavailable favorites remain visible as unavailable records so they can still be removed.
+- When a favorited draft is saved as a permanent document, its favorite automatically follows the new path without leaving stale or duplicate entries.
 
 ## [2.3.2] - 2026-08-09
 

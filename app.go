@@ -62,14 +62,16 @@ type RecentFileStatus struct {
 }
 
 type Preferences struct {
-	RecentFiles         []string           `json:"recentFiles"`
-	RecentFileStatuses  []RecentFileStatus `json:"recentFileStatuses,omitempty"`
-	DraftFiles          []string           `json:"draftFiles,omitempty"`
-	LastFile            string             `json:"lastFile,omitempty"`
-	ExplorerRoot        string             `json:"explorerRoot,omitempty"`
-	Language            string             `json:"language"`
-	LastUpdateCheck     string             `json:"lastUpdateCheck,omitempty"`
-	SuppressUpdateUntil string             `json:"suppressUpdateUntil,omitempty"`
+	RecentFiles          []string           `json:"recentFiles"`
+	RecentFileStatuses   []RecentFileStatus `json:"recentFileStatuses,omitempty"`
+	FavoriteFiles        []string           `json:"favoriteFiles"`
+	FavoriteFileStatuses []RecentFileStatus `json:"favoriteFileStatuses,omitempty"`
+	DraftFiles           []string           `json:"draftFiles,omitempty"`
+	LastFile             string             `json:"lastFile,omitempty"`
+	ExplorerRoot         string             `json:"explorerRoot,omitempty"`
+	Language             string             `json:"language"`
+	LastUpdateCheck      string             `json:"lastUpdateCheck,omitempty"`
+	SuppressUpdateUntil  string             `json:"suppressUpdateUntil,omitempty"`
 }
 
 type App struct {
@@ -157,7 +159,7 @@ func (a *App) languageSelectionMarkerPath() string {
 }
 
 func defaultPreferences() Preferences {
-	return Preferences{RecentFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN"}
+	return Preferences{RecentFiles: []string{}, FavoriteFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN"}
 }
 
 func normaliseLanguage(language string) string {
@@ -188,6 +190,9 @@ func (a *App) readPreferencesUnlocked() (Preferences, error) {
 	prefs.Language = normaliseLanguage(prefs.Language)
 	if prefs.RecentFiles == nil {
 		prefs.RecentFiles = []string{}
+	}
+	if prefs.FavoriteFiles == nil {
+		prefs.FavoriteFiles = []string{}
 	}
 	if prefs.DraftFiles == nil {
 		prefs.DraftFiles = []string{}
@@ -432,6 +437,25 @@ func (a *App) replaceDraft(originalPath, savedPath string) (string, error) {
 			}
 		}
 		prefs.RecentFiles = recent
+		favorites := make([]string, 0, len(prefs.FavoriteFiles))
+		favoriteSavedPath := false
+		for _, item := range prefs.FavoriteFiles {
+			if draftPathKey(item) == key {
+				if !favoriteSavedPath {
+					favorites = append(favorites, savedPath)
+					favoriteSavedPath = true
+				}
+				continue
+			}
+			if strings.EqualFold(filepath.Clean(item), savedPath) {
+				if favoriteSavedPath {
+					continue
+				}
+				favoriteSavedPath = true
+			}
+			favorites = append(favorites, item)
+		}
+		prefs.FavoriteFiles = favorites
 		drafts := make([]string, 0, len(prefs.DraftFiles))
 		for _, item := range prefs.DraftFiles {
 			if draftPathKey(item) != key {
@@ -709,6 +733,7 @@ func (a *App) GetPreferences() (Preferences, error) {
 		return prefs, err
 	}
 	prefs.RecentFileStatuses = recentFileStatuses(prefs.RecentFiles)
+	prefs.FavoriteFileStatuses = recentFileStatuses(prefs.FavoriteFiles)
 	return prefs, nil
 }
 
@@ -762,6 +787,40 @@ func (a *App) RemoveRecent(filePath string) (Preferences, error) {
 				prefs.LastFile = filtered[0]
 			}
 		}
+	})
+}
+
+func (a *App) AddFavorite(filePath string) (Preferences, error) {
+	if strings.TrimSpace(filePath) == "" {
+		return Preferences{}, errors.New("favorite path is empty")
+	}
+	cleaned, err := filepath.Abs(filepath.Clean(filePath))
+	if err != nil {
+		return Preferences{}, err
+	}
+	return a.updatePreferences(func(prefs *Preferences) {
+		for _, item := range prefs.FavoriteFiles {
+			if strings.EqualFold(filepath.Clean(item), cleaned) {
+				return
+			}
+		}
+		prefs.FavoriteFiles = append([]string{cleaned}, prefs.FavoriteFiles...)
+	})
+}
+
+func (a *App) RemoveFavorite(filePath string) (Preferences, error) {
+	if strings.TrimSpace(filePath) == "" {
+		return a.GetPreferences()
+	}
+	cleaned := filepath.Clean(filePath)
+	return a.updatePreferences(func(prefs *Preferences) {
+		filtered := make([]string, 0, len(prefs.FavoriteFiles))
+		for _, item := range prefs.FavoriteFiles {
+			if !strings.EqualFold(filepath.Clean(item), cleaned) {
+				filtered = append(filtered, item)
+			}
+		}
+		prefs.FavoriteFiles = filtered
 	})
 }
 

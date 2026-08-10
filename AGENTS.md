@@ -131,6 +131,7 @@ app.go / updates.go（Go 后端）
 偏好文件位于 `os.UserConfigDir()/MD阅读助手/preferences.json`，主要字段：
 
 - `recentFiles`：最多 10 个最近文档路径。
+- `favoriteFiles`：用户主动收藏的文档路径；独立于最近阅读，原文件失效时仍保留记录。
 - `draftFiles`：自动创建但尚未完成“另存为”替换的草稿路径。
 - `lastFile`：最近一个文档。
 - `language`：`zh-CN` 或 `en`。
@@ -158,6 +159,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 - `ListFolder(root)`：递归深度最多 5 层、最多 800 个文件。
 - `GetPreferences()`：读取偏好。
 - `RemoveRecent(path)`：只删除最近记录，不删除原文件。
+- `AddFavorite(path)` / `RemoveFavorite(path)`：添加或取消收藏，只修改偏好记录，不操作原文件。
 
 ### 图片
 
@@ -182,7 +184,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 `renderer.js` 的 `state` 是当前唯一前端状态源：
 
 - `currentFile`：当前文档。
-- `files`、`recentFiles`、`explorerFiles`：侧栏数据。
+- `files`、`recentFiles`、`favoriteFiles`、`explorerFiles`：侧栏数据。
 - `root`、`sidebarMode`：资源浏览器状态。
 - `editing`、`dirty`、`savedContent`、`saving`：编辑与保存状态。
 - `dark`、`fontScale`、`language`：用户界面偏好。

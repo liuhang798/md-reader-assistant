@@ -36,9 +36,11 @@ window.leafMD = {
   listFolder: root => desktopRuntime ? Backend.ListFolder(root) : resolved({ root, files: [] }),
   getPreferences: () => desktopRuntime
     ? Backend.GetPreferences()
-    : resolved({ language: localStorage.getItem('language') || 'zh-CN', recentFiles: [], recentFileStatuses: [], explorerRoot: localStorage.getItem('explorerRoot') || '' }),
+    : resolved({ language: localStorage.getItem('language') || 'zh-CN', recentFiles: [], recentFileStatuses: [], favoriteFiles: [], favoriteFileStatuses: [], explorerRoot: localStorage.getItem('explorerRoot') || '' }),
   needsLanguageSelection: () => desktopRuntime ? Backend.NeedsLanguageSelection() : resolved(false),
   removeRecent: filePath => desktopRuntime ? Backend.RemoveRecent(filePath) : resolved(),
+  addFavorite: filePath => desktopRuntime ? Backend.AddFavorite(filePath) : resolved(),
+  removeFavorite: filePath => desktopRuntime ? Backend.RemoveFavorite(filePath) : resolved(),
   getInitialFile: () => desktopRuntime ? Backend.GetInitialFile() : resolved(null),
   getStartupMode: () => desktopRuntime ? Backend.GetStartupMode() : resolved('preview'),
   dirname: filePath => desktopRuntime ? Backend.Dirname(filePath) : resolved(filePath),

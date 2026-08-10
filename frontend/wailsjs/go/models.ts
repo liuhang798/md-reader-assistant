@@ -93,6 +93,8 @@ export namespace main {
 	export class Preferences {
 	    recentFiles: string[];
 	    recentFileStatuses?: RecentFileStatus[];
+	    favoriteFiles: string[];
+	    favoriteFileStatuses?: RecentFileStatus[];
 	    draftFiles?: string[];
 	    lastFile?: string;
 	    explorerRoot?: string;
@@ -108,6 +110,8 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.recentFiles = source["recentFiles"];
 	        this.recentFileStatuses = this.convertValues(source["recentFileStatuses"], RecentFileStatus);
+	        this.favoriteFiles = source["favoriteFiles"];
+	        this.favoriteFileStatuses = this.convertValues(source["favoriteFileStatuses"], RecentFileStatus);
 	        this.draftFiles = source["draftFiles"];
 	        this.lastFile = source["lastFile"];
 	        this.explorerRoot = source["explorerRoot"];

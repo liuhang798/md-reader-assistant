@@ -222,10 +222,10 @@ Section
     FileOpen $0 "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" w
     StrCmp $LANGUAGE ${LANG_ENGLISH} installerLanguageEnglish installerLanguageChinese
     installerLanguageEnglish:
-        FileWrite $0 "{$\"recentFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"en$\"}"
+        FileWrite $0 "{$\"recentFiles$\":[],$\"favoriteFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"en$\"}"
         Goto installerLanguageClose
     installerLanguageChinese:
-        FileWrite $0 "{$\"recentFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"zh-CN$\"}"
+        FileWrite $0 "{$\"recentFiles$\":[],$\"favoriteFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"zh-CN$\"}"
     installerLanguageClose:
     FileClose $0
     installerLanguageDone:

@@ -7,36 +7,38 @@ const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'ut
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 
 test('opening an existing recent document updates it in place', () => {
-  assert.match(renderer, /const existingIndex = state\.recentFiles\.findIndex\(file => file\.path === doc\.path\)/);
+  assert.match(renderer, /const existingIndex = state\.recentFiles\.findIndex\(file => sameDocumentPath\(file\.path, doc\.path\)\)/);
   assert.match(renderer, /state\.recentFiles\[existingIndex\] = recentEntry\(doc\)/);
   assert.doesNotMatch(renderer, /\[recentEntry\(doc\), \.\.\.state\.recentFiles\.filter/);
 });
 
-test('missing recent documents stay visible but cannot be opened', () => {
-  assert.match(renderer, /const missing = state\.sidebarMode === 'recent' && file\.exists === false/);
+test('missing recent and favorite documents stay visible but cannot be opened', () => {
+  assert.match(renderer, /const missing = state\.sidebarMode !== 'explorer' && file\.exists === false/);
   assert.match(renderer, /file-row\$\{missing \? ' missing' : ''\}/);
-  assert.match(renderer, /disabled title=.*recentMissingTitle/);
+  assert.match(renderer, /aria-disabled="true" data-missing="true" title=.*recentMissingTitle/);
+  assert.match(renderer, /if \(button\.dataset\.missing === 'true'\) return/);
   assert.match(renderer, /recentMissingAria/);
-  assert.match(renderer, /refreshRecentFileStatuses\(\)/);
+  assert.match(renderer, /refreshLibraryFileStatuses\(\)/);
   assert.match(styles, /\.file-row\.missing \.file-copy strong \{[^}]*text-decoration: line-through/);
   assert.match(styles, /\.file-row\.missing \.recent-remove \{ opacity: \.62; \}/);
 });
 
-test('right-clicking a recent document opens an action menu', () => {
+test('right-clicking any library document opens an action menu', () => {
   assert.match(html, /id="recentContextMenu"/);
   assert.match(html, /data-recent-action="edit"/);
+  assert.match(html, /data-recent-action="favorite"/);
   assert.match(html, /data-recent-action="reveal"/);
   assert.match(html, /data-recent-action="remove"/);
-  assert.match(renderer, /if \(state\.sidebarMode === 'recent'\)/);
   assert.match(renderer, /els\.fileList\.querySelectorAll\('\.file-row'\)/);
   assert.match(renderer, /addEventListener\('contextmenu', event =>/);
   assert.match(renderer, /openRecentContextMenu\(event, decodeURIComponent\(row\.dataset\.path\), row\.classList\.contains\('missing'\)\)/);
-  assert.match(renderer, /const disabled = missing && button\.dataset\.recentAction !== 'remove'/);
+  assert.match(renderer, /const favoriteRemoval = button\.dataset\.recentAction === 'favorite' && isFavorite/);
   assert.doesNotMatch(renderer, /contextmenu[\s\S]{0,250}revealFileInFolder\(decodeURIComponent/);
 });
 
-test('recent context menu edits, reveals, or removes the selected document', () => {
+test('document context menu edits, favorites, reveals, or removes the selected document', () => {
   assert.match(renderer, /if \(action === 'edit'\) await editRecentDocument\(filePath\)/);
+  assert.match(renderer, /else if \(action === 'favorite'\) await setFavoriteRecord\(filePath/);
   assert.match(renderer, /else if \(action === 'reveal'\) await revealFileInFolder\(filePath\)/);
   assert.match(renderer, /else if \(action === 'remove'\) await removeRecentRecord\(filePath\)/);
   assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*window\.leafMD\.readFile\(filePath\)[\s\S]*await toggleEditor\(true\)/);
