@@ -48,6 +48,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 - Preview text can be zoomed with `Ctrl + wheel` on Windows/Linux or `Command + wheel` on macOS, and the selected size is remembered in both reader and live-preview modes.
 - Fixed Windows upgrades being interrupted when Explorer locked an old shortcut or Markdown association icon; the installer can now offer to close a running older version and continue.
 - Added a persistent Favorites view. Right-click documents in Recent or Explorer to add or remove them from Favorites.
+- Favorited documents display a filled accent-colored star in Recent, Favorites, and Explorer for quick recognition.
 - Favorites survive restarts and remain independent from Recent; removing a favorite never deletes the original document.
 - Moved, deleted, or temporarily unavailable favorites remain visible as unavailable records so they can still be cleaned up.
 

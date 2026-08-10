@@ -950,16 +950,20 @@ function renderFileList() {
   els.fileList.innerHTML = state.files.map(file => {
     const active = sameDocumentPath(state.currentFile?.path, file.path) ? ' active' : '';
     const missing = state.sidebarMode !== 'explorer' && file.exists === false;
+    const favorited = state.favoriteFiles.some(favorite => sameDocumentPath(favorite.path, file.path));
     const sub = state.sidebarMode === 'explorer'
       ? (file.directory && file.directory !== '.' ? file.directory : t('markdownDocument'))
       : t(missing ? 'recentMissing' : state.sidebarMode === 'favorites' ? 'favorited' : 'recentOpened');
+    const favoriteMarker = favorited
+      ? `<span class="favorite-marker" title="${escapeHtml(t('favorited'))}" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></span>`
+      : '';
     const removeButton = state.sidebarMode === 'recent'
       ? `<button class="recent-remove" data-path="${encodeURIComponent(file.path)}" title="${t('removeRecentTitle')}" aria-label="${escapeHtml(t('removeRecentAria', { name: file.name }))}"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M8 10v8M12 10v8M16 10v8M7 7l1 14h8l1-14"/></svg></button>`
       : '';
     const itemAttributes = missing
       ? ` aria-disabled="true" data-missing="true" title="${escapeHtml(t('recentMissingTitle'))}" aria-label="${escapeHtml(t('recentMissingAria', { name: file.name }))}"`
       : ` title="${escapeHtml(t('recentContextHint'))}"`;
-    return `<div class="file-row${missing ? ' missing' : ''}" data-path="${encodeURIComponent(file.path)}"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"${itemAttributes}><span class="file-icon">${fileIcon()}</span><span class="file-copy"><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
+    return `<div class="file-row${missing ? ' missing' : ''}" data-path="${encodeURIComponent(file.path)}"><button class="file-item${active}" data-path="${encodeURIComponent(file.path)}"${itemAttributes}><span class="file-icon">${fileIcon()}</span><span class="file-copy"><span class="file-title-line">${favoriteMarker}<strong>${escapeHtml(file.name)}</strong></span><small>${escapeHtml(sub)}</small></span></button>${removeButton}</div>`;
   }).join('');
   els.fileList.querySelectorAll('.file-item').forEach(button => {
     button.addEventListener('click', () => {

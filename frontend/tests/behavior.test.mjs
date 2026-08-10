@@ -45,3 +45,13 @@ test('document context menu edits, favorites, reveals, or removes the selected d
   assert.match(renderer, /await window\.leafMD\.showInFolder\(filePath\)/);
   assert.match(styles, /\.recent-context-menu \{[^}]*right: auto;[^}]*width: 190px;/);
 });
+
+test('favorite documents show a persistent theme-colored marker in every library view', () => {
+  assert.match(renderer, /const favorited = state\.favoriteFiles\.some\(favorite => sameDocumentPath\(favorite\.path, file\.path\)\)/);
+  assert.match(renderer, /class="file-title-line"/);
+  assert.match(renderer, /class="favorite-marker"/);
+  assert.match(renderer, /class="file-title-line">\$\{favoriteMarker\}<strong>/);
+  assert.match(renderer, /title="\$\{escapeHtml\(t\('favorited'\)\)\}"/);
+  assert.match(styles, /\.favorite-marker \{[^}]*color: var\(--accent-strong\);/);
+  assert.match(styles, /\.favorite-marker svg \{[^}]*fill: currentColor;/);
+});
