@@ -28,7 +28,7 @@
 !define INFO_PROJECTNAME    "md-reader-assistant"
 !define INFO_COMPANYNAME    "LeafMD Open Source"
 !define INFO_PRODUCTNAME    "MD阅读助手"
-!define INFO_PRODUCTVERSION "2.3.2"
+!define INFO_PRODUCTVERSION "2.3.3"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
@@ -81,6 +81,10 @@ ManifestDPIAware true
 
 LangString FinishRunText ${LANG_ENGLISH} "Run ${INFO_PRODUCTNAME}"
 LangString FinishRunText ${LANG_SIMPCHINESE} "运行 ${INFO_PRODUCTNAME}"
+LangString CloseRunningAppPrompt ${LANG_ENGLISH} "${INFO_PRODUCTNAME} is still running and must be closed before the upgrade. Close it now and continue installing? Unsaved changes may be lost."
+LangString CloseRunningAppPrompt ${LANG_SIMPCHINESE} "${INFO_PRODUCTNAME} 仍在运行，升级前必须关闭。是否立即关闭并继续安装？未保存的修改可能会丢失。"
+LangString CloseRunningAppFailed ${LANG_ENGLISH} "The running application could not be closed. Close it manually, then click Retry."
+LangString CloseRunningAppFailed ${LANG_SIMPCHINESE} "无法关闭正在运行的软件。请手动关闭后点击重试。"
 
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
 #!uninstfinalize 'signtool --file "%1"'
@@ -130,6 +134,51 @@ Function ResolvePreviousInstallDir
     previousInstallDone:
 FunctionEnd
 
+# Detect a locked installed executable before extraction. Interactive upgrades
+# let the user explicitly close the old process; silent upgrades fail safely.
+Function EnsureApplicationClosed
+    IfFileExists "$INSTDIR\${PRODUCT_EXECUTABLE}" 0 applicationClosed
+    ClearErrors
+    FileOpen $0 "$INSTDIR\${PRODUCT_EXECUTABLE}" a
+    IfErrors applicationLocked
+    FileClose $0
+    Goto applicationClosed
+
+    applicationLocked:
+        IfSilent applicationCloseCancelled applicationClosePrompt
+    applicationClosePrompt:
+        MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(CloseRunningAppPrompt)" IDYES applicationForceClose IDNO applicationCloseCancelled
+    applicationForceClose:
+        nsExec::ExecToStack '"$SYSDIR\taskkill.exe" /F /T /IM "${PRODUCT_EXECUTABLE}"'
+        Pop $0
+        Pop $1
+        IntCmp $0 0 applicationVerifyClosed applicationCloseFailed applicationCloseFailed
+    applicationVerifyClosed:
+        Sleep 500
+        ClearErrors
+        FileOpen $0 "$INSTDIR\${PRODUCT_EXECUTABLE}" a
+        IfErrors applicationCloseFailed
+        FileClose $0
+        Goto applicationClosed
+    applicationCloseFailed:
+        IfSilent applicationCloseCancelled applicationCloseRetry
+    applicationCloseRetry:
+        MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(CloseRunningAppFailed)" IDRETRY applicationForceClose IDCANCEL applicationCloseCancelled
+    applicationCloseCancelled:
+        SetErrorLevel 66
+        Quit
+    applicationClosed:
+FunctionEnd
+
+# Wails' generated association macro writes a standalone .ico on every install.
+# Explorer can keep that file locked. Use the executable's embedded icon instead.
+!macro AssociateMarkdownFiles
+    !insertmacro APP_ASSOCIATE "md" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "markdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "mdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "mkd" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+!macroend
+
 # Electron releases and early Wails installers used different uninstall keys
 # or installation scopes. Remove only stale entries with this exact product
 # name so Windows shows a single installed application after an upgrade.
@@ -153,6 +202,8 @@ FunctionEnd
 
 Section
     !insertmacro wails.setShellContext
+
+    Call EnsureApplicationClosed
 
     Call RemoveLegacyUninstallEntries
 
@@ -179,8 +230,6 @@ Section
     FileClose $0
     installerLanguageDone:
 
-    File "/oname=MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" "..\icon.ico"
-
     # 2.2.2 could leave a public shortcut because its CI rebuild omitted the
     # user execution-level define. Try to remove both locations. If Windows
     # does not permit deleting the public link, keep it and do not create a
@@ -195,19 +244,25 @@ Section
     IfFileExists "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" publicStartMenuRemains createUserStartMenu
     createUserStartMenu:
         SetShellVarContext current
-        CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" 0
+        CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0
     publicStartMenuRemains:
 
     SetShellVarContext all
     IfFileExists "$DESKTOP\${INFO_PRODUCTNAME}.lnk" publicDesktopRemains createUserDesktop
     createUserDesktop:
         SetShellVarContext current
-        CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\MDReaderAssistant-${INFO_PRODUCTVERSION}.ico" 0
+        CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0
     publicDesktopRemains:
         SetShellVarContext current
-    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'
 
-    !insertmacro wails.associateFiles
+    # Older installers stored a separate shortcut icon. Explorer may keep that
+    # file locked during a same-version reinstall, so shortcuts now use the icon
+    # embedded in the executable and stale icon files are removed when possible.
+    Delete /REBOOTOK "$INSTDIR\MDReaderAssistant-*.ico"
+
+    !insertmacro AssociateMarkdownFiles
+    Delete /REBOOTOK "$INSTDIR\mdFileIcon.ico"
+    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)'
     !insertmacro wails.associateCustomProtocols
 
     !insertmacro wails.writeUninstaller

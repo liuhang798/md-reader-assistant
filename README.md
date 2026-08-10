@@ -43,9 +43,10 @@ Windows 用户运行 `md-reader-assistant-版本-windows-amd64.exe`，按安装�
 
 macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时手动切换；临时选择会保持到系统下一次切换白天或黑夜模式，随后自动恢复跟随。系统模式变化时界面与原生标题栏同步切换；使用在轻薄标题栏中垂直居中的系统原生窗口控制按钮与应用菜单，半屏平铺和窗口缩放时按钮位置保持稳定。进入全屏后 Logo 和软件名称会自动向左对齐，退出后立即恢复窗口按钮安全间距且不会短暂重叠。支持标准 Command 快捷键：`Command + W` 关闭窗口并留在后台，`Command + Q` 真正退出应用。全屏关闭时会先退出全屏再隐藏到后台；编辑器和资源浏览器采用延迟初始化，减少冷启动等待。
 
-## 2.3.2 更新亮点
+## 2.3.3 更新亮点
 
-- 修复 macOS 全屏关闭后应用进入后台，再次点击 Dock 图标无法恢复窗口的问题；全屏关闭现在与普通关闭行为一致，Dock 恢复可靠回到窗口。
+- 文档预览支持鼠标滚轮缩放：Windows/Linux 使用 `Ctrl + 滚轮`，macOS 使用 `Command + 滚轮`，阅读页与编辑模式实时预览均可使用并自动记忆字号。
+- 修复 Windows 覆盖安装时快捷方式或 Markdown 文件关联图标被资源管理器占用而中断的问题；若旧版仍在运行，安装器会提供关闭旧版并继续的选项。
 
 ## 主要功能
 
@@ -147,7 +148,7 @@ npm run build
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-推送 `v2.3.2` 等版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包并发布到 GitHub Releases。客户端会根据仓库的最新稳定 Release 提醒更新。
+推送 `v2.3.3` 等版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包并发布到 GitHub Releases。客户端会根据仓库的最新稳定 Release 提醒更新。
 
 ## 项目文档
 

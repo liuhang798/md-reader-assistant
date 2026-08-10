@@ -4,7 +4,17 @@ All notable changes to MD Reader Assistant are documented here.
 
 ## [Unreleased]
 
-_Nothing yet._
+## [2.3.3] - 2026-08-10
+
+### 简体中文
+
+- 新增文档预览鼠标滚轮缩放：Windows/Linux 使用 `Ctrl + 滚轮`，macOS 使用 `Command + 滚轮`；支持阅读页和编辑模式实时预览，并自动记忆字号。
+- 修复 Windows 同版本覆盖安装时，旧快捷方式或 Markdown 文件关联图标被资源管理器占用而导致安装中断的问题；两类关联现在都直接使用程序内置图标，并安全延迟清理旧图标文件。升级时若检测到旧版仍在运行，安装器会提供确认关闭并继续安装的选项。
+
+### English
+
+- Added mouse-wheel text zoom for document previews: `Ctrl + wheel` on Windows/Linux and `Command + wheel` on macOS. It works in both the reader and live preview and preserves the selected text size.
+- Fixed Windows same-version reinstalls failing when Explorer kept old shortcut or Markdown file-association icons locked. Both associations now use the icon embedded in the executable, while legacy icons are safely removed or deferred until reboot. If the old application is still running, the installer offers to close it and continue.
 
 ## [2.3.2] - 2026-08-09
 
@@ -214,3 +224,4 @@ _Nothing yet._
 [2.3.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.0
 [2.3.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.1
 [2.3.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.2
+[2.3.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.3

@@ -527,6 +527,76 @@ func TestWindowsInstallerUsesItsLanguageAsTheInitialAppLanguage(t *testing.T) {
 	}
 }
 
+func TestWindowsInstallerUsesReinstallSafeShortcutIcons(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("build", "windows", "installer", "project.nsi"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	installer := string(data)
+
+	if strings.Contains(installer, `File "/oname=MDReaderAssistant-${INFO_PRODUCTVERSION}.ico"`) {
+		t.Fatal("Windows installer must not overwrite a standalone shortcut icon that Explorer may still have locked")
+	}
+	for _, required := range []string{
+		`CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0`,
+		`CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0`,
+		`Delete /REBOOTOK "$INSTDIR\MDReaderAssistant-*.ico"`,
+	} {
+		if !strings.Contains(installer, required) {
+			t.Errorf("Windows installer is missing reinstall-safe shortcut rule %q", required)
+		}
+	}
+}
+
+func TestWindowsInstallerUsesReinstallSafeFileAssociationIcons(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("build", "windows", "installer", "project.nsi"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	installer := string(data)
+
+	if strings.Contains(installer, `!insertmacro wails.associateFiles`) {
+		t.Fatal("Windows installer must not use Wails file associations that overwrite a standalone icon")
+	}
+	for _, required := range []string{
+		`!macro AssociateMarkdownFiles`,
+		`!insertmacro APP_ASSOCIATE "md" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0"`,
+		`!insertmacro AssociateMarkdownFiles`,
+		`Delete /REBOOTOK "$INSTDIR\mdFileIcon.ico"`,
+	} {
+		if !strings.Contains(installer, required) {
+			t.Errorf("Windows installer is missing reinstall-safe file-association rule %q", required)
+		}
+	}
+}
+
+func TestWindowsInstallerOffersToCloseALockedRunningApplication(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("build", "windows", "installer", "project.nsi"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	installer := string(data)
+
+	for _, required := range []string{
+		`LangString CloseRunningAppPrompt ${LANG_ENGLISH}`,
+		`LangString CloseRunningAppPrompt ${LANG_SIMPCHINESE}`,
+		`Function EnsureApplicationClosed`,
+		`Call EnsureApplicationClosed`,
+		`MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(CloseRunningAppPrompt)"`,
+		`nsExec::ExecToStack '"$SYSDIR\taskkill.exe" /F /T /IM "${PRODUCT_EXECUTABLE}"'`,
+	} {
+		if !strings.Contains(installer, required) {
+			t.Errorf("Windows installer is missing running-application handling %q", required)
+		}
+	}
+
+	closeCheck := strings.Index(installer, `Call EnsureApplicationClosed`)
+	fileWrite := strings.Index(installer, `!insertmacro wails.files`)
+	if closeCheck < 0 || fileWrite < 0 || closeCheck > fileWrite {
+		t.Fatal("Windows installer must handle the running application before overwriting executable files")
+	}
+}
+
 func TestCompareVersions(t *testing.T) {
 	tests := []struct {
 		left, right string
