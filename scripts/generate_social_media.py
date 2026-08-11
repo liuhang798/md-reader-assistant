@@ -97,7 +97,7 @@ def make_portrait(filename: str, title: str, subtitle: str, screenshot: str) -> 
     draw.rounded_rectangle((96, 365, 162, 371), radius=3, fill=(224, 158, 41))
     centered(draw, subtitle, 404, font(29), MUTED)
     paste_card(canvas, SCREENSHOTS / screenshot, (54, 525, 972, 570))
-    centered(draw, "Windows  ·  macOS  ·  Linux   |   v2.3.3", 1275, font(24), (83, 103, 90))
+    centered(draw, "Windows  ·  macOS  ·  Linux   |   v2.3.4", 1275, font(24), (83, 103, 90))
     OUTPUT.mkdir(parents=True, exist_ok=True)
     canvas.save(OUTPUT / filename, optimize=True)
 
@@ -125,7 +125,7 @@ def make_cover_9x16() -> None:
     centered(draw, "Windows  ·  macOS  ·  Linux", 645, font(29), (44, 55, 49))
     paste_card(canvas, SCREENSHOTS / "03-split-editor.png", (54, 790, 972, 570))
     centered(draw, "开源免费  ·  本地优先  ·  约 7 MB", 1500, font(27), MUTED)
-    centered(draw, "MD Reader Assistant  v2.3.3", 1560, font(22), (101, 118, 108))
+    centered(draw, "MD Reader Assistant  v2.3.4", 1560, font(22), (101, 118, 108))
     OUTPUT.mkdir(parents=True, exist_ok=True)
     canvas.save(OUTPUT / "01-cover-douyin-9x16.png", optimize=True)
 

@@ -7,6 +7,7 @@ import { escapeMarkdownText, highlightExtension, nextFootnoteNumber, prepareFoot
 import { filesFromPreferencePaths, normalizeSidebarMode, sameDocumentPath } from './library-state.js';
 
 const $ = selector => document.querySelector(selector);
+const DOC_WIDTH_LEVELS = ['narrow', 'medium', 'wide', 'full'];
 let codeEditor;
 let editorExtensions = [];
 let basicSetup;
@@ -28,6 +29,7 @@ let markdownHighlightStyle;
 let editorDependenciesPromise;
 let editorInitializationPromise;
 let suppressEditorChanges = false;
+let externalRefreshInProgress = false;
 
 const initialAppearance = readAppearanceStorage(localStorage);
 
@@ -42,6 +44,7 @@ const state = {
   accentTheme: initialAppearance.accentTheme,
   colorMode: initialAppearance.colorMode,
   fontScale: Number(localStorage.getItem('fontScale') || 1),
+  docWidth: normalizeDocWidth(localStorage.getItem('docWidth')),
   language: localStorage.getItem('language') === 'en' ? 'en' : 'zh-CN',
   sidebarWidth: Number(localStorage.getItem('sidebarWidth') || 258),
   tocWidth: Number(localStorage.getItem('tocWidth') || 205),
@@ -68,6 +71,7 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
     zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', printDocument: '打印文档', copy: '复制', copied: '已复制',
+    docWidth: '文档宽度', widthNarrow: '窄', widthMedium: '中', widthWide: '宽', widthFull: '全宽', docWidthChanged: '文档宽度：{level}',
     bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', favorited: '已收藏', favoriteDocument: '收藏文档', unfavoriteDocument: '取消收藏', favoriteAdded: '已收藏文档', favoriteRemoved: '已取消收藏，原文件未删除', recentContextHint: '右键打开文档操作菜单', recentContextMenuTitle: '文档操作', recentEdit: '编辑', recentReveal: '打开所在文件夹', recentRemove: '移除', recentRevealFailed: '无法打开文件所在目录', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyFavorites: '还没有收藏文档', emptyExplorer: '请先打开一个文件夹',
     markdownDocument: 'Markdown 文档', removeRecentTitle: '移除最近阅读记录', removeRecentAria: '从最近阅读中移除 {name}',
     discardConfirm: '当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？', previewError: '暂时无法渲染当前内容',
@@ -75,7 +79,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.3.3', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.3.4', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
@@ -99,6 +103,7 @@ const translations = {
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
     zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
+    docWidth: 'Document width', widthNarrow: 'Narrow', widthMedium: 'Medium', widthWide: 'Wide', widthFull: 'Full width', docWidthChanged: 'Document width: {level}',
     bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', favorited: 'Favorited', favoriteDocument: 'Add to Favorites', unfavoriteDocument: 'Remove from Favorites', favoriteAdded: 'Document added to Favorites', favoriteRemoved: 'Removed from Favorites. The original file was not deleted.', recentContextHint: 'Right-click for document actions', recentContextMenuTitle: 'Document actions', recentEdit: 'Edit', recentReveal: 'Show in Folder', recentRemove: 'Remove', recentRevealFailed: 'Unable to show the file in its folder', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyFavorites: 'No favorite documents', emptyExplorer: 'Open a folder to browse files',
     markdownDocument: 'Markdown document', removeRecentTitle: 'Remove recent record', removeRecentAria: 'Remove {name} from Recent',
     discardConfirm: 'This document has unsaved changes.\n\nDiscard the changes and continue?', previewError: 'The current content cannot be rendered',
@@ -106,7 +111,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.3.3', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.3.4', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
@@ -801,6 +806,22 @@ function setFontScale(scale, silent = false) {
   if (!silent) showToast(t('bodyFontScale', { percent: Math.round(state.fontScale * 100) }));
 }
 
+function normalizeDocWidth(value) {
+  return DOC_WIDTH_LEVELS.includes(value) ? value : 'medium';
+}
+
+function setDocumentWidth(level, silent = false) {
+  state.docWidth = normalizeDocWidth(level);
+  document.body.dataset.docWidth = state.docWidth;
+  localStorage.setItem('docWidth', state.docWidth);
+  document.querySelectorAll('#moreMenu button[data-doc-width]').forEach(button => {
+    const active = button.dataset.docWidth === state.docWidth;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-checked', String(active));
+  });
+  if (!silent) showToast(t('docWidthChanged', { level: t(`width${state.docWidth.charAt(0).toUpperCase()}${state.docWidth.slice(1)}`) }));
+}
+
 function handlePreviewWheelZoom(event) {
   const direction = previewWheelZoomDirection({
     platform: document.documentElement.dataset.platform,
@@ -1174,6 +1195,37 @@ async function loadFile(filePath) {
   }
 }
 
+async function refreshCurrentFileFromDisk() {
+  if (!state.currentFile?.path || state.dirty || state.saving || externalRefreshInProgress) return;
+  const requestedPath = state.currentFile.path;
+  externalRefreshInProgress = true;
+  try {
+    const refreshed = await window.leafMD.readFile(requestedPath);
+    if (!state.currentFile || !sameDocumentPath(state.currentFile.path, requestedPath) || state.dirty || state.saving) return;
+    if (!refreshed?.path || refreshed.content === state.currentFile.content) return;
+
+    const reader = $('.reader-pane');
+    const scrollTop = reader.scrollTop;
+    state.currentFile = refreshed;
+    state.savedContent = refreshed.content;
+    els.editorFileName.textContent = refreshed.name;
+    renderEditorPreview(refreshed.content);
+    if (state.editing) {
+      replaceEditorContent(refreshed.content, true);
+      updateEditorPosition();
+    } else {
+      renderCurrentDocument();
+      reader.scrollTop = scrollTop;
+      if (!els.searchBar.classList.contains('hidden')) performSearch();
+    }
+    setDirty(false);
+  } catch (error) {
+    console.warn('Unable to refresh the current document from disk:', error);
+  } finally {
+    externalRefreshInProgress = false;
+  }
+}
+
 function updateEditorPosition() {
   if (!codeEditor) return;
   const cursor = codeEditor.state.selection.main.head;
@@ -1336,7 +1388,7 @@ function performSearch() {
   if (!term) return;
   const walker = document.createTreeWalker(els.content, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
-      return node.parentElement.closest('code, script, style, mark') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      return node.parentElement.closest('script, style, mark') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
     }
   });
   const nodes = [];
@@ -1488,7 +1540,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.3.3';
+  $('#currentVersion').textContent = info.currentVersion || '2.3.4';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -1568,6 +1620,7 @@ async function initialize() {
   setAccentTheme(state.accentTheme);
   if (!initializeMacSystemColorMode()) setColorMode(state.colorMode);
   setFontScale(state.fontScale, true);
+  setDocumentWidth(state.docWidth, true);
   scheduleMacWindowModeSync();
   const prefs = await window.leafMD.getPreferences();
   const needsLanguageSelection = await window.leafMD.needsLanguageSelection();
@@ -1705,6 +1758,7 @@ els.moreMenu.addEventListener('click', event => {
   if (action === 'zoom-in') setFontScale(state.fontScale + .08);
   if (action === 'zoom-out') setFontScale(state.fontScale - .08);
   if (action === 'zoom-reset') setFontScale(1);
+  if (button?.dataset.docWidth) setDocumentWidth(button.dataset.docWidth);
   if (action === 'default-app') {
     window.leafMD.openDefaultApps();
     showToast(t('defaultAppHint'));
@@ -1790,7 +1844,10 @@ window.leafMD.onFileDrop(paths => {
 initializeFormatToolbarOverflow();
 initializePaneResizers();
 window.addEventListener('resize', scheduleMacWindowModeSync);
-window.addEventListener('focus', scheduleMacWindowModeSync);
+window.addEventListener('focus', () => {
+  scheduleMacWindowModeSync();
+  refreshCurrentFileFromDisk();
+});
 initialize();
 setInterval(() => {
   if (state.editing && state.dirty && state.currentFile?.path && !state.saving) saveDocument(false, { auto: true, silent: true });

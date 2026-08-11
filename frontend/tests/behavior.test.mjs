@@ -55,3 +55,36 @@ test('favorite documents show a persistent theme-colored marker in every library
   assert.match(styles, /\.favorite-marker \{[^}]*color: var\(--accent-strong\);/);
   assert.match(styles, /\.favorite-marker svg \{[^}]*fill: currentColor;/);
 });
+
+test('reader search includes Markdown inline code and fenced code text', () => {
+  assert.match(renderer, /closest\('script, style, mark'\)/);
+  assert.doesNotMatch(renderer, /closest\('code, script, style, mark'\)/);
+});
+
+test('returning to the app reloads an externally changed document without overwriting local edits', () => {
+  assert.match(renderer, /async function refreshCurrentFileFromDisk\(\)/);
+  assert.match(renderer, /if \(!state\.currentFile\?\.path \|\| state\.dirty \|\| state\.saving \|\| externalRefreshInProgress\) return/);
+  assert.match(renderer, /const refreshed = await window\.leafMD\.readFile\(requestedPath\)/);
+  assert.match(renderer, /if \(!state\.currentFile \|\| !sameDocumentPath\(state\.currentFile\.path, requestedPath\) \|\| state\.dirty \|\| state\.saving\) return/);
+  assert.match(renderer, /window\.addEventListener\('focus', \(\) => \{[\s\S]*scheduleMacWindowModeSync\(\);[\s\S]*refreshCurrentFileFromDisk\(\);[\s\S]*\}\)/);
+});
+
+test('document width presets are selectable in the more menu and persist', () => {
+  assert.match(html, /data-doc-width="narrow"/);
+  assert.match(html, /data-doc-width="medium"/);
+  assert.match(html, /data-doc-width="wide"/);
+  assert.match(html, /data-doc-width="full"/);
+  assert.match(html, /role="menuitemradio" data-doc-width="medium"/);
+  assert.match(renderer, /docWidth: normalizeDocWidth\(localStorage\.getItem\('docWidth'\)\)/);
+  assert.match(renderer, /function normalizeDocWidth\(value\)/);
+  assert.match(renderer, /function setDocumentWidth\(level, silent = false\)/);
+  assert.match(renderer, /document\.body\.dataset\.docWidth = state\.docWidth/);
+  assert.match(renderer, /localStorage\.setItem\('docWidth', state\.docWidth\)/);
+  assert.match(renderer, /if \(button\?\.dataset\.docWidth\) setDocumentWidth\(button\.dataset\.docWidth\)/);
+  assert.match(renderer, /setDocumentWidth\(state\.docWidth, true\)/);
+  assert.match(styles, /\.document-view \{ max-width: var\(--doc-width\)/);
+  assert.match(styles, /\.editor-preview-content \{ max-width: var\(--editor-doc-width\)/);
+  assert.match(styles, /body\[data-doc-width="narrow"\] \{ --doc-width: 640px; --editor-doc-width: 560px; \}/);
+  assert.match(styles, /body\[data-doc-width="wide"\] \{ --doc-width: 1100px; --editor-doc-width: 900px; \}/);
+  assert.match(styles, /body\[data-doc-width="full"\] \{ --doc-width: 100%; --editor-doc-width: 100%; \}/);
+});

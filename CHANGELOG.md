@@ -2,7 +2,19 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
-## [Unreleased]
+## [2.3.4] - 2026-08-11
+
+### 简体中文
+
+- 新增当前文档外部修改自动刷新：应用重新获得焦点时会从磁盘重新读取并更新阅读页或无未保存内容的编辑页；若本软件存在未保存编辑则安全跳过，避免覆盖用户输入。
+- 新增文档宽度调整：在“更多”菜单中可选择窄 / 中 / 宽 / 全宽四档内容宽度，阅读页与编辑实时预览同时生效并自动记忆。
+- 修复阅读页查找主动跳过 Markdown 行内代码和代码块的问题；代码文字现在会进入匹配计数，并支持高亮及上一个/下一个定位。
+
+### English
+
+- Added automatic refresh for externally modified active documents. When the app regains focus, it reloads the reader or a clean editor from disk; local unsaved edits safely block replacement.
+- Added document width presets in the More menu: narrow / medium / wide / full width. Both the reader and the live editor preview respect the chosen width, which is remembered.
+- Fixed reader search intentionally skipping Markdown inline code and fenced code blocks. Code text now participates in match counts, highlighting, and previous/next navigation.
 
 ## [2.3.3] - 2026-08-10
 
@@ -235,3 +247,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.1
 [2.3.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.2
 [2.3.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.3
+[2.3.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.4

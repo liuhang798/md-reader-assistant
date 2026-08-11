@@ -44,8 +44,9 @@ test('accent menu contains exactly eight accessible radio options', () => {
   assert.match(html, /id="accentMenu"[^>]*role="menu"/);
   const optionIds = [...html.matchAll(/data-accent-option="([^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(optionIds, accentIds);
-  assert.equal((html.match(/role="menuitemradio"/g) ?? []).length, 8);
-  assert.equal((html.match(/aria-checked="false"/g) ?? []).length, 8);
+  const accentMenu = html.match(/<div id="accentMenu"[\s\S]*?<\/div>\s*<\/div>/)?.[0] ?? '';
+  assert.equal((accentMenu.match(/role="menuitemradio"/g) ?? []).length, 8);
+  assert.equal((accentMenu.match(/aria-checked="false"/g) ?? []).length, 8);
 });
 
 test('all in-app brand images participate in runtime accent switching', () => {

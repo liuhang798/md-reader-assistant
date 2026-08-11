@@ -1,5 +1,7 @@
 :root {
   --font-scale: 1;
+  --doc-width: 850px;
+  --editor-doc-width: 700px;
   --titlebar-height: 52px;
   --mac-titlebar-bg: var(--bg);
   --mac-titlebar-line: var(--line);
@@ -301,7 +303,12 @@ body.resizing-panes .sidebar, body.resizing-panes .toc-panel { transition: none;
 .drop-hint { display: flex; align-items: center; gap: 7px; color: var(--faint); font-size: 11px; margin-top: 22px; }
 kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 2px 6px; font-size: 10px; }
 
-.document-view { max-width: 850px; padding: 50px 68px 70px; margin: 0 auto; }
+.document-view { max-width: var(--doc-width); padding: 50px 68px 70px; margin: 0 auto; }
+body[data-doc-width="narrow"] { --doc-width: 640px; --editor-doc-width: 560px; }
+body[data-doc-width="medium"] { --doc-width: 850px; --editor-doc-width: 700px; }
+body[data-doc-width="wide"] { --doc-width: 1100px; --editor-doc-width: 900px; }
+body[data-doc-width="full"] { --doc-width: 100%; --editor-doc-width: 100%; }
+body[data-doc-width="full"] .document-view { padding-left: 44px; padding-right: 44px; }
 .document-meta { display: flex; justify-content: space-between; align-items: center; padding-bottom: 26px; margin-bottom: 36px; border-bottom: 1px solid var(--line); }
 .breadcrumb { min-width: 0; display: flex; gap: 8px; color: var(--faint); font-size: 11px; align-items: center; }
 .breadcrumb span { overflow: hidden; max-width: 300px; white-space: nowrap; text-overflow: ellipsis; }
@@ -397,7 +404,7 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-wid
 .highlight-label { padding: 0 3px; border-radius: 2px; background: color-mix(in srgb, #f2cf4a 62%, var(--paper)); color: var(--text); font-family: "Segoe UI", sans-serif; font-weight: 750; }
 .horizontal-rule-label { font-size: 18px; line-height: 1; }
 .editor-preview-scroll { flex: 1; min-height: 0; overflow: auto; }
-.editor-preview-content { max-width: 700px; margin: 0 auto; padding: 34px 42px 90px; font-size: calc(15px * var(--font-scale)); }
+.editor-preview-content { max-width: var(--editor-doc-width); margin: 0 auto; padding: 34px 42px 90px; font-size: calc(15px * var(--font-scale)); }
 .editor-preview-content h1 { font-size: calc(30px * var(--font-scale)); }
 .editor-preview-content h2 { font-size: calc(22px * var(--font-scale)); }
 .editor-preview-content h3 { font-size: calc(18px * var(--font-scale)); }
@@ -454,6 +461,8 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .popover .language-option .language-check { opacity: 0; color: var(--accent-strong); font-size: 12px; font-weight: 800; }
 .popover .language-option.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 650; }
 .popover .language-option.active .language-check { opacity: 1; }
+.popover .width-option span:first-child { color: inherit; font-size: 12px; }
+.popover .width-option.active span:first-child { color: var(--accent-strong); font-weight: 650; }
 .popover hr { border: 0; height: 1px; background: var(--line); margin: 5px; }
 .recent-context-menu { z-index: 90; right: auto; width: 190px; }
 .recent-context-menu button { align-items: center; justify-content: flex-start; gap: 10px; color: var(--text); }
@@ -560,7 +569,7 @@ body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; 
 
 @media (max-width: 1120px) {
   .toc-panel, .toc-resizer { display: none; }
-  .document-view { max-width: 790px; }
+  .document-view { max-width: min(var(--doc-width), 790px); }
   .back-to-top { right: 24px; }
 }
 @media (max-width: 900px) {
