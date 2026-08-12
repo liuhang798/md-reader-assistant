@@ -2,6 +2,16 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.8] - 2026-08-12
+
+### 简体中文
+
+- 本版本用于验证 Windows 应用内更新的自替换逻辑（便携版与安装版均适用），无功能变化。
+
+### English
+
+- This release validates the Windows in-app updater's self-replace logic (works for both portable and installed deployments); no functional changes.
+
 ## [2.3.7] - 2026-08-12
 
 ### 简体中文
@@ -285,3 +295,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.5
 [2.3.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.6
 [2.3.7]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.7
+[2.3.8]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.8
