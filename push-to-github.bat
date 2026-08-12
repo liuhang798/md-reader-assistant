@@ -6,7 +6,7 @@ cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
 set "BRANCH=main"
-set "COMMIT_MSG=Release v2.3.11: rewrite updater in Go, drop cmd scripts"
+set "COMMIT_MSG=Release v2.3.13: fix Windows in-app self-update file locking"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
 

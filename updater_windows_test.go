@@ -12,6 +12,17 @@ import (
 	"time"
 )
 
+func TestMain(m *testing.M) {
+	if len(os.Args) >= 3 && os.Args[1] == "--test-start-update" {
+		if err := applyUpdate(os.Args[2]); err != nil {
+			os.Exit(2)
+		}
+		os.Exit(0)
+	}
+	runUpdateHelperIfRequested()
+	os.Exit(m.Run())
+}
+
 func TestReplaceFileWithChinesePaths(t *testing.T) {
 	dir := t.TempDir()
 	source := filepath.Join(dir, "新版本-测试.bin")
@@ -76,10 +87,11 @@ func TestRunUpdateHelperEndToEnd(t *testing.T) {
 	if err := os.MkdirAll(proofDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	oldProof := filepath.Join(proofDir, "old.txt")
+	proofPath := filepath.Join(proofDir, "proof.txt")
+	t.Setenv("HELPER_PROOF_DIR", proofDir)
 
 	oldCmd := exec.Command(oldProcess)
-	oldCmd.Env = append(os.Environ(), "HELPER_PROOF_DIR="+proofDir)
+	oldCmd.Env = os.Environ()
 	if err := oldCmd.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +105,7 @@ func TestRunUpdateHelperEndToEnd(t *testing.T) {
 	if processAlive(parentPID) {
 		t.Fatal("old process did not terminate")
 	}
-	_ = os.Remove(oldProof)
+	_ = os.Remove(proofPath)
 
 	logPath := filepath.Join(dir, "apply-update.log")
 	if err := runUpdateHelper(newBinary, targetBinary, parentPID, logPath); err != nil {
@@ -112,7 +124,7 @@ func TestRunUpdateHelperEndToEnd(t *testing.T) {
 	// ...and the new version must have been started (it writes its proof).
 	deadline = time.Now().Add(10 * time.Second)
 	for {
-		if _, err := os.Stat(filepath.Join(proofDir, "proof.txt")); err == nil {
+		if _, err := os.Stat(proofPath); err == nil {
 			break
 		}
 		if time.Now().After(deadline) {
@@ -129,6 +141,81 @@ func TestRunUpdateHelperEndToEnd(t *testing.T) {
 		if !strings.Contains(string(logData), expected) {
 			t.Fatalf("log is missing %q\n--- log ---\n%s", expected, logData)
 		}
+	}
+}
+
+// TestApplyUpdateCanReplaceTheExecutableThatLaunchedIt catches the Windows
+// file-locking bug where the updater was launched from the installed
+// executable and then tried to overwrite that same running executable.
+func TestApplyUpdateCanReplaceTheExecutableThatLaunchedIt(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "中文更新目录")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	testExecutable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	installedExecutable := filepath.Join(dir, "MD阅读助手.exe")
+	testExecutableData, err := os.ReadFile(testExecutable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(installedExecutable, testExecutableData, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	newSource := filepath.Join(dir, "new-version.go")
+	proofPath := filepath.Join(dir, "restarted.txt")
+	newSourceCode := "package main\n" +
+		"import \"os\"\n" +
+		"func main() { _ = os.WriteFile(" + strconv.Quote(proofPath) + ", []byte(\"restarted\"), 0o644) }\n"
+	if err := os.WriteFile(newSource, []byte(newSourceCode), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	newBinary := filepath.Join(dir, "md-reader-assistant-next-windows-amd64.bin")
+	build := exec.Command("go", "build", "-o", newBinary, newSource)
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build replacement binary: %v\n%s", err, output)
+	}
+
+	oldApp := exec.Command(installedExecutable, "--test-start-update", newBinary)
+	if output, err := oldApp.CombinedOutput(); err != nil {
+		t.Fatalf("start old app update flow: %v\n%s", err, output)
+	}
+
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		if data, err := os.ReadFile(proofPath); err == nil && string(data) == "restarted" {
+			return
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	logPath := filepath.Join(dir, "apply-update.log")
+	logData, _ := os.ReadFile(logPath)
+	t.Fatalf("updated executable did not restart; updater log:\n%s", logData)
+}
+
+func TestRunUpdateHelperLogsReplacementFailure(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "apply-update.log")
+	err := runUpdateHelper(
+		filepath.Join(dir, "missing-new-version.bin"),
+		filepath.Join(dir, "installed-app.exe"),
+		"99999999",
+		logPath,
+	)
+	if err == nil {
+		t.Fatal("runUpdateHelper must report a missing replacement binary")
+	}
+	logData, readErr := os.ReadFile(logPath)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if !strings.Contains(string(logData), "ERROR: replace failed:") {
+		t.Fatalf("failure reason is missing from updater log:\n%s", logData)
 	}
 }
 

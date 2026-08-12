@@ -25,7 +25,7 @@ import (
 const (
 	appNameZH  = "MD阅读助手"
 	appNameEN  = "MD Reader Assistant"
-	appVersion = "2.3.11"
+	appVersion = "2.3.13"
 	maxRecent  = 10
 )
 

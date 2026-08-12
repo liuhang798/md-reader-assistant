@@ -2,6 +2,32 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.13] - 2026-08-12
+
+### 简体中文
+
+- 修复 Windows 应用内更新仍可能无法覆盖旧程序的问题：更新辅助进程现在会先复制到独立临时 exe 后再启动，避免辅助进程自身占用安装目录中的主程序文件；下载校验完成后可可靠等待旧进程退出、替换程序并自动重启，无需再次运行安装向导。
+- 更新辅助进程会将等待超时、文件替换失败或新版本启动失败的具体原因写入 `apply-update.log`，便于排查权限或安全软件拦截。
+- 新增真实 Windows 端到端回归测试，覆盖“安装目录旧程序发起更新、被新二进制替换并自动重启”的完整链路。
+
+### English
+
+- Fixed a remaining Windows in-app update failure: the updater helper is now staged as a separate temporary executable before launch, so it no longer locks the installed application that it must replace. After download verification it can reliably wait for the old process, replace it, and restart without running the installer again.
+- The updater now writes explicit timeout, replacement, and restart errors to `apply-update.log` for diagnosing permission or security-software interference.
+- Added a real Windows end-to-end regression test covering an installed executable initiating the update, being replaced by the new binary, and restarting automatically.
+
+## [2.3.12] - 2026-08-12
+
+### 简体中文
+
+- 修复 Windows 应用内更新仍可能无法覆盖旧程序的问题：更新辅助进程现在会先复制到独立临时 exe 后再启动，避免辅助进程自身占用安装目录中的主程序文件；下载校验完成后可可靠等待旧进程退出、替换程序并自动重启，无需再次运行安装向导。
+- 更新辅助进程会将等待超时、文件替换失败或新版本启动失败的具体原因写入 `apply-update.log`，便于排查权限或安全软件拦截。
+
+### English
+
+- Fixed a remaining Windows in-app update failure: the updater helper is now staged as a separate temporary executable before launch, so it no longer locks the installed application that it must replace. After download verification it can reliably wait for the old process, replace it, and restart without running the installer again.
+- The updater now writes explicit timeout, replacement, and restart errors to `apply-update.log` for diagnosing permission or security-software interference.
+
 ## [2.3.11] - 2026-08-12
 
 ### 简体中文
@@ -329,3 +355,5 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.9]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.9
 [2.3.10]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.10
 [2.3.11]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.11
+[2.3.12]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.12
+[2.3.13]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.13

@@ -23,7 +23,17 @@ func applyUpdate(downloadPath string) error {
 	if err != nil {
 		return err
 	}
-	command := exec.Command(executable, "--apply-update", downloadPath, executable, strconv.Itoa(os.Getpid()))
+
+	// Windows keeps a running executable locked. Starting helper mode from the
+	// installed executable would make the helper hold the exact file it needs
+	// to replace. Stage a separate copy in the update directory so the installed
+	// executable becomes writable as soon as the main process exits.
+	helperPath := filepath.Join(filepath.Dir(downloadPath), "apply-update-helper-"+strconv.Itoa(os.Getpid())+".exe")
+	if err := copyExecutable(executable, helperPath); err != nil {
+		return fmt.Errorf("stage update helper: %w", err)
+	}
+
+	command := exec.Command(helperPath, "--apply-update", downloadPath, executable, strconv.Itoa(os.Getpid()))
 	command.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	return command.Start()
 }
@@ -61,17 +71,23 @@ func runUpdateHelper(newBinary, oldExecutable, parentPID, logPath string) error 
 		time.Sleep(time.Second)
 	}
 	if processAlive(parentPID) {
-		return fmt.Errorf("timed out waiting for the old process to exit")
+		err := fmt.Errorf("timed out waiting for the old process to exit")
+		writeLog("[apply-update] ERROR: %v", err)
+		return err
 	}
 
 	writeLog("[apply-update] replacing %s", oldExecutable)
 	if err := replaceFile(newBinary, oldExecutable); err != nil {
-		return fmt.Errorf("replace failed: %w", err)
+		err = fmt.Errorf("replace failed: %w", err)
+		writeLog("[apply-update] ERROR: %v", err)
+		return err
 	}
 
 	writeLog("[apply-update] starting the new version")
 	if err := exec.Command(oldExecutable).Start(); err != nil {
-		return fmt.Errorf("start failed: %w", err)
+		err = fmt.Errorf("start failed: %w", err)
+		writeLog("[apply-update] ERROR: %v", err)
+		return err
 	}
 	writeLog("[apply-update] done")
 	return nil
@@ -83,6 +99,14 @@ func processAlive(pid string) bool {
 }
 
 func replaceFile(source, target string) error {
+	data, err := os.ReadFile(source)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(target, data, 0o755)
+}
+
+func copyExecutable(source, target string) error {
 	data, err := os.ReadFile(source)
 	if err != nil {
 		return err

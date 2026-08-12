@@ -30,3 +30,4 @@ __pycache__/
 
 # Local tool configuration
 reasonix.toml
+.reasonix/
