@@ -6,7 +6,7 @@ cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
 set "BRANCH=main"
-set "COMMIT_MSG=Release v2.3.8: verify in-app update"
+set "COMMIT_MSG=Release v2.3.9: fix Windows updater script"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
 

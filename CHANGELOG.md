@@ -2,6 +2,16 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.9] - 2026-08-12
+
+### 简体中文
+
+- 修复 Windows 应用内更新的替换脚本：脚本改为纯 ASCII 并通过环境变量传递路径（避免中文路径在 cmd 中被错误解析），等待延迟改用 `ping`（修复 GUI 环境下 `timeout` 失效导致更新脚本过早超时的问题）。
+
+### English
+
+- Fixed the Windows in-app updater script: it is now pure ASCII and receives paths through environment variables (so non-ASCII paths survive cmd.exe parsing), and the wait delay uses `ping` instead of `timeout`, which fails when stdin is unavailable in a GUI process.
+
 ## [2.3.8] - 2026-08-12
 
 ### 简体中文
@@ -296,3 +306,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.6
 [2.3.7]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.7
 [2.3.8]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.8
+[2.3.9]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.9
