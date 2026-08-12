@@ -39,3 +39,7 @@ open "%s"
 	}
 	return exec.Command("/bin/sh", scriptPath).Start()
 }
+
+// runUpdateHelperIfRequested is a no-op on darwin: the shell script handles
+// the replacement there.
+func runUpdateHelperIfRequested() {}

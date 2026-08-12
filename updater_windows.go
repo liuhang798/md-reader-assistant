@@ -3,66 +3,89 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
+	"time"
 )
 
-// applyUpdate replaces the running application's executable through a detached
-// batch script. The script waits for this process to exit (releasing the
-// single-instance lock), copies the verified binary over the old one, and
-// starts the new version. This works for both installed and portable
-// deployments: it always replaces the executable that is actually running.
-//
-// The batch file itself is pure ASCII: every path is passed through environment
-// variables (which Windows stores as UTF-16), so non-ASCII user names and
-// folders survive cmd.exe's ANSI code page parsing. Delays use ping instead of
-// timeout because timeout fails when stdin is unavailable in a GUI process.
+// applyUpdate starts a hidden helper instance of the same executable that
+// performs the replacement after this process exits. A batch script cannot be
+// used here: cmd.exe is unable to resolve non-ASCII paths (the update folder
+// lives under a user profile whose name is Chinese on this machine), so the
+// whole flow runs in Go, which passes UTF-16 paths to the Win32 API.
 func applyUpdate(downloadPath string) error {
 	executable, err := os.Executable()
 	if err != nil {
 		return err
 	}
-	logPath := filepath.Join(filepath.Dir(downloadPath), "apply-update.log")
-	scriptPath := filepath.Join(filepath.Dir(downloadPath), "apply-update.bat")
-	script := windowsUpdateScript()
-	if err := os.WriteFile(scriptPath, []byte(script), 0o644); err != nil {
-		return err
-	}
-	command := exec.Command("cmd", "/C", scriptPath)
-	command.Env = append(os.Environ(),
-		"UPDATE_PROC="+filepath.Base(executable),
-		"UPDATE_NEW="+downloadPath,
-		"UPDATE_OLD="+executable,
-		"UPDATE_LOG="+logPath,
-	)
+	command := exec.Command(executable, "--apply-update", downloadPath, executable, strconv.Itoa(os.Getpid()))
 	command.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	return command.Start()
 }
 
-func windowsUpdateScript() string {
-	return `@echo off
-rem In-app updater: wait for the old process to exit, replace it, restart.
-set /a tries=0
-:loop
-tasklist /FI "IMAGENAME eq %UPDATE_PROC%" 2>nul | find /I "%UPDATE_PROC%" >nul
-if errorlevel 1 goto copy
-set /a tries+=1
-if %tries% geq 90 (
-  echo [apply-update] timed out waiting for the old process to exit >> "%UPDATE_LOG%"
-  exit /b 1
-)
-ping -n 2 127.0.0.1 >nul
-goto loop
-:copy
-echo [apply-update] replacing the old binary >> "%UPDATE_LOG%"
-copy /Y "%UPDATE_NEW%" "%UPDATE_OLD%" >> "%UPDATE_LOG%" 2>&1
-if errorlevel 1 (
-  echo [apply-update] copy failed >> "%UPDATE_LOG%"
-  exit /b 1
-)
-echo [apply-update] starting the new version >> "%UPDATE_LOG%"
-start "" "%UPDATE_OLD%"
-`
+// runUpdateHelperIfRequested handles the "--apply-update" helper mode: it
+// waits for the parent process to exit, replaces the old executable with the
+// verified new binary, and starts the new version.
+func runUpdateHelperIfRequested() {
+	if len(os.Args) < 5 || os.Args[1] != "--apply-update" {
+		return
+	}
+	err := runUpdateHelper(os.Args[2], os.Args[3], os.Args[4], filepath.Join(filepath.Dir(os.Args[2]), "apply-update.log"))
+	if err != nil {
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
+func runUpdateHelper(newBinary, oldExecutable, parentPID, logPath string) error {
+	writeLog := func(format string, args ...any) {
+		file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+		_, _ = fmt.Fprintf(file, format+"\n", args...)
+	}
+
+	writeLog("[apply-update] helper started, waiting for pid %s to exit", parentPID)
+	deadline := time.Now().Add(90 * time.Second)
+	for time.Now().Before(deadline) {
+		if !processAlive(parentPID) {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if processAlive(parentPID) {
+		return fmt.Errorf("timed out waiting for the old process to exit")
+	}
+
+	writeLog("[apply-update] replacing %s", oldExecutable)
+	if err := replaceFile(newBinary, oldExecutable); err != nil {
+		return fmt.Errorf("replace failed: %w", err)
+	}
+
+	writeLog("[apply-update] starting the new version")
+	if err := exec.Command(oldExecutable).Start(); err != nil {
+		return fmt.Errorf("start failed: %w", err)
+	}
+	writeLog("[apply-update] done")
+	return nil
+}
+
+func processAlive(pid string) bool {
+	output, err := exec.Command("tasklist", "/FI", "PID eq "+pid, "/NH").Output()
+	return err == nil && strings.Contains(string(output), pid)
+}
+
+func replaceFile(source, target string) error {
+	data, err := os.ReadFile(source)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(target, data, 0o755)
 }

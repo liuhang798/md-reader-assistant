@@ -2,6 +2,16 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.10] - 2026-08-12
+
+### 简体中文
+
+- 重构 Windows 应用内更新：替换与重启逻辑改为应用自带的 Go 辅助进程（不再使用 cmd/bat 脚本）。修复 cmd 无法处理中文路径（如用户名含中文时）导致更新脚本从未执行、更新静默失败的问题；等待旧进程退出、替换二进制、启动新版本均由 Go 通过系统 UTF-16 接口完成，并写入日志便于排查。
+
+### English
+
+- Reworked the Windows in-app updater: replacement and restart now run in a Go helper process instead of cmd/bat scripts. This fixes silent failures caused by cmd.exe being unable to resolve non-ASCII paths (for example Chinese user names), which previously meant the update script never ran. Waiting for the old process, replacing the binary and starting the new version all use Go's UTF-16 Win32 calls and are logged for troubleshooting.
+
 ## [2.3.9] - 2026-08-12
 
 ### 简体中文
@@ -307,3 +317,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.7]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.7
 [2.3.8]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.8
 [2.3.9]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.9
+[2.3.10]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.10

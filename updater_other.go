@@ -9,3 +9,6 @@ import "fmt"
 func applyUpdate(downloadPath string) error {
 	return fmt.Errorf("in-app updates are not supported on this platform")
 }
+
+// runUpdateHelperIfRequested is a no-op on platforms without self-update.
+func runUpdateHelperIfRequested() {}

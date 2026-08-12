@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "MD阅读助手"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "2.3.7"
+    !define INFO_PRODUCTVERSION "2.3.10"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright © 2026 柳航"

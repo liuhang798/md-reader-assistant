@@ -18,6 +18,10 @@ import (
 var assets embed.FS
 
 func main() {
+	// In-app update helper mode: performs the binary replacement and restart
+	// without starting the GUI (see updater_windows.go).
+	runUpdateHelperIfRequested()
+
 	app := NewApp()
 	applicationMenu := buildApplicationMenu(goruntime.GOOS)
 
