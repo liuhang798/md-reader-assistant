@@ -27,7 +27,7 @@ func updateAssetNameForPlatform(goos string) string {
 	case "darwin":
 		return "macos-universal.bin"
 	case "windows":
-		return "windows-amd64.exe"
+		return "windows-amd64.bin"
 	default:
 		return ""
 	}

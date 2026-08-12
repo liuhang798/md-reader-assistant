@@ -94,11 +94,13 @@ jobs:
           $releaseDir = New-Item -ItemType Directory -Force build/bin/release
           $target = Join-Path $releaseDir.FullName "md-reader-assistant-$env:APP_VERSION-windows-amd64.exe"
           Copy-Item -LiteralPath $installer -Destination $target -Force
-          Get-Item -LiteralPath $target | Format-Table FullName, Length
+          $binaryTarget = Join-Path $releaseDir.FullName "md-reader-assistant-$env:APP_VERSION-windows-amd64.bin"
+          Copy-Item -LiteralPath $binary -Destination $binaryTarget -Force
+          Get-Item -LiteralPath $target, $binaryTarget | Format-Table FullName, Length
       - uses: actions/upload-artifact@v4
         with:
           name: md-reader-assistant-windows-x64
-          path: build/bin/release/*.exe
+          path: build/bin/release/*
           if-no-files-found: error
 
   macos:

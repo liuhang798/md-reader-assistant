@@ -2,6 +2,16 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.7] - 2026-08-12
+
+### 简体中文
+
+- 修复 Windows 应用内更新：改为直接替换正在运行的可执行文件（不再依赖静默安装器），绿色便携版与安装版均可自动升级并重启；升级过程写入日志便于排查。
+
+### English
+
+- Fixed Windows in-app updates: the running executable is now replaced directly instead of relying on a silent installer, so both portable and installed deployments upgrade and restart automatically. The update process writes a log for troubleshooting.
+
 ## [2.3.6] - 2026-08-12
 
 ### 简体中文
@@ -274,3 +284,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.4
 [2.3.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.5
 [2.3.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.6
+[2.3.7]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.7
