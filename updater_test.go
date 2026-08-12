@@ -13,17 +13,17 @@ import (
 
 func TestPickUpdateAsset(t *testing.T) {
 	assets := []githubReleaseAsset{
-		{Name: "md-reader-assistant-2.3.5-linux-amd64.deb"},
-		{Name: "md-reader-assistant-2.3.5-macos-universal.dmg"},
-		{Name: "md-reader-assistant-2.3.5-macos-universal.bin"},
-		{Name: "md-reader-assistant-2.3.5-windows-amd64.exe"},
+		{Name: "md-reader-assistant-2.3.6-linux-amd64.deb"},
+		{Name: "md-reader-assistant-2.3.6-macos-universal.dmg"},
+		{Name: "md-reader-assistant-2.3.6-macos-universal.bin"},
+		{Name: "md-reader-assistant-2.3.6-windows-amd64.exe"},
 	}
 
 	darwin, err := pickUpdateAsset(assets, "darwin")
 	if err != nil {
 		t.Fatalf("darwin: %v", err)
 	}
-	if darwin.Name != "md-reader-assistant-2.3.5-macos-universal.bin" {
+	if darwin.Name != "md-reader-assistant-2.3.6-macos-universal.bin" {
 		t.Fatalf("darwin picked %q, want the .bin executable", darwin.Name)
 	}
 
@@ -31,7 +31,7 @@ func TestPickUpdateAsset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("windows: %v", err)
 	}
-	if windows.Name != "md-reader-assistant-2.3.5-windows-amd64.exe" {
+	if windows.Name != "md-reader-assistant-2.3.6-windows-amd64.exe" {
 		t.Fatalf("windows picked %q, want the NSIS installer", windows.Name)
 	}
 

@@ -2,6 +2,16 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.6] - 2026-08-12
+
+### 简体中文
+
+- 本版本用于验证应用内自动更新链路，无功能变化。从上一版本开始，macOS 与 Windows 用户可在更新弹窗中直接“下载并更新”，应用内完成下载、完整性校验、替换与自动重启。
+
+### English
+
+- This release validates the in-app automatic update pipeline; no functional changes. Starting from the previous version, macOS and Windows users can pick “Download & Update” in the update dialog to download, verify, replace and restart in-app.
+
 ## [2.3.5] - 2026-08-12
 
 ### 简体中文
@@ -263,3 +273,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.3
 [2.3.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.4
 [2.3.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.5
+[2.3.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.6
