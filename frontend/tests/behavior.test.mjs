@@ -133,3 +133,21 @@ test('the update dialog offers in-app download and apply with progress', () => {
   assert.match(renderer, /setTimeout\(\(\) => window\.leafMD\.closeWindow\(\), 500\)/);
   assert.match(styles, /\.update-progress-bar \{ height: 100%; width: 0; border-radius: 4px; background: var\(--accent-strong\);/);
 });
+
+test('the editor header offers an exit editing button', () => {
+  assert.match(html, /id="exitEditButton" class="text-button exit-edit-button"/);
+  assert.match(html, /data-i18n="exitEdit"/);
+  assert.match(renderer, /els\.exitEditButton\.addEventListener\('click', \(\) => \{\s*if \(state\.editing\) toggleEditor\(false\);/);
+});
+
+test('code blocks let the user pick a common programming language', () => {
+  assert.match(html, /id="codeLangMenu"/);
+  assert.match(renderer, /const CODE_LANGUAGES = \[/);
+  assert.match(renderer, /\{ value: 'go', label: 'Go' \}/);
+  assert.match(renderer, /if \(command === 'code-block'\) \{ openCodeLangMenu\(\); return true; \}/);
+  assert.match(renderer, /function insertCodeBlock\(lang = ''\)/);
+  assert.match(renderer, /els\.codeLangMenu\.addEventListener\('click', event => \{\s*event\.stopPropagation\(\);/);
+  assert.match(renderer, /insertCodeBlock\(button\.dataset\.codeLang\)/);
+  assert.match(renderer, /document\.addEventListener\('click', \(\) => \{\s*els\.moreMenu\.classList\.add\('hidden'\);\s*els\.codeLangMenu\.classList\.add\('hidden'\);/);
+  assert.match(styles, /\.code-lang-menu \{ right: auto; top: auto;/);
+});

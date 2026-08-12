@@ -2,6 +2,20 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.4.1] - 2026-08-12
+
+### 简体中文
+
+- 编辑模式新增“光标定位预览”：移动光标或输入内容时，左侧实时预览会跟随滚动到当前所在章节/段落，方便边写边看排版效果。
+- 编辑器头部新增“退出编辑”按钮，点击即可离开编辑状态回到沉浸式阅读页。
+- 插入代码块时可以选择常用编程语言（JavaScript、Python、Go、Java、C/C++、Rust、HTML、SQL 等 19 种），并自动写入带语言标识的围栏代码块。
+
+### English
+
+- Editing now keeps the live preview in sync with the cursor: as the caret moves or you type, the left preview scrolls to the block being edited.
+- The editor header now has an “Exit editing” button that returns to the immersive reading view.
+- Inserting a code block now lets you pick a common programming language (JavaScript, Python, Go, Java, C/C++, Rust, HTML, SQL, and more), and the language-tagged fence is written automatically.
+
 ## [2.4.0] - 2026-08-12
 
 ### 简体中文
@@ -372,3 +386,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.12]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.12
 [2.3.13]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.13
 [2.4.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.0
+[2.4.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.1

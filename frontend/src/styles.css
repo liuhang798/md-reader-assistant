@@ -453,6 +453,8 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .drop-overlay > div { width: 330px; height: 190px; border-radius: 18px; border: 2px dashed var(--accent); background: var(--paper); color: var(--accent-strong); display: flex; flex-direction: column; gap: 18px; align-items: center; justify-content: center; box-shadow: var(--shadow); }
 .drop-overlay svg { width: 42px; height: 42px; }
 .popover { position: fixed; z-index: 35; right: 144px; top: 48px; width: 210px; background: var(--paper-strong); border: 1px solid var(--line); border-radius: 11px; padding: 6px; box-shadow: var(--shadow); }
+.code-lang-menu { right: auto; top: auto; width: 204px; max-height: min(340px, 60vh); overflow-y: auto; }
+.code-lang-menu .popover-label { position: sticky; top: -6px; z-index: 1; background: var(--paper-strong); }
 .popover button { width: 100%; border: 0; background: transparent; padding: 9px 10px; display: flex; justify-content: space-between; border-radius: 7px; cursor: pointer; text-align: left; font-size: 12px; }
 .popover button:hover { background: var(--accent-soft); }
 .popover button span { color: var(--faint); font-size: 10px; }

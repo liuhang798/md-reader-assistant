@@ -8,16 +8,20 @@ function replaceReferencesOutsideInlineCode(line, replaceReference) {
 }
 
 export function prepareFootnotes(source) {
+  const lines = String(source).split('\n');
   const definitions = new Map();
   const contentLines = [];
+  const lineMap = []; // 处理后第 n 行（0-based）对应源文档第 lineMap[n] 行（0-based）；定义行被移除
   let fence = '';
 
-  for (const line of String(source).split('\n')) {
+  for (let sourceIndex = 0; sourceIndex < lines.length; sourceIndex++) {
+    const line = lines[sourceIndex];
     const fenceMatch = line.match(/^\s{0,3}(`{3,}|~{3,})/);
     if (fenceMatch) {
       if (!fence) fence = fenceMatch[1][0];
       else if (fence === fenceMatch[1][0]) fence = '';
       contentLines.push(line);
+      lineMap.push(sourceIndex);
       continue;
     }
 
@@ -27,9 +31,10 @@ export function prepareFootnotes(source) {
       continue;
     }
     contentLines.push(line);
+    lineMap.push(sourceIndex);
   }
 
-  if (!definitions.size) return { markdown: String(source), notes: [] };
+  if (!definitions.size) return { markdown: String(source), notes: [], lineMap: null };
 
   const numbers = new Map();
   const referenceCounts = new Map();
@@ -69,7 +74,8 @@ export function prepareFootnotes(source) {
       number: numbers.get(label),
       text: definitions.get(label),
       referenceCount: referenceCounts.get(label) || 0
-    }))
+    })),
+    lineMap
   };
 }
 

@@ -4,6 +4,7 @@ import hljs from 'highlight.js/lib/common';
 import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage, resolveMacColorMode, temporaryMacColorModeAfterToggle } from './appearance.js';
 import { previewWheelZoomDirection } from './font-wheel-zoom.js';
 import { escapeMarkdownText, highlightExtension, nextFootnoteNumber, prepareFootnotes, renderFootnoteSection } from './markdown-formats.js';
+import { scanMarkdownBlockStartLines } from './preview-line-map.js';
 import { filesFromPreferencePaths, normalizeSidebarMode, sameDocumentPath } from './library-state.js';
 
 const $ = selector => document.querySelector(selector);
@@ -67,7 +68,8 @@ const translations = {
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
     openFolder: '打开文件夹', quickOpenHint: '快速打开，也可以将文件拖到这里', revealFile: '定位文件', revealFileTitle: '在资源管理器中显示',
     print: '打印', printTitle: '打印文档', readingEnd: '阅读结束', livePreview: '实时预览', readingEffect: '阅读效果', markdownEditorLabel: 'MARKDOWN 编辑器',
-    untitledDocument: '未命名文档', saved: '已保存', unsaved: '尚未保存', autoSaved: '已自动保存', saveAs: '另存为', markdownEditorAria: 'Markdown 编辑器',
+    untitledDocument: '未命名文档', saved: '已保存', unsaved: '尚未保存', autoSaved: '已自动保存', saveAs: '另存为', exitEdit: '退出编辑', markdownEditorAria: 'Markdown 编辑器',
+    codeLang: '选择编程语言', codeNoLang: '无语言（纯文本）',
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
     zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', printDocument: '打印文档', copy: '复制', copied: '已复制',
@@ -79,7 +81,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.4.0', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.4.1', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
@@ -100,7 +102,8 @@ const translations = {
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
     openFolder: 'Open Folder', quickOpenHint: 'Quick open, or drop a file here', revealFile: 'Show File', revealFileTitle: 'Show in File Explorer',
     print: 'Print', printTitle: 'Print document', readingEnd: 'End of document', livePreview: 'LIVE PREVIEW', readingEffect: 'Rendered document', markdownEditorLabel: 'MARKDOWN EDITOR',
-    untitledDocument: 'Untitled document', saved: 'Saved', unsaved: 'Unsaved', autoSaved: 'Autosaved', saveAs: 'Save As', markdownEditorAria: 'Markdown editor',
+    untitledDocument: 'Untitled document', saved: 'Saved', unsaved: 'Unsaved', autoSaved: 'Autosaved', saveAs: 'Save As', exitEdit: 'Exit editing', markdownEditorAria: 'Markdown editor',
+    codeLang: 'Select a language', codeNoLang: 'No language (plain text)',
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
     zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
@@ -112,7 +115,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.4.0', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.4.1', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
@@ -199,6 +202,7 @@ const els = {
   moreMenu: $('#moreMenu'), accentMenu: $('#accentMenu'), recentContextMenu: $('#recentContextMenu'), toast: $('#toast'), editorView: $('#editorView'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
+  exitEditButton: $('#exitEditButton'), codeLangMenu: $('#codeLangMenu'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
   recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'),
   editorUndoButton: $('#editorUndoButton')
@@ -401,11 +405,7 @@ function runFormatCommand(command) {
     return replaceSelection(`${prefix}https://)`, prefix.length, 8);
   }
   if (command === 'inline-code') return wrapSelection('`', '`', 'code');
-  if (command === 'code-block') {
-    const selection = codeEditor.state.selection.main;
-    const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || 'code';
-    return replaceSelection(`\`\`\`\n${selected}\n\`\`\``, 4, selected.length);
-  }
+  if (command === 'code-block') { openCodeLangMenu(); return true; }
   if (command === 'horizontal-rule') return replaceSelection('\n\n---\n\n', 5, 0);
   if (command === 'hard-break') return replaceSelection('  \n', 3, 0);
   if (command === 'footnote') {
@@ -435,6 +435,91 @@ function runFormatCommand(command) {
 
 let formatToolbarLayoutFrame;
 let formatToolbarResizeObserver;
+
+// 代码块常用编程语言（value 为 highlight.js 可识别的语言别名）
+const CODE_LANGUAGES = [
+  { value: 'js', label: 'JavaScript' },
+  { value: 'ts', label: 'TypeScript' },
+  { value: 'python', label: 'Python' },
+  { value: 'go', label: 'Go' },
+  { value: 'java', label: 'Java' },
+  { value: 'c', label: 'C' },
+  { value: 'cpp', label: 'C++' },
+  { value: 'csharp', label: 'C#' },
+  { value: 'rust', label: 'Rust' },
+  { value: 'ruby', label: 'Ruby' },
+  { value: 'php', label: 'PHP' },
+  { value: 'html', label: 'HTML' },
+  { value: 'css', label: 'CSS' },
+  { value: 'sql', label: 'SQL' },
+  { value: 'json', label: 'JSON' },
+  { value: 'yaml', label: 'YAML' },
+  { value: 'bash', label: 'Bash' },
+  { value: 'powershell', label: 'PowerShell' },
+  { value: 'markdown', label: 'Markdown' }
+];
+
+let codeLangMenuBuilt = false;
+
+function buildCodeLangMenu() {
+  if (codeLangMenuBuilt) return;
+  codeLangMenuBuilt = true;
+  const menu = els.codeLangMenu;
+  for (const lang of CODE_LANGUAGES) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.role = 'menuitem';
+    button.dataset.codeLang = lang.value;
+    button.textContent = lang.label;
+    menu.append(button);
+  }
+  const plain = document.createElement('button');
+  plain.type = 'button';
+  plain.role = 'menuitem';
+  plain.dataset.codeLang = '';
+  plain.dataset.i18n = 'codeNoLang';
+  plain.textContent = t('codeNoLang');
+  menu.append(plain);
+}
+
+// 在代码块按钮下方弹出编程语言选择菜单；再次调用则关闭。
+function openCodeLangMenu() {
+  buildCodeLangMenu();
+  const menu = els.codeLangMenu;
+  const wasHidden = menu.classList.contains('hidden');
+  menu.classList.add('hidden');
+  if (!wasHidden) return;
+  els.moreMenu.classList.add('hidden');
+  closeAccentMenu();
+  closeRecentContextMenu();
+  const anchor = $('[data-format="code-block"]:not([hidden])') || $('#moreFormatSelect');
+  const rect = anchor?.getBoundingClientRect();
+  menu.classList.remove('hidden');
+  menu.style.left = 'auto';
+  menu.style.top = 'auto';
+  menu.style.right = 'auto';
+  if (rect) {
+    const margin = 8;
+    const width = menu.offsetWidth;
+    const height = menu.offsetHeight;
+    let left = rect.left;
+    if (left + width > window.innerWidth - margin) left = Math.max(margin, window.innerWidth - width - margin);
+    let top = rect.bottom + 6;
+    if (top + height > window.innerHeight - margin) top = Math.max(margin, rect.top - height - 6);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+  }
+}
+
+// 插入带指定语言的代码块；lang 为空时插入无语言围栏。
+function insertCodeBlock(lang = '') {
+  if (!codeEditor) return false;
+  const selection = codeEditor.state.selection.main;
+  const selected = codeEditor.state.doc.sliceString(selection.from, selection.to) || 'code';
+  const fence = lang ? `\`\`\`${lang}\n${selected}\n\`\`\`` : `\`\`\`\n${selected}\n\`\`\``;
+  const caret = lang ? 4 + lang.length : 4;
+  return replaceSelection(fence, caret, selected.length);
+}
 
 function syncFormatDividers() {
   const bar = $('#editorFormatBar');
@@ -674,7 +759,10 @@ async function initializeCodeEditor() {
         clearTimeout(renderEditorPreview.timer);
         renderEditorPreview.timer = setTimeout(() => renderEditorPreview(state.currentFile.content), 90);
       }
-      if (update.docChanged || update.selectionSet) updateEditorPosition();
+      if (update.docChanged || update.selectionSet) {
+        updateEditorPosition();
+        scrollPreviewToCursor();
+      }
       updateUndoButton(update.state);
     })
   ];
@@ -1168,12 +1256,31 @@ function renderMarkdownTo(container, doc, content) {
     });
   });
   bindDocumentActions(container);
+  injectPreviewLineNumbers(container, prepared);
+}
+
+// 为渲染后的每个顶层块元素注入 data-line（该块在源文档中的起始行号，1-based）。
+// 编辑模式下根据 CodeMirror 光标行号找到对应块，实现预览跟随光标滚动。
+function injectPreviewLineNumbers(container, prepared) {
+  const starts = scanMarkdownBlockStartLines(prepared.markdown);
+  const children = [...container.children].filter(el => !el.classList?.contains('footnotes'));
+  if (!children.length || starts.length === 0) return;
+  // 保险：顶层元素数与扫描块数偏差过大说明无法可靠对齐，放弃注入而不是错位滚动
+  if (Math.abs(children.length - starts.length) > 2) return;
+  const lineMap = prepared.lineMap;
+  children.forEach((el, index) => {
+    const processedLine = starts[index];
+    if (!processedLine) return;
+    const sourceLine = lineMap ? lineMap[processedLine - 1] + 1 : processedLine;
+    el.dataset.line = String(sourceLine);
+  });
 }
 
 function renderEditorPreview(content = state.currentFile?.content || '') {
   if (!state.currentFile) return;
   try {
     renderMarkdownTo(els.editorPreview, state.currentFile, content);
+    scrollPreviewToCursor(true);
   } catch (error) {
     els.editorPreview.innerHTML = `<p class="preview-error">${t('previewError')}</p>`;
     console.error(error);
@@ -1283,6 +1390,30 @@ function updateEditorPosition() {
   const cursor = codeEditor.state.selection.main.head;
   const line = codeEditor.state.doc.lineAt(cursor);
   els.editorPosition.textContent = t('editorPosition', { line: line.number, column: cursor - line.from + 1 });
+}
+
+// 根据编辑器光标行号，把左侧预览滚动到对应的块元素（编辑/预览滚动同步）。
+// 只取“最后一个起始行 <= 光标行的块”，光标在同一行内移动时不重复滚动；
+// force 用于预览重新渲染后强制校正一次。
+function scrollPreviewToCursor(force = false) {
+  if (!codeEditor || !state.editing) return;
+  const scroller = $('.editor-preview-scroll');
+  const preview = els.editorPreview;
+  if (!scroller || !preview?.children.length) return;
+  const cursorLine = codeEditor.state.doc.lineAt(codeEditor.state.selection.main.head).number;
+  if (!force && cursorLine === scrollPreviewToCursor.lastLine) return;
+  scrollPreviewToCursor.lastLine = cursorLine;
+  let target = null;
+  for (const el of preview.children) {
+    const line = Number(el.dataset.line);
+    if (Number.isFinite(line) && line <= cursorLine) target = el;
+  }
+  if (!target) return;
+  const rect = target.getBoundingClientRect();
+  const scrollerRect = scroller.getBoundingClientRect();
+  const top = Math.max(0, scroller.scrollTop + rect.top - scrollerRect.top - 12);
+  if (Math.abs(top - scroller.scrollTop) < 48) return;
+  scroller.scrollTo({ top, behavior: 'smooth' });
 }
 
 async function toggleEditor(forceEditing) {
@@ -1592,7 +1723,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.4.0';
+  $('#currentVersion').textContent = info.currentVersion || '2.4.1';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -1790,6 +1921,7 @@ $('#moreButton').addEventListener('click', event => {
   event.stopPropagation();
   closeAccentMenu();
   closeRecentContextMenu();
+  els.codeLangMenu.classList.add('hidden');
   els.moreMenu.classList.toggle('hidden');
 });
 $('#windowMinimise').addEventListener('click', () => window.leafMD.minimiseWindow());
@@ -1857,9 +1989,21 @@ els.editorUndoButton.addEventListener('click', () => {
     focusCodeEditor();
   }
 });
+els.exitEditButton.addEventListener('click', () => {
+  if (state.editing) toggleEditor(false);
+});
+els.codeLangMenu.addEventListener('click', event => {
+  event.stopPropagation();
+  const button = event.target.closest('[data-code-lang]');
+  if (!button) return;
+  els.codeLangMenu.classList.add('hidden');
+  if (insertCodeBlock(button.dataset.codeLang)) focusCodeEditor();
+});
 $('#editorFormatBar').addEventListener('click', event => {
   const button = event.target.closest('[data-format]');
-  if (button) runFormatCommand(button.dataset.format);
+  if (!button) return;
+  if (button.dataset.format === 'code-block') event.stopPropagation();
+  runFormatCommand(button.dataset.format);
 });
 els.moreMenu.addEventListener('click', event => {
   const button = event.target.closest('button');
@@ -1897,6 +2041,7 @@ els.recentContextMenu.addEventListener('click', async event => {
 });
 document.addEventListener('click', () => {
   els.moreMenu.classList.add('hidden');
+  els.codeLangMenu.classList.add('hidden');
   closeAccentMenu();
   closeRecentContextMenu();
 });
@@ -1920,6 +2065,7 @@ document.addEventListener('keydown', event => {
   else if (primaryModifier && event.key === '-') { event.preventDefault(); setFontScale(state.fontScale - .08); }
   else if (primaryModifier && event.key === '0') { event.preventDefault(); setFontScale(1); }
   else if (event.key === 'Escape' && !els.recentContextMenu.classList.contains('hidden')) closeRecentContextMenu();
+  else if (event.key === 'Escape' && !els.codeLangMenu.classList.contains('hidden')) { els.codeLangMenu.classList.add('hidden'); focusCodeEditor(); }
   else if (event.key === 'Escape' && !els.accentMenu.classList.contains('hidden')) { closeAccentMenu(); $('#accentButton').focus(); }
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
   else if (event.key === 'Escape' && !els.imageDialog.classList.contains('hidden')) closeImageDialog();
