@@ -2,6 +2,20 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.4.0] - 2026-08-12
+
+### 简体中文
+
+- 正式发布稳定的 Windows 应用内无安装更新：新版本下载并校验后，由独立 Go 辅助进程等待旧程序退出、替换主程序并自动重启，不再调用安装向导。
+- 解决中文用户名或中文安装路径导致更新脚本无法运行，以及更新 helper 自身占用主程序、导致 Windows 拒绝覆盖的问题。
+- 更新失败时会把等待超时、文件替换或重启错误写入 `apply-update.log`，并由真实 Windows 端到端测试覆盖完整自更新链路。
+
+### English
+
+- Officially released stable installer-free Windows in-app updates. After downloading and verifying a release, a separate Go helper waits for the old process, replaces the application, and restarts it without launching an installer wizard.
+- Fixed both non-ASCII user/install paths that broke command scripts and the updater helper locking the installed executable that Windows needed to replace.
+- Update timeout, replacement, and restart failures are recorded in `apply-update.log`, with the complete self-update flow protected by a real Windows end-to-end test.
+
 ## [2.3.13] - 2026-08-12
 
 ### 简体中文
@@ -357,3 +371,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.11]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.11
 [2.3.12]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.12
 [2.3.13]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.13
+[2.4.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.0
