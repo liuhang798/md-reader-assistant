@@ -27,3 +27,6 @@ coverage/
 *.coverprofile
 __pycache__/
 *.py[cod]
+
+# Local tool configuration
+reasonix.toml
