@@ -2,6 +2,16 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.11] - 2026-08-12
+
+### 简体中文
+
+- 本版本用于验证 Windows 应用内更新的 Go 辅助进程自替换逻辑，无功能变化。
+
+### English
+
+- This release validates the Windows in-app updater's Go helper-process self-replace logic; no functional changes.
+
 ## [2.3.10] - 2026-08-12
 
 ### 简体中文
@@ -318,3 +328,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.8]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.8
 [2.3.9]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.9
 [2.3.10]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.10
+[2.3.11]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.11
