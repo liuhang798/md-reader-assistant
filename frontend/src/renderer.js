@@ -79,15 +79,16 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.3.4', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.3.5', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
     remindLater: '稍后提醒', snooze30Days: '30 天内不再提醒', updateSnoozed: '未来 30 天不再自动提醒更新', openDownloadPage: '打开下载页面', alreadyLatest: '当前已是最新版本', updateCheckFailed: '检查更新失败，请稍后重试',
+    downloadAndUpdate: '下载并更新', downloadingUpdate: '正在下载更新… {percent}%', preparingUpdate: '正在安装更新…', updateFailed: '更新失败，请稍后重试', updateBlockedByUnsavedChanges: '请先保存当前文档再更新',
     formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3', heading4: '标题 4', heading5: '标题 5', heading6: '标题 6',
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', strikethroughTitle: '删除线 (Ctrl+Shift+X)', highlightTitle: '高亮 (Ctrl+Shift+H)', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', horizontalRule: '分隔线', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
     moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
-    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试',
+    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试', imageDialogHint: '选择本地图片，或粘贴在线图片链接。', imageUrlLabel: '图片链接', imageUrlPlaceholder: 'https:// 或 http:// 链接', imageAltPlaceholder: '可选的图片说明', localImage: '本地图片…', imageUrlInvalid: '请输入有效的 http:// 或 https:// 链接',
     resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度'
   },
   en: {
@@ -111,15 +112,16 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.3.4', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.3.5', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
     remindLater: 'Remind me later', snooze30Days: 'Don’t remind me for 30 days', updateSnoozed: 'Automatic update reminders paused for 30 days', openDownloadPage: 'Open download page', alreadyLatest: 'You’re using the latest version', updateCheckFailed: 'Unable to check for updates. Try again later.',
+    downloadAndUpdate: 'Download & Update', downloadingUpdate: 'Downloading update… {percent}%', preparingUpdate: 'Installing update…', updateFailed: 'Update failed. Please try again.', updateBlockedByUnsavedChanges: 'Save the current document before updating',
     formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3', heading4: 'Heading 4', heading5: 'Heading 5', heading6: 'Heading 6',
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', strikethroughTitle: 'Strikethrough (Ctrl+Shift+X)', highlightTitle: 'Highlight (Ctrl+Shift+H)', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', horizontalRule: 'Horizontal rule', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
     moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
-    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.',
+    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.', imageDialogHint: 'Pick a local image or paste an online image link.', imageUrlLabel: 'Image URL', imageUrlPlaceholder: 'https:// or http:// link', imageAltPlaceholder: 'Optional image description', localImage: 'Local image…', imageUrlInvalid: 'Enter a valid http:// or https:// link',
     resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline'
   }
 };
@@ -198,7 +200,7 @@ const els = {
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'),
-  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'),
+  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'),
   editorUndoButton: $('#editorUndoButton')
 };
 
@@ -285,11 +287,18 @@ function editorContent() {
   return codeEditor?.state.doc.toString() || '';
 }
 
+function isPlainTextFile(path) {
+  return /\.txt$/i.test(path || '');
+}
+
 function createEditorState(content = '', moveToStart = true) {
+  const language = isPlainTextFile(state.currentFile?.path)
+    ? []
+    : [markdown(), syntaxHighlighting(markdownHighlightStyle)];
   return EditorState.create({
     doc: content,
     selection: { anchor: moveToStart ? 0 : content.length },
-    extensions: [...editorExtensions, editorLanguage.of(editorLanguageExtension())]
+    extensions: [...editorExtensions, ...language, editorLanguage.of(editorLanguageExtension())]
   });
 }
 
@@ -522,19 +531,60 @@ function insertTable() {
   closeTableDialog();
 }
 
-async function insertImage() {
+function openImageDialog() {
+  if (!state.currentFile) return;
+  els.imageUrl.value = '';
+  const selection = codeEditor.state.selection.main;
+  els.imageAltInput.value = codeEditor.state.doc.sliceString(selection.from, selection.to) || '';
+  els.imageDialog.classList.remove('hidden');
+  document.body.classList.add('dialog-open');
+  requestAnimationFrame(() => els.imageUrl.focus());
+}
+
+function closeImageDialog() {
+  if (els.imageDialog.classList.contains('hidden')) return;
+  els.imageDialog.classList.add('hidden');
+  document.body.classList.remove('dialog-open');
+  focusCodeEditor();
+}
+
+function selectedImageAlt() {
+  if (codeEditor && !codeEditor.state.selection.main.empty) {
+    return codeEditor.state.doc.sliceString(codeEditor.state.selection.main.from, codeEditor.state.selection.main.to).replaceAll('[', '\\[').replaceAll(']', '\\]');
+  }
+  return '';
+}
+
+function insertImage() {
+  openImageDialog();
+}
+
+async function insertLocalImage() {
   if (!state.currentFile) return;
   try {
     const imagePath = await window.leafMD.selectImage(state.currentFile.path);
     if (!imagePath) return;
-    const selection = codeEditor.state.selection.main;
-    const selected = (codeEditor.state.doc.sliceString(selection.from, selection.to) || t('imageAlt')).replaceAll(']', '\\]');
+    const selected = els.imageAltInput.value.trim().replaceAll('[', '\\[').replaceAll(']', '\\]') || selectedImageAlt() || t('imageAlt');
     const markdownPath = /[\s()]/.test(imagePath) ? `<${imagePath.replaceAll('>', '%3E')}>` : imagePath;
     replaceSelection(`![${selected}](${markdownPath})`, 2, selected.length);
   } catch (error) {
     console.error(error);
     showToast(t('imageSelectFailed'));
   }
+}
+
+function insertImageFromUrl() {
+  if (!state.currentFile) return;
+  const url = els.imageUrl.value.trim();
+  if (!/^https?:\/\/\S+$/i.test(url)) {
+    showToast(t('imageUrlInvalid'));
+    els.imageUrl.focus();
+    return;
+  }
+  const selected = els.imageAltInput.value.trim().replaceAll('[', '\\[').replaceAll(']', '\\]') || selectedImageAlt() || t('imageAlt');
+  const markdownPath = /[\s()]/.test(url) ? `<${url.replaceAll('>', '%3E')}>` : url;
+  replaceSelection(`![${selected}](${markdownPath})`, 2, selected.length);
+  closeImageDialog();
 }
 
 async function initializeCodeEditor() {
@@ -614,8 +664,6 @@ async function initializeCodeEditor() {
   });
     editorExtensions = [
     basicSetup,
-    markdown(),
-    syntaxHighlighting(markdownHighlightStyle),
     editorTheme,
     saveKeymap,
     EditorView.lineWrapping,
@@ -1092,6 +1140,10 @@ function maybeDiscardChanges() {
 }
 
 function renderMarkdownTo(container, doc, content) {
+  if (isPlainTextFile(doc.path)) {
+    container.innerHTML = `<div class="plain-text">${escapeHtml(content)}</div>`;
+    return;
+  }
   const prepared = prepareFootnotes(content);
   let html = marked.parse(prepared.markdown);
   html += renderFootnoteSection(prepared.notes, text => marked.parseInline(text), t('footnotes'));
@@ -1540,7 +1592,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.3.4';
+  $('#currentVersion').textContent = info.currentVersion || '2.3.5';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -1554,6 +1606,10 @@ function openUpdateDialog(info) {
   }));
   els.updateDialog.classList.remove('hidden');
   document.body.classList.add('dialog-open');
+  const platform = document.documentElement.dataset.platform;
+  $('#applyUpdate').classList.toggle('hidden', platform !== 'darwin' && platform !== 'windows');
+  $('#updateProgress').classList.add('hidden');
+  $('#applyUpdate').disabled = false;
   requestAnimationFrame(() => $('#openUpdatePage').focus());
 }
 
@@ -1613,6 +1669,47 @@ async function snoozeUpdates() {
     showToast(t('updateSnoozed'));
   } catch (error) {
     console.warn('Unable to save update reminder preference:', error);
+  }
+}
+
+let applyingUpdate = false;
+
+function setUpdateProgress(done, total) {
+  const percent = total > 0 ? Math.min(100, Math.round((done * 100) / total)) : 0;
+  $('#updateProgressBar').style.width = `${percent}%`;
+  $('#updateProgressLabel').textContent = t('downloadingUpdate', { percent });
+}
+
+async function startDownloadAndUpdate() {
+  if (applyingUpdate) return;
+  if (state.dirty && state.currentFile?.path) {
+    await saveDocument(false, { auto: true, silent: true });
+  }
+  if (state.dirty) {
+    showToast(t('updateBlockedByUnsavedChanges'));
+    return;
+  }
+  applyingUpdate = true;
+  $('#applyUpdate').disabled = true;
+  $('#openUpdatePage').disabled = true;
+  $('#updateLater').disabled = true;
+  $('#updateSnooze').disabled = true;
+  $('#updateProgress').classList.remove('hidden');
+  setUpdateProgress(0, 1);
+  try {
+    await window.leafMD.downloadAndApplyUpdate();
+    $('#updateProgressLabel').textContent = t('preparingUpdate');
+    $('#updateProgressBar').style.width = '100%';
+    setTimeout(() => window.leafMD.closeWindow(), 500);
+  } catch (error) {
+    console.warn('In-app update failed:', error);
+    applyingUpdate = false;
+    $('#updateProgress').classList.add('hidden');
+    $('#applyUpdate').disabled = false;
+    $('#openUpdatePage').disabled = false;
+    $('#updateLater').disabled = false;
+    $('#updateSnooze').disabled = false;
+    showToast(t('updateFailed'));
   }
 }
 
@@ -1717,6 +1814,10 @@ els.aboutDialog.querySelectorAll('[data-external]').forEach(link => link.addEven
 $('#closeUpdate').addEventListener('click', closeUpdate);
 $('#updateLater').addEventListener('click', closeUpdate);
 $('#updateSnooze').addEventListener('click', snoozeUpdates);
+$('#applyUpdate').addEventListener('click', startDownloadAndUpdate);
+window.leafMD.onUpdateProgress(progress => {
+  if (applyingUpdate) setUpdateProgress(Number(progress?.done) || 0, Number(progress?.total) || 0);
+});
 $('#openUpdatePage').addEventListener('click', () => {
   const releaseURL = state.updateInfo?.releaseUrl;
   if (releaseURL) window.leafMD.openExternal(releaseURL);
@@ -1730,6 +1831,16 @@ $('#cancelTable').addEventListener('click', closeTableDialog);
 $('#confirmTable').addEventListener('click', insertTable);
 els.tableDialog.addEventListener('click', event => {
   if (event.target === els.tableDialog) closeTableDialog();
+});
+$('#closeImageDialog').addEventListener('click', closeImageDialog);
+$('#cancelImage').addEventListener('click', closeImageDialog);
+$('#confirmImage').addEventListener('click', insertImageFromUrl);
+$('#pickLocalImage').addEventListener('click', () => { closeImageDialog(); insertLocalImage(); });
+els.imageDialog.addEventListener('click', event => {
+  if (event.target === els.imageDialog) closeImageDialog();
+});
+els.imageUrl.addEventListener('keydown', event => {
+  if (event.key === 'Enter') insertImageFromUrl();
 });
 $('#headingSelect').addEventListener('change', event => {
   formatSelectedLines('heading', event.target.value);
@@ -1811,6 +1922,7 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Escape' && !els.recentContextMenu.classList.contains('hidden')) closeRecentContextMenu();
   else if (event.key === 'Escape' && !els.accentMenu.classList.contains('hidden')) { closeAccentMenu(); $('#accentButton').focus(); }
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
+  else if (event.key === 'Escape' && !els.imageDialog.classList.contains('hidden')) closeImageDialog();
   else if (event.key === 'Escape' && !els.updateDialog.classList.contains('hidden')) closeUpdate();
   else if (event.key === 'Escape' && !els.aboutDialog.classList.contains('hidden')) closeAbout();
   else if (event.key === 'Escape' && !els.searchBar.classList.contains('hidden')) closeSearch();

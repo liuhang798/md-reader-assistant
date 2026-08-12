@@ -8,6 +8,8 @@ export function CheckForUpdates(arg1:boolean):Promise<main.UpdateInfo>;
 
 export function Dirname(arg1:string):Promise<string>;
 
+export function DownloadAndApplyUpdate():Promise<void>;
+
 export function GetInitialFile():Promise<main.Document>;
 
 export function GetPreferences():Promise<main.Preferences>;

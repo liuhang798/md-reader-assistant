@@ -13,7 +13,7 @@
   "info": {
     "companyName": "LeafMD Open Source",
     "productName": "MD阅读助手",
-    "productVersion": "2.3.4",
+    "productVersion": "2.3.5",
     "copyright": "Copyright © 2026 柳航",
     "comments": "A beautiful cross-platform Markdown reader and editor built with Go and Wails.",
     "fileAssociations": [
@@ -42,6 +42,13 @@
         "ext": "mkd",
         "name": "Markdown Document",
         "description": "Markdown 文档",
+        "iconName": "mdFileIcon",
+        "role": "Editor"
+      },
+      {
+        "ext": "txt",
+        "name": "Text Document",
+        "description": "文本文件",
         "iconName": "mdFileIcon",
         "role": "Editor"
       }

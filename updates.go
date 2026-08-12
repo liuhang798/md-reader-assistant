@@ -27,13 +27,49 @@ type UpdateInfo struct {
 }
 
 type githubRelease struct {
-	TagName     string `json:"tag_name"`
-	Name        string `json:"name"`
-	Body        string `json:"body"`
-	HTMLURL     string `json:"html_url"`
-	PublishedAt string `json:"published_at"`
-	Draft       bool   `json:"draft"`
-	Prerelease  bool   `json:"prerelease"`
+	TagName     string               `json:"tag_name"`
+	Name        string               `json:"name"`
+	Body        string               `json:"body"`
+	HTMLURL     string               `json:"html_url"`
+	PublishedAt string               `json:"published_at"`
+	Draft       bool                 `json:"draft"`
+	Prerelease  bool                 `json:"prerelease"`
+	Assets      []githubReleaseAsset `json:"assets"`
+}
+
+type githubReleaseAsset struct {
+	Name               string `json:"name"`
+	BrowserDownloadURL string `json:"browser_download_url"`
+	Digest             string `json:"digest"`
+}
+
+// fetchLatestRelease queries the GitHub API for the newest stable release.
+func (a *App) fetchLatestRelease() (*githubRelease, error) {
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, latestReleaseAPI, nil)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Accept", "application/vnd.github+json")
+	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	request.Header.Set("User-Agent", "MDReaderAssistant/"+appVersion)
+
+	response, err := (&http.Client{Timeout: 8 * time.Second}).Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("check GitHub release: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub release check returned %s", response.Status)
+	}
+
+	var release githubRelease
+	if err := json.NewDecoder(response.Body).Decode(&release); err != nil {
+		return nil, fmt.Errorf("decode GitHub release: %w", err)
+	}
+	if release.Draft || release.Prerelease || strings.TrimSpace(release.TagName) == "" {
+		return nil, errors.New("GitHub did not return a stable release")
+	}
+	return &release, nil
 }
 
 // CheckForUpdates checks the latest stable GitHub Release. The frontend calls
@@ -49,29 +85,9 @@ func (a *App) CheckForUpdates(force bool) (UpdateInfo, error) {
 			}
 		}
 	}
-	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, latestReleaseAPI, nil)
+	release, err := a.fetchLatestRelease()
 	if err != nil {
 		return result, err
-	}
-	request.Header.Set("Accept", "application/vnd.github+json")
-	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("User-Agent", "MDReaderAssistant/"+appVersion)
-
-	response, err := (&http.Client{Timeout: 8 * time.Second}).Do(request)
-	if err != nil {
-		return result, fmt.Errorf("check GitHub release: %w", err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("GitHub release check returned %s", response.Status)
-	}
-
-	var release githubRelease
-	if err := json.NewDecoder(response.Body).Decode(&release); err != nil {
-		return result, fmt.Errorf("decode GitHub release: %w", err)
-	}
-	if release.Draft || release.Prerelease || strings.TrimSpace(release.TagName) == "" {
-		return result, errors.New("GitHub did not return a stable release")
 	}
 
 	latest := normaliseVersion(release.TagName)

@@ -304,6 +304,7 @@ body.resizing-panes .sidebar, body.resizing-panes .toc-panel { transition: none;
 kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 2px 6px; font-size: 10px; }
 
 .document-view { max-width: var(--doc-width); padding: 50px 68px 70px; margin: 0 auto; }
+.plain-text { white-space: pre-wrap; overflow-wrap: break-word; font-family: "Cascadia Code", Consolas, "Microsoft YaHei UI", monospace; font-size: calc(15px * var(--font-scale)); line-height: 1.75; color: var(--text); user-select: text; }
 body[data-doc-width="narrow"] { --doc-width: 640px; --editor-doc-width: 560px; }
 body[data-doc-width="medium"] { --doc-width: 850px; --editor-doc-width: 700px; }
 body[data-doc-width="wide"] { --doc-width: 1100px; --editor-doc-width: 900px; }
@@ -549,6 +550,10 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .release-notes-content a { color: var(--accent-strong); text-underline-offset: 2px; }
 .update-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .update-footer .large-button { min-width: 112px; height: 40px; padding: 0 14px; }
+.update-progress { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; padding: 12px 14px; border-radius: 11px; background: var(--panel); }
+.update-progress-track { height: 6px; border-radius: 4px; background: color-mix(in srgb, var(--muted) 22%, transparent); overflow: hidden; }
+.update-progress-bar { height: 100%; width: 0; border-radius: 4px; background: var(--accent-strong); transition: width .18s ease; }
+.update-progress > span { color: var(--muted); font-size: 11px; }
 .table-dialog { position: relative; width: min(430px, 100%); padding: 30px; border: 1px solid color-mix(in srgb, var(--line) 82%, var(--accent)); border-radius: 18px; background: var(--paper-strong); box-shadow: 0 30px 90px rgba(18, 25, 20, .28); animation: dialog-rise .2s ease-out; }
 .table-dialog h2 { margin: 7px 0 8px; font-size: 23px; }
 .table-dialog > p { margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 1.6; }
@@ -558,6 +563,11 @@ body:has(.toc-panel.hidden) .back-to-top { right: 24px; }
 .table-size-fields input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
 .table-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
 .table-dialog-actions .large-button { min-width: 92px; height: 39px; }
+.image-dialog-fields { display: flex; flex-direction: column; gap: 14px; }
+.image-dialog-fields label { display: flex; flex-direction: column; gap: 7px; color: var(--muted); font-size: 11px; }
+.image-dialog-fields input { height: 42px; width: 100%; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; outline: none; color: var(--text); background: var(--panel); }
+.image-dialog-fields input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.image-dialog-actions .large-button:first-child { margin-right: auto; }
 body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; }
 @keyframes dialog-fade { from { opacity: 0; } }
 @keyframes dialog-rise { from { opacity: 0; transform: translateY(8px) scale(.985); } }

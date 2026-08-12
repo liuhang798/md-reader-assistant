@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file: https: http:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self';">
   <title data-i18n="appName">MD阅读助手</title>
 </head>
 <body>
@@ -261,7 +261,7 @@
     <button data-action="print"><span class="menu-label" data-i18n="printDocument">打印文档</span> <span>Ctrl P</span></button>
     <hr>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span> <span>GitHub</span></button>
-    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.3.4</span></button>
+    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.3.5</span></button>
   </div>
 
   <div id="recentContextMenu" class="popover recent-context-menu hidden no-drag" role="menu" data-i18n-aria-label="recentContextMenuTitle" aria-label="最近阅读文档操作">
@@ -327,7 +327,7 @@
         <div>
           <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
           <h2 id="aboutTitle" data-i18n="appName">MD阅读助手</h2>
-          <span class="about-version" data-i18n="aboutVersion">版本 2.3.4</span>
+          <span class="about-version" data-i18n="aboutVersion">版本 2.3.5</span>
         </div>
       </div>
       <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。</p>
@@ -364,18 +364,23 @@
         </div>
       </div>
       <div class="update-versions" aria-label="Version change">
-        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.3.4</strong></span>
+        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.3.5</strong></span>
         <svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
-        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.3.4</strong></span>
+        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.3.5</strong></span>
       </div>
       <div class="release-notes-panel">
         <strong data-i18n="releaseNotes">更新说明</strong>
         <div id="releaseNotes" class="release-notes-content"></div>
       </div>
+      <div id="updateProgress" class="update-progress hidden">
+        <div class="update-progress-track"><div id="updateProgressBar" class="update-progress-bar"></div></div>
+        <span id="updateProgressLabel" data-i18n="downloadingUpdate">正在下载更新…</span>
+      </div>
       <div class="update-footer">
         <button id="updateLater" class="large-button secondary" type="button" data-i18n="remindLater">稍后提醒</button>
         <button id="updateSnooze" class="large-button secondary" type="button" data-i18n="snooze30Days">30 天内不再提醒</button>
-        <button id="openUpdatePage" class="large-button primary" type="button" data-i18n="openDownloadPage">打开下载页面</button>
+        <button id="applyUpdate" class="large-button primary" type="button" data-i18n="downloadAndUpdate">下载并更新</button>
+        <button id="openUpdatePage" class="large-button secondary" type="button" data-i18n="openDownloadPage">打开下载页面</button>
       </div>
     </section>
   </div>
@@ -395,6 +400,26 @@
       <div class="table-dialog-actions">
         <button id="cancelTable" class="large-button secondary" type="button" data-i18n="cancel">取消</button>
         <button id="confirmTable" class="large-button primary" type="button" data-i18n="insert">插入</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="imageDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="imageDialogTitle">
+    <section class="table-dialog image-dialog">
+      <button id="closeImageDialog" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <span class="eyebrow" data-i18n="markdownTool">MARKDOWN 工具</span>
+      <h2 id="imageDialogTitle" data-i18n="insertImage">插入图片</h2>
+      <p data-i18n="imageDialogHint">选择本地图片，或粘贴在线图片链接。</p>
+      <div class="image-dialog-fields">
+        <label><span data-i18n="imageUrlLabel">图片链接</span><input id="imageUrl" type="text" data-i18n-placeholder="imageUrlPlaceholder" placeholder="https://…"></label>
+        <label><span data-i18n="imageAlt">图片说明</span><input id="imageAltInput" type="text" data-i18n-placeholder="imageAltPlaceholder" placeholder="可选的图片说明"></label>
+      </div>
+      <div class="table-dialog-actions image-dialog-actions">
+        <button id="pickLocalImage" class="large-button secondary" type="button" data-i18n="localImage">本地图片…</button>
+        <button id="cancelImage" class="large-button secondary" type="button" data-i18n="cancel">取消</button>
+        <button id="confirmImage" class="large-button primary" type="button" data-i18n="insert">插入</button>
       </div>
     </section>
   </div>

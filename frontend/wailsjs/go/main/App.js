@@ -14,6 +14,10 @@ export function Dirname(arg1) {
   return window['go']['main']['App']['Dirname'](arg1);
 }
 
+export function DownloadAndApplyUpdate() {
+  return window['go']['main']['App']['DownloadAndApplyUpdate']();
+}
+
 export function GetInitialFile() {
   return window['go']['main']['App']['GetInitialFile']();
 }

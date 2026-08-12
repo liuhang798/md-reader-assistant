@@ -28,7 +28,7 @@
 !define INFO_PROJECTNAME    "md-reader-assistant"
 !define INFO_COMPANYNAME    "LeafMD Open Source"
 !define INFO_PRODUCTNAME    "MD阅读助手"
-!define INFO_PRODUCTVERSION "2.3.4"
+!define INFO_PRODUCTVERSION "2.3.5"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
@@ -135,7 +135,8 @@ Function ResolvePreviousInstallDir
 FunctionEnd
 
 # Detect a locked installed executable before extraction. Interactive upgrades
-# let the user explicitly close the old process; silent upgrades fail safely.
+# let the user explicitly close the old process; silent upgrades (started by
+# the in-app updater) force-close the old process and continue.
 Function EnsureApplicationClosed
     IfFileExists "$INSTDIR\${PRODUCT_EXECUTABLE}" 0 applicationClosed
     ClearErrors
@@ -145,7 +146,16 @@ Function EnsureApplicationClosed
     Goto applicationClosed
 
     applicationLocked:
-        IfSilent applicationCloseCancelled applicationClosePrompt
+        IfSilent silentForceClose applicationClosePrompt
+    silentForceClose:
+        # The in-app updater may have already quit by now; taskkill failing
+        # because the process is gone is fine, we only wait for the lock to
+        # be released before extracting the new files.
+        nsExec::ExecToStack '"$SYSDIR\taskkill.exe" /F /T /IM "${PRODUCT_EXECUTABLE}"'
+        Pop $0
+        Pop $1
+        Sleep 800
+        Goto applicationClosed
     applicationClosePrompt:
         MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(CloseRunningAppPrompt)" IDYES applicationForceClose IDNO applicationCloseCancelled
     applicationForceClose:
@@ -177,6 +187,7 @@ FunctionEnd
     !insertmacro APP_ASSOCIATE "markdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
     !insertmacro APP_ASSOCIATE "mdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
     !insertmacro APP_ASSOCIATE "mkd" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "txt" "Text Document" "文本文件" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
 !macroend
 
 # Electron releases and early Wails installers used different uninstall keys
@@ -270,6 +281,10 @@ Section
     # open the directory page at the same location.
     SetRegView 64
     WriteRegStr HKCU "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
+    # A silent in-app upgrade (/S) should start the new version automatically.
+    IfSilent 0 silentRunDone
+    ExecShell "" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+    silentRunDone:
 SectionEnd
 
 Section "uninstall"

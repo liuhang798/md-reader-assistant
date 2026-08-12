@@ -162,10 +162,22 @@ jobs:
             exit 1
           fi
           ls -lh "${output_path}"
+      - name: Extract raw executable for in-app updates
+        shell: bash
+        run: |
+          app_path="$(find build/bin -maxdepth 1 -type d -name '*.app' -print -quit)"
+          binary="${app_path}/Contents/MacOS/MDReaderAssistant"
+          if [[ ! -x "${binary}" ]]; then
+            echo "Expected macOS executable was not found: ${binary}" >&2
+            exit 1
+          fi
+          release_dir="build/bin/release"
+          cp "${binary}" "${release_dir}/md-reader-assistant-${APP_VERSION}-macos-universal.bin"
+          ls -lh "${release_dir}/md-reader-assistant-${APP_VERSION}-macos-universal.bin"
       - uses: actions/upload-artifact@v4
         with:
           name: md-reader-assistant-macos-universal
-          path: build/bin/release/*.dmg
+          path: build/bin/release/*
           if-no-files-found: error
 
   linux:

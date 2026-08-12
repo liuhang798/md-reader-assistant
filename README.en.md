@@ -43,6 +43,12 @@ On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the s
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
+## What's new in 2.3.5
+
+- Plain-text `.txt` files are fully supported: the reader and the live editor preview render them as-is (no Markdown parsing), the editor uses plain text mode, and files open from the dialog, drag-in, or folder explorer. The installer registers the `.txt` association for double-click opening.
+- Insert images either from local files or by pasting an `http/https` online link with an optional description.
+- Added in-app automatic updates: the update dialog can download and apply the new version directly with a progress bar and integrity check, then restart automatically — no manual download, installer wizard, or macOS Gatekeeper approval needed. Supported on macOS and Windows; Linux keeps the manual download flow.
+
 ## What's new in 2.3.4
 
 - Returning to MD Reader Assistant now reloads the active document after another application changes it, while local unsaved edits remain protected from replacement.
@@ -61,6 +67,8 @@ The macOS build follows the computer's light/dark appearance automatically while
 ## Highlights
 
 - Read and edit Markdown with the same calm, polished interface.
+- Open, read, and edit plain-text `.txt` files too: the reader renders them as-is (no Markdown parsing), the editor uses plain text mode, and the `.txt` file association can be registered for double-click opening.
+- Insert images either from local files or by pasting an `http/https` online link with an optional description.
 - Split editing mode: live preview on the left, syntax-highlighted editor on the right.
 - The formatting toolbar covers H1–H6, bold, italic, strikethrough, highlight, links, inline/fenced code, quotes, lists, tasks, horizontal rules, tables and images. When space runs out, controls move into More Formats instead of creating a horizontal scrollbar. More Formats also adds bold italic, underline, superscript, subscript, hard breaks, footnotes, reference links, autolinks, syntax escaping, HTML/collapsible blocks, keyboard keys and comments. Common actions support `Ctrl/Cmd + B`, `Ctrl/Cmd + I`, `Ctrl/Cmd + K`, `Ctrl/Cmd + Shift + X` and `Ctrl/Cmd + Shift + H`.
 - Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
@@ -133,7 +141,7 @@ Tagged releases are built automatically for:
 - macOS Universal: Intel and Apple Silicon DMG
 - Linux x64: DEB and AppImage
 
-Unsigned development builds may trigger Windows SmartScreen or macOS Gatekeeper warnings. Production signing certificates are not included in this repository.
+Unsigned development builds may trigger Windows SmartScreen or macOS Gatekeeper warnings on first install. Production signing certificates are not included in this repository. In-app updates are unaffected: the new version is downloaded and applied by the app itself, so no repeated authorization is required.
 
 ## Development
 
@@ -165,7 +173,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.3.4` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates.
+Push a tag such as `v2.3.5` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates. On macOS and Windows the update dialog can also download and apply the new version in-app with a progress bar, then restart automatically.
 
 ## Project documentation
 

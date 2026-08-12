@@ -2,6 +2,20 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.3.5] - 2026-08-12
+
+### 简体中文
+
+- 兼容纯文本 TXT 文件：阅读页与编辑实时预览按纯文本渲染（保留原始换行与空格，不解析 Markdown 语法），编辑模式使用纯文本语法；可通过“打开文档”对话框、拖放或文件夹浏览直接打开，安装时注册 `.txt` 文件关联，双击即可用本应用打开。
+- 插入图片支持填写在线链接：点击工具栏“插入图片”可在弹窗中粘贴 `http://` 或 `https://` 图片地址并附可选图片说明，也可以继续选择本地图片。
+- 新增应用内自动更新：检测到新版本后可直接“下载并更新”，应用内下载（带进度条）、校验完整性后自动替换并重启，无需手动下载安装或再到系统设置授权；macOS 与 Windows 均支持，Linux 保持手动下载。
+
+### English
+
+- Plain-text `.txt` files are now fully supported: the reader and the live editor preview render them as-is, preserving line breaks and spaces without Markdown parsing, and the editor uses plain text mode. Files can be opened from the dialog, drag-in, or folder explorer, and the installer registers the `.txt` association so double-clicking opens them directly.
+- Inserting an image now supports online links: the image dialog accepts an `http://` or `https://` image URL with an optional description, alongside the existing local file picker.
+- Added in-app automatic updates: the update dialog can download and apply the new version directly with a progress bar and integrity check, then restart automatically — no manual download, installer wizard, or macOS Gatekeeper approval needed. Supported on macOS and Windows; Linux keeps the manual download flow.
+
 ## [2.3.4] - 2026-08-11
 
 ### 简体中文
@@ -248,3 +262,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.2
 [2.3.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.3
 [2.3.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.4
+[2.3.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.5

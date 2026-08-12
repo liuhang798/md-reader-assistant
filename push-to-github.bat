@@ -6,7 +6,7 @@ cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
 set "BRANCH=main"
-set "COMMIT_MSG=Release v2.3.4: document width presets, external refresh, reader search fix"
+set "COMMIT_MSG=Release v2.3.5: TXT support, online image links, in-app updates"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
 

@@ -677,6 +677,7 @@ func TestWindowsInstallerUsesReinstallSafeFileAssociationIcons(t *testing.T) {
 	for _, required := range []string{
 		`!macro AssociateMarkdownFiles`,
 		`!insertmacro APP_ASSOCIATE "md" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0"`,
+		`!insertmacro APP_ASSOCIATE "txt" "Text Document" "文本文件" "$INSTDIR\${PRODUCT_EXECUTABLE},0"`,
 		`!insertmacro AssociateMarkdownFiles`,
 		`Delete /REBOOTOK "$INSTDIR\mdFileIcon.ico"`,
 	} {
@@ -777,6 +778,40 @@ func TestReleaseVersionConsistency(t *testing.T) {
 		if !strings.Contains(string(data), appVersion) {
 			t.Errorf("%s does not contain release version %s", path, appVersion)
 		}
+	}
+}
+
+func TestPlainTextFilesAreSupportedEverywhere(t *testing.T) {
+	if !markdownExtensions[".txt"] {
+		t.Fatal("markdownExtensions must include .txt so folders, command-line args and drag-in accept plain text files")
+	}
+	var wailsConfig struct {
+		Info struct {
+			FileAssociations []struct {
+				Ext         string `json:"ext"`
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			} `json:"fileAssociations"`
+		} `json:"info"`
+	}
+	data, err := os.ReadFile("wails.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &wailsConfig); err != nil {
+		t.Fatal(err)
+	}
+	foundTXT := false
+	for _, association := range wailsConfig.Info.FileAssociations {
+		if association.Ext == "txt" {
+			foundTXT = true
+			if association.Name != "Text Document" || association.Description == "" {
+				t.Fatalf("txt association metadata is incomplete: %+v", association)
+			}
+		}
+	}
+	if !foundTXT {
+		t.Fatal("wails.json fileAssociations must include a .txt entry so the installer registers plain text files")
 	}
 }
 

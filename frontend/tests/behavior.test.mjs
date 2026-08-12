@@ -88,3 +88,48 @@ test('document width presets are selectable in the more menu and persist', () =>
   assert.match(styles, /body\[data-doc-width="wide"\] \{ --doc-width: 1100px; --editor-doc-width: 900px; \}/);
   assert.match(styles, /body\[data-doc-width="full"\] \{ --doc-width: 100%; --editor-doc-width: 100%; \}/);
 });
+
+test('plain text files render without Markdown parsing and edit without Markdown syntax highlighting', () => {
+  assert.match(renderer, /function isPlainTextFile\(path\)/);
+  assert.match(renderer, /return \/\\\.txt\$\/i\.test\(path \|\| ''\)/);
+  assert.match(renderer, /if \(isPlainTextFile\(doc\.path\)\) \{\s*container\.innerHTML = `<div class="plain-text">\$\{escapeHtml\(content\)\}<\/div>`;/);
+  assert.match(renderer, /const language = isPlainTextFile\(state\.currentFile\?\.path\)\s*\? \[\]\s*: \[markdown\(\), syntaxHighlighting\(markdownHighlightStyle\)\]/);
+  assert.doesNotMatch(renderer, /editorExtensions = \[\s*basicSetup,\s*markdown\(\)/);
+  assert.match(styles, /\.plain-text \{ white-space: pre-wrap; overflow-wrap: break-word; font-family: "Cascadia Code", Consolas, "Microsoft YaHei UI", monospace;/);
+  assert.match(styles, /\.plain-text \{[^}]*font-size: calc\(15px \* var\(--font-scale\)\);/);
+});
+
+test('inserting an image supports online links with an optional description', () => {
+  assert.match(html, /id="imageDialog"/);
+  assert.match(html, /id="imageUrl"/);
+  assert.match(html, /id="imageAltInput"/);
+  assert.match(html, /id="pickLocalImage"/);
+  assert.match(html, /id="confirmImage"/);
+  assert.match(html, /img-src 'self' data: file: https: http:/);
+  assert.match(renderer, /function openImageDialog\(\)/);
+  assert.match(renderer, /function closeImageDialog\(\)/);
+  assert.match(renderer, /function insertImageFromUrl\(\)/);
+  assert.match(renderer, /if \(!\/\^https\?:\\\/\\\/\\S\+\$\/i\.test\(url\)\)/);
+  assert.match(renderer, /const markdownPath = \/\[\\s\(\)\]\/\.test\(url\) \? `<\$\{url\.replaceAll\('>', '%3E'\)\}>` : url;/);
+  assert.match(renderer, /function insertLocalImage\(\)/);
+  assert.match(renderer, /window\.leafMD\.selectImage\(state\.currentFile\.path\)/);
+  assert.match(renderer, /els\.imageAltInput\.value\.trim\(\)\.replaceAll\('\[', '\\\\\['\)\.replaceAll\('\]', '\\\\\]'\) \|\| selectedImageAlt\(\) \|\| t\('imageAlt'\)/);
+  assert.match(renderer, /\$\('#pickLocalImage'\)\.addEventListener\('click', \(\) => \{ closeImageDialog\(\); insertLocalImage\(\); \}\)/);
+  assert.match(renderer, /els\.imageUrl\.addEventListener\('keydown', event => \{\s*if \(event\.key === 'Enter'\) insertImageFromUrl\(\);/);
+  assert.match(styles, /\.image-dialog-fields input:focus \{ border-color: var\(--accent\);/);
+});
+
+test('the update dialog offers in-app download and apply with progress', () => {
+  assert.match(html, /id="applyUpdate"/);
+  assert.match(html, /id="updateProgress"/);
+  assert.match(html, /id="updateProgressBar"/);
+  assert.match(html, /id="updateProgressLabel"/);
+  assert.match(renderer, /async function startDownloadAndUpdate\(\)/);
+  assert.match(renderer, /await window\.leafMD\.downloadAndApplyUpdate\(\)/);
+  assert.match(renderer, /window\.leafMD\.onUpdateProgress\(progress =>/);
+  assert.match(renderer, /\$\('#applyUpdate'\)\.addEventListener\('click', startDownloadAndUpdate\)/);
+  assert.match(renderer, /platform !== 'darwin' && platform !== 'windows'/);
+  assert.match(renderer, /state\.dirty && state\.currentFile\?\.path\) \{\s*await saveDocument\(false, \{ auto: true, silent: true \}\)/);
+  assert.match(renderer, /setTimeout\(\(\) => window\.leafMD\.closeWindow\(\), 500\)/);
+  assert.match(styles, /\.update-progress-bar \{ height: 100%; width: 0; border-radius: 4px; background: var\(--accent-strong\);/);
+});
