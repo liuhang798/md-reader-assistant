@@ -52,27 +52,46 @@ jobs:
           $ErrorActionPreference = 'Stop'
           go install github.com/wailsapp/wails/v2/cmd/wails@${env:WAILS_VERSION}
 
-          # NSIS: download the portable zip (most reliable; avoids flaky choco/winget installers).
-          $nsisDir = Join-Path $env:ProgramFiles 'NSIS'
-          $makensis = Join-Path $nsisDir 'makensis.exe'
+          $candidates = @(
+            "$env:ProgramFiles\NSIS\makensis.exe",
+            "${env:ProgramFiles(x86)}\NSIS\makensis.exe",
+            "$env:LOCALAPPDATA\Programs\NSIS\makensis.exe",
+            "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\NSIS.NSIS\makensis.exe"
+          )
+          $existing = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 
-          if (-not (Test-Path -LiteralPath $makensis)) {
+          # 1) chocolatey (2 attempts) - its source is flaky, retry before giving up
+          if (-not $existing) {
+            foreach ($attempt in 1..2) {
+              Write-Host "Attempt ${attempt}: choco install nsis..."
+              choco install nsis --yes --no-progress *> $null
+              $existing = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+              if ($existing) { break }
+              Start-Sleep -Seconds 8
+            }
+          }
+
+          # 2) fall back: portable zip via curl.exe (more reliable than Invoke-WebRequest)
+          if (-not $existing) {
             $zip = Join-Path $env:TEMP 'nsis-3.12.zip'
-            Write-Host 'Downloading NSIS 3.12 portable zip...'
-            Invoke-WebRequest -Uri 'https://downloads.sourceforge.net/project/nsis/NSIS%203/3.12/nsis-3.12.zip' -OutFile $zip -UseBasicParsing -MaximumRedirection 10
+            Write-Host 'Downloading NSIS 3.12 portable zip via curl...'
+            curl.exe -L --retry 3 --retry-delay 5 -sS -o $zip "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.12/nsis-3.12.zip"
+            if ($LASTEXITCODE -ne 0) { throw "NSIS zip download failed (curl exit $LASTEXITCODE)" }
             $extract = Join-Path $env:TEMP 'nsis-extract'
             if (Test-Path -LiteralPath $extract) { Remove-Item -LiteralPath $extract -Recurse -Force }
             Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
             $verDir = Get-ChildItem -LiteralPath $extract -Directory | Select-Object -First 1
             if (-not $verDir) { throw 'NSIS zip did not extract as expected' }
+            $nsisDir = Join-Path $env:ProgramFiles 'NSIS'
             if (Test-Path -LiteralPath $nsisDir) { Remove-Item -LiteralPath $nsisDir -Recurse -Force }
             Move-Item -LiteralPath $verDir.FullName -Destination $nsisDir
+            $existing = Join-Path $nsisDir 'makensis.exe'
           }
 
-          if (-not (Test-Path -LiteralPath $makensis)) {
+          if (-not $existing -or -not (Test-Path -LiteralPath $existing)) {
             throw 'makensis.exe was not found after installing NSIS'
           }
-          Write-Host "NSIS ready: $makensis"
+          Write-Host "NSIS ready: $existing"
       - name: Build Windows installer
         shell: pwsh
         run: wails build -clean -platform windows/amd64 -o MDReaderAssistant.exe -nsis -installscope user -webview2 embed -trimpath -nocolour
