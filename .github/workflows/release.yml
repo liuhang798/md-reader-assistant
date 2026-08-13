@@ -306,7 +306,7 @@ jobs:
           echo "Syncing source code to Gitee ${GITEE_OWNER}/${GITEE_REPO}..."
           git push "${auth_url}" "HEAD:refs/heads/main" --force 2>&1 | sed "s|${GITEE_TOKEN}|***|g" || true
 
-          commitish=$(git rev-parse "${RELEASE_TAG}^{commit}" 2>/dev/null || git rev-parse HEAD)
+          commitish=$(git rev-list -n1 "${RELEASE_TAG}" 2>/dev/null || git rev-parse HEAD)
           echo "Releasing commit: ${commitish}"
 
           # Recreate the Gitee release for this tag so stale assets are cleared.
