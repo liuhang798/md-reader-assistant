@@ -320,6 +320,7 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 4. 构建 Linux DEB 与 AppImage。
 5. 从 CHANGELOG 提取当前版本段。
 6. 创建或更新同标签 GitHub Release，并替换同名产物。
+7. 若配置了 `GITEE_TOKEN`（GitHub Actions secret），把三平台产物上传到 Gitee Release（`liuhang798/md-reader-assistant`）供国内用户下载；未配置时仅打印警告并跳过。
 
 发布前还需要人工验证：安装升级、桌面图标、文件关联、macOS 窗口样式、Linux 启动、更新弹窗和下载链接。
 
