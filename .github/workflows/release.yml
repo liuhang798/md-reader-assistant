@@ -383,31 +383,19 @@ jobs:
           fi
           echo "Gitee release created: id=${release_id}"
 
-          # Upload every build artifact (Windows installer/bin, macOS DMG/bin, Linux deb/AppImage).
-          shopt -s nullglob
-          for f in release-assets/*; do
-            [ -f "${f}" ] || continue
-            name=$(basename "${f}")
-            ok=false
-            for attempt in 1 2 3; do
-              echo "Uploading ${name} to Gitee release (attempt ${attempt}/3)..."
-              resp=$(curl -sS --max-time 180 -X POST "${base}/releases/${release_id}/attach_files" \
-                -F "access_token=${GITEE_TOKEN}" \
-                -F "file=@${f}" 2>&1) && {
-                if printf '%s' "${resp}" | grep -q '"message"'; then
-                  echo "::warning::Gitee upload reported error for ${name}: ${resp}"
-                else
-                  echo "Uploaded ${name}"
-                  ok=true
-                fi
-                break
-              } || {
-                echo "Upload attempt ${attempt} failed: ${resp}"
-                [ "${attempt}" -lt 3 ] && sleep 10
-              }
-            done
-            if [ "${ok}" != "true" ]; then
-              echo "::error::Gitee upload failed for ${name} after 3 attempts"
-            fi
-          done
-          echo "Gitee sync completed: https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/releases/${RELEASE_TAG}"
+          # Publish assets to the release-assets branch via git push.
+          # Gitee's attach_files upload API is unreachable from overseas (GitHub) runners,
+          # but git push works, so binaries are served from the repo branch instead.
+          echo "Pushing build assets to the release-assets branch..."
+          asset_dir=$(mktemp -d)
+          cp release-assets/* "${asset_dir}"/
+          (
+            cd "${asset_dir}"
+            git init -q -b release-assets
+            git add -A
+            git -c user.name="${GITEE_OWNER}" -c user.email="${GITEE_OWNER}@users.noreply.gitee.com" \
+              commit -q -m "release ${RELEASE_TAG} assets"
+            git push "${auth_url}" release-assets --force 2>&1 | sed "s|${GITEE_TOKEN}|***|g"
+          )
+          rm -rf "${asset_dir}"
+          echo "Gitee sync completed: https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/tree/release-assets"
