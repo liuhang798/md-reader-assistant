@@ -395,7 +395,8 @@ jobs:
             git add -A
             git -c user.name="${GITEE_OWNER}" -c user.email="${GITEE_OWNER}@users.noreply.gitee.com" \
               commit -q -m "release ${RELEASE_TAG} assets"
-            git push "${auth_url}" release-assets --force 2>&1 | sed "s|${GITEE_TOKEN}|***|g"
+            git -c http.postBuffer=524288000 -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=300 \
+              push "${auth_url}" release-assets --force 2>&1 | sed "s|${GITEE_TOKEN}|***|g"
           )
           rm -rf "${asset_dir}"
           echo "Gitee sync completed: https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/tree/release-assets"
