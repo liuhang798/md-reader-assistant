@@ -384,9 +384,10 @@ jobs:
           echo "Gitee release created: id=${release_id}"
 
           # Publish assets to the release-assets branch via git push.
-          # Gitee's attach_files upload API is unreachable from overseas (GitHub) runners,
-          # but git push works, so binaries are served from the repo branch instead.
-          echo "Pushing build assets to the release-assets branch..."
+          # Note: pushing large binaries from GitHub (overseas) runners to Gitee is unreliable
+          # (attach_files API is unreachable; git push is very slow). This step is best-effort:
+          # on failure, run sync-release-to-gitee.bat locally to sync assets from China.
+          echo "Pushing build assets to the release-assets branch (best-effort)..."
           asset_dir=$(mktemp -d)
           cp release-assets/* "${asset_dir}"/
           (
@@ -395,8 +396,10 @@ jobs:
             git add -A
             git -c user.name="${GITEE_OWNER}" -c user.email="${GITEE_OWNER}@users.noreply.gitee.com" \
               commit -q -m "release ${RELEASE_TAG} assets"
-            git -c http.postBuffer=524288000 -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=300 \
-              push "${auth_url}" release-assets --force 2>&1 | sed "s|${GITEE_TOKEN}|***|g"
+            if ! git -c http.postBuffer=524288000 -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=300 \
+              push "${auth_url}" release-assets --force 2>&1 | sed "s|${GITEE_TOKEN}|***|g"; then
+              echo "::warning::Gitee release-assets push failed (overseas network). Run sync-release-to-gitee.bat locally to sync."
+            fi
           )
           rm -rf "${asset_dir}"
           echo "Gitee sync completed: https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/tree/release-assets"
