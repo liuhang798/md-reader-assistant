@@ -71,7 +71,8 @@ app.go / updates.go（Go 后端）
 | `README.zh-CN.md` | 旧中文版链接的兼容入口，指向默认中文主页 |
 | `CHANGELOG.md` | 中英文版本升级日志，也是应用更新弹窗和 Release notes 的来源 |
 | `RELEASING.md` | 版本发布操作指南 |
-| `push-to-github.bat` | Windows 双击自动拉取、提交并推送源码 |
+| `push-to-github.bat` | Windows 双击自动拉取、提交并推送源码（GitHub + Gitee 双推） |
+| `sync-release-to-gitee.bat` | Windows 双击把 GitHub Release 资产下载后推送到 Gitee `release-assets` 分支（国内直连，CI 失败时兜底） |
 
 `frontend/dist`、`frontend/node_modules`、`build/bin` 是生成目录，已被 `.gitignore` 排除，不应提交。
 
@@ -330,6 +331,7 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 2. 版本发布流程：同步版本号 → 更新 CHANGELOG/README → 提交 → 双推 `main` → 打 tag（与版本完全一致）→ 推送 tag 到 GitHub 触发 `release.yml` → 构建完成后验证 GitHub Release 与 Gitee Release 均有三平台产物。
 3. `release.yml` 配置了 `GITEE_TOKEN` secret 时自动把产物同步到 Gitee Release；未配置时跳过并告警。此 secret 在 GitHub 仓库 Settings → Secrets 维护，不要写入仓库。
 4. Gitee 是国内镜像与国内下载入口，始终与 GitHub 保持同源；Gitee 的 CI（Gitee Go）不具备三平台构建能力，构建一律由 GitHub Actions 完成。
+5. 三平台产物同步到 Gitee 采用「CI 自动 + 脚本兜底」双保险：`release.yml` 会把产物 push 到 Gitee `release-assets` 分支（GitHub Release 附件上传 API 在海外 runner 不可达，勿改用 attach_files）；若 CI 同步失败，双击 `sync-release-to-gitee.bat [vX.Y.Z]`（从 GitHub Release 下载资产后直连 push 到 Gitee）补同步。
 
 ## 15. 完成标准
 
