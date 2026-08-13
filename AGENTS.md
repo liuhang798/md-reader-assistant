@@ -324,6 +324,13 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 
 发布前还需要人工验证：安装升级、桌面图标、文件关联、macOS 窗口样式、Linux 启动、更新弹窗和下载链接。
 
+### 推送与发布规范（常驻规则）
+
+1. 任何代码推送必须同时推送到 GitHub 与 Gitee 两个 remote：用 `push-to-github.bat`（自动双推 + 重试），或等价命令 `git push origin <branch>` + `git push gitee <branch>`。不允许只推单端。
+2. 版本发布流程：同步版本号 → 更新 CHANGELOG/README → 提交 → 双推 `main` → 打 tag（与版本完全一致）→ 推送 tag 到 GitHub 触发 `release.yml` → 构建完成后验证 GitHub Release 与 Gitee Release 均有三平台产物。
+3. `release.yml` 配置了 `GITEE_TOKEN` secret 时自动把产物同步到 Gitee Release；未配置时跳过并告警。此 secret 在 GitHub 仓库 Settings → Secrets 维护，不要写入仓库。
+4. Gitee 是国内镜像与国内下载入口，始终与 GitHub 保持同源；Gitee 的 CI（Gitee Go）不具备三平台构建能力，构建一律由 GitHub Actions 完成。
+
 ## 15. 完成标准
 
 一个修改只有在以下条件全部满足时才算完成：
