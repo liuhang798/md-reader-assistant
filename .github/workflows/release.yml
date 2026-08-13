@@ -71,7 +71,7 @@ jobs:
           if (-not $installed) {
             Write-Host "choco install failed; downloading NSIS 3.12 zip directly..."
             $zip = Join-Path $env:TEMP 'nsis-3.12.zip'
-            Invoke-WebRequest -Uri 'https://sourceforge.net/projects/nsis/files/NSIS%203/3.12/nsis-3.12.zip/download' -OutFile $zip -UseBasicParsing
+            Invoke-WebRequest -Uri 'https://github.com/nsis-dev/nsis/releases/download/v3.12/nsis-3.12.zip' -OutFile $zip -UseBasicParsing -MaximumRedirection 10
             $extract = Join-Path $env:TEMP 'nsis-extract'
             Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
             $verDir = Get-ChildItem -LiteralPath $extract -Directory | Select-Object -First 1
