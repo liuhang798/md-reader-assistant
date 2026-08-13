@@ -54,36 +54,38 @@ jobs:
 
           $nsisDir = Join-Path $env:ProgramFiles 'NSIS'
           $makensis = Join-Path $nsisDir 'makensis.exe'
+          $localMakensis = Join-Path $env:LOCALAPPDATA 'Programs\NSIS\makensis.exe'
 
-          # Try chocolatey first (2 attempts), then fall back to a direct NSIS zip download.
-          # community.chocolatey.org is intermittently unavailable (503/504), so never rely on it alone.
           $installed = $false
-          foreach ($attempt in 1..2) {
-            Write-Host "Attempt ${attempt}: choco install nsis..."
-            choco install nsis --yes --no-progress *> $null
-            if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $makensis)) {
+
+          # 1) winget (Microsoft CDN; most reliable on GitHub runners)
+          if (Get-Command winget -ErrorAction SilentlyContinue) {
+            Write-Host 'Installing NSIS via winget...'
+            winget install -e --id NSIS.NSIS --silent --accept-package-agreements --accept-source-agreements *> $null
+            if (Test-Path -LiteralPath $localMakensis) {
               $installed = $true
-              break
+            } else {
+              Write-Host 'winget install finished but makensis was not found'
             }
-            Start-Sleep -Seconds 8
+          }
+
+          # 2) chocolatey (2 attempts) as fallback
+          if (-not $installed) {
+            foreach ($attempt in 1..2) {
+              Write-Host "Attempt ${attempt}: choco install nsis..."
+              choco install nsis --yes --no-progress *> $null
+              if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $makensis)) {
+                $installed = $true
+                break
+              }
+              Start-Sleep -Seconds 8
+            }
           }
 
           if (-not $installed) {
-            Write-Host "choco install failed; downloading NSIS 3.12 zip directly..."
-            $zip = Join-Path $env:TEMP 'nsis-3.12.zip'
-            Invoke-WebRequest -Uri 'https://github.com/nsis-dev/nsis/releases/download/v3.12/nsis-3.12.zip' -OutFile $zip -UseBasicParsing -MaximumRedirection 10
-            $extract = Join-Path $env:TEMP 'nsis-extract'
-            Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
-            $verDir = Get-ChildItem -LiteralPath $extract -Directory | Select-Object -First 1
-            if (-not $verDir) { throw "NSIS zip did not extract as expected" }
-            if (Test-Path -LiteralPath $nsisDir) { Remove-Item -LiteralPath $nsisDir -Recurse -Force }
-            Move-Item -LiteralPath $verDir.FullName -Destination $nsisDir
+            throw 'makensis.exe was not found after installing NSIS'
           }
-
-          if (-not (Test-Path -LiteralPath $makensis)) {
-            throw "makensis.exe was not found after installing NSIS"
-          }
-          Write-Host "NSIS ready: $makensis"
+          Write-Host 'NSIS ready'
       - name: Build Windows installer
         shell: pwsh
         run: wails build -clean -platform windows/amd64 -o MDReaderAssistant.exe -nsis -installscope user -webview2 embed -trimpath -nocolour
@@ -100,6 +102,7 @@ jobs:
             (Get-Command makensis.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1),
             "${env:ProgramFiles(x86)}\NSIS\makensis.exe",
             "$env:ProgramFiles\NSIS\makensis.exe",
+            "$env:LOCALAPPDATA\Programs\NSIS\makensis.exe",
             "$env:ChocolateyInstall\bin\makensis.exe"
           ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) }
           $makensis = $makensisCandidates | Select-Object -First 1
