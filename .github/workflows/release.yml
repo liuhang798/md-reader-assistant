@@ -49,8 +49,41 @@ jobs:
       - name: Install Wails and NSIS
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           go install github.com/wailsapp/wails/v2/cmd/wails@${env:WAILS_VERSION}
-          choco install nsis --yes --no-progress
+
+          $nsisDir = Join-Path $env:ProgramFiles 'NSIS'
+          $makensis = Join-Path $nsisDir 'makensis.exe'
+
+          # Try chocolatey first (2 attempts), then fall back to a direct NSIS zip download.
+          # community.chocolatey.org is intermittently unavailable (503/504), so never rely on it alone.
+          $installed = $false
+          foreach ($attempt in 1..2) {
+            Write-Host "Attempt ${attempt}: choco install nsis..."
+            choco install nsis --yes --no-progress *> $null
+            if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $makensis)) {
+              $installed = $true
+              break
+            }
+            Start-Sleep -Seconds 8
+          }
+
+          if (-not $installed) {
+            Write-Host "choco install failed; downloading NSIS 3.12 zip directly..."
+            $zip = Join-Path $env:TEMP 'nsis-3.12.zip'
+            Invoke-WebRequest -Uri 'https://sourceforge.net/projects/nsis/files/NSIS%203/3.12/nsis-3.12.zip/download' -OutFile $zip -UseBasicParsing
+            $extract = Join-Path $env:TEMP 'nsis-extract'
+            Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+            $verDir = Get-ChildItem -LiteralPath $extract -Directory | Select-Object -First 1
+            if (-not $verDir) { throw "NSIS zip did not extract as expected" }
+            if (Test-Path -LiteralPath $nsisDir) { Remove-Item -LiteralPath $nsisDir -Recurse -Force }
+            Move-Item -LiteralPath $verDir.FullName -Destination $nsisDir
+          }
+
+          if (-not (Test-Path -LiteralPath $makensis)) {
+            throw "makensis.exe was not found after installing NSIS"
+          }
+          Write-Host "NSIS ready: $makensis"
       - name: Build Windows installer
         shell: pwsh
         run: wails build -clean -platform windows/amd64 -o MDReaderAssistant.exe -nsis -installscope user -webview2 embed -trimpath -nocolour
