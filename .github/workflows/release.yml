@@ -354,7 +354,7 @@ jobs:
           # Recreate the Gitee release for this tag so stale assets are cleared.
           existing=$(curl -sS -f "${base}/releases/tags/${RELEASE_TAG}" 2>/dev/null || true)
           if [ -n "${existing}" ] && printf '%s' "${existing}" | grep -q '"id"'; then
-            existing_id=$(printf '%s' "${existing}" | sed -n 's/.*"id":\([0-9]*\).*/\1/p' | head -1)
+            existing_id=$(printf '%s' "${existing}" | grep -oE '"id":[0-9]+' | head -1 | cut -d: -f2)
             echo "Removing existing Gitee release id=${existing_id} for ${RELEASE_TAG}"
             curl -sS -X DELETE "${base}/releases/${existing_id}?access_token=${GITEE_TOKEN}" || true
           fi
@@ -376,7 +376,7 @@ jobs:
             --data-urlencode "name=md-reader-assistant ${version}" \
             --data-urlencode "body=${body}" \
             --data-urlencode "target_commitish=${commitish}")
-          release_id=$(printf '%s' "${created}" | sed -n 's/.*"id":\([0-9]*\).*/\1/p' | head -1)
+          release_id=$(printf '%s' "${created}" | grep -oE '"id":[0-9]+' | head -1 | cut -d: -f2)
           if [ -z "${release_id}" ]; then
             echo "Failed to create Gitee release: ${created}" >&2
             exit 1
