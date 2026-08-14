@@ -81,13 +81,13 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.4.1', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.4.2', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
     remindLater: '稍后提醒', snooze30Days: '30 天内不再提醒', updateSnoozed: '未来 30 天不再自动提醒更新', openDownloadPage: '打开下载页面', alreadyLatest: '当前已是最新版本', updateCheckFailed: '检查更新失败，请稍后重试',
     downloadAndUpdate: '下载并更新', downloadingUpdate: '正在下载更新… {percent}%', preparingUpdate: '正在安装更新…', updateFailed: '更新失败，请稍后重试', updateBlockedByUnsavedChanges: '请先保存当前文档再更新',
-    formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3', heading4: '标题 4', heading5: '标题 5', heading6: '标题 6',
+    formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', formatPainter: '格式刷', formatPainterTitle: '格式刷：复制选中文本的格式，再选中目标文本即可自动应用', formatCopied: '已复制格式，选中目标文本后自动应用', formatApplied: '格式已应用', formatNeedSelection: '请先选中要复制格式的文本', formatCleared: '已取消格式刷', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3', heading4: '标题 4', heading5: '标题 5', heading6: '标题 6',
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', strikethroughTitle: '删除线 (Ctrl+Shift+X)', highlightTitle: '高亮 (Ctrl+Shift+H)', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', horizontalRule: '分隔线', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
     moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
     markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试', imageDialogHint: '选择本地图片，或粘贴在线图片链接。', imageUrlLabel: '图片链接', imageUrlPlaceholder: 'https:// 或 http:// 链接', imageAltPlaceholder: '可选的图片说明', localImage: '本地图片…', imageUrlInvalid: '请输入有效的 http:// 或 https:// 链接',
@@ -115,13 +115,13 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.4.1', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.4.2', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
     remindLater: 'Remind me later', snooze30Days: 'Don’t remind me for 30 days', updateSnoozed: 'Automatic update reminders paused for 30 days', openDownloadPage: 'Open download page', alreadyLatest: 'You’re using the latest version', updateCheckFailed: 'Unable to check for updates. Try again later.',
     downloadAndUpdate: 'Download & Update', downloadingUpdate: 'Downloading update… {percent}%', preparingUpdate: 'Installing update…', updateFailed: 'Update failed. Please try again.', updateBlockedByUnsavedChanges: 'Save the current document before updating',
-    formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3', heading4: 'Heading 4', heading5: 'Heading 5', heading6: 'Heading 6',
+    formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', formatPainter: 'Format painter', formatPainterTitle: 'Format painter: copy the selected text format, then select the target text to apply automatically', formatCopied: 'Format copied. Select the target text to apply automatically.', formatApplied: 'Format applied', formatNeedSelection: 'Select the text whose format you want to copy first', formatCleared: 'Format painter cancelled', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3', heading4: 'Heading 4', heading5: 'Heading 5', heading6: 'Heading 6',
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', strikethroughTitle: 'Strikethrough (Ctrl+Shift+X)', highlightTitle: 'Highlight (Ctrl+Shift+H)', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', horizontalRule: 'Horizontal rule', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
     moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
     markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.', imageDialogHint: 'Pick a local image or paste an online image link.', imageUrlLabel: 'Image URL', imageUrlPlaceholder: 'https:// or http:// link', imageAltPlaceholder: 'Optional image description', localImage: 'Local image…', imageUrlInvalid: 'Enter a valid http:// or https:// link',
@@ -371,6 +371,122 @@ function formatSelectedLines(kind, headingPrefix = '') {
   });
   codeEditor.focus();
   return true;
+}
+
+let copiedFormat = null; // { inline: ['bold','italic',...], block: 'heading2' | 'quote' | null }
+let copiedFormatSource = null; // 复制格式时的源选区 { from, to }
+let formatPainterApplyTimer = null; // 选区稳定后自动应用格式的定时器
+
+function analyzeFormat(selectionFrom, selectionTo) {
+  const doc = codeEditor.state.doc;
+  const format = { inline: [], block: null };
+  // 检查行内标记（包裹在选区两侧）
+  const before = doc.sliceString(Math.max(0, selectionFrom - 3), selectionFrom);
+  const after = doc.sliceString(selectionTo, Math.min(doc.length, selectionTo + 3));
+  const inlineChecks = [
+    { open: '**', close: '**', name: 'bold' },
+    { open: '*', close: '*', name: 'italic' },
+    { open: '~~', close: '~~', name: 'strikethrough' },
+    { open: '==', close: '==', name: 'highlight' },
+    { open: '`', close: '`', name: 'inline-code' }
+  ];
+  for (const check of inlineChecks) {
+    if (before.endsWith(check.open) && after.startsWith(check.close)) format.inline.push(check.name);
+  }
+  // bold 匹配时移除重复的 italic（* 也会匹配 ** 尾部）
+  if (format.inline.includes('bold')) format.inline = format.inline.filter(name => name !== 'italic');
+  // 检查块级格式（选区首行）
+  const first = doc.lineAt(selectionFrom);
+  const lineText = first.text;
+  const headingMatch = lineText.match(/^(#{1,6})\s+/);
+  if (headingMatch) format.block = `heading${headingMatch[1].length}`;
+  else if (/^>\s+/.test(lineText)) format.block = 'quote';
+  else if (/^[-*+]\s+/.test(lineText)) format.block = 'unordered-list';
+  else if (/^\d+[.)]\s+/.test(lineText)) format.block = 'ordered-list';
+  return format;
+}
+
+function copyFormatFromSelection() {
+  if (!codeEditor || !state.editing) return false;
+  const selection = codeEditor.state.selection.main;
+  if (selection.from === selection.to) {
+    showToast(t('formatNeedSelection'));
+    return false;
+  }
+  const format = analyzeFormat(selection.from, selection.to);
+  if (!format.inline.length && !format.block) {
+    showToast(t('formatNeedSelection'));
+    return false;
+  }
+  copiedFormat = format;
+  copiedFormatSource = { from: selection.from, to: selection.to };
+  const button = $('#formatPainterButton');
+  if (button) {
+    button.classList.add('active');
+    button.setAttribute('aria-pressed', 'true');
+  }
+  showToast(t('formatCopied'));
+  return true;
+}
+
+function scheduleFormatPainterApply() {
+  clearTimeout(formatPainterApplyTimer);
+  formatPainterApplyTimer = setTimeout(() => {
+    if (!copiedFormat || !codeEditor || !state.editing) return;
+    const selection = codeEditor.state.selection.main;
+    // 仅在新选区与源选区不同且非空时自动应用
+    if (selection.from === selection.to) return;
+    if (copiedFormatSource && selection.from === copiedFormatSource.from && selection.to === copiedFormatSource.to) return;
+    applyCopiedFormat();
+  }, 120);
+}
+
+function applyCopiedFormat() {
+  if (!copiedFormat || !codeEditor || !state.editing) return false;
+  const selection = codeEditor.state.selection.main;
+  if (selection.from === selection.to) return false;
+  let selectionChanged = false;
+  // 先应用行内格式（基于当前选区），再应用块级格式（formatSelectedLines 会重新读取选区）
+  if (copiedFormat.inline.length) {
+    const current = codeEditor.state.selection.main;
+    let insert = codeEditor.state.doc.sliceString(current.from, current.to);
+    for (const name of copiedFormat.inline) {
+      const open = { bold: '**', italic: '*', strikethrough: '~~', highlight: '==', 'inline-code': '`' }[name];
+      if (open) insert = `${open}${insert}${open}`;
+    }
+    codeEditor.dispatch({
+      changes: { from: current.from, to: current.to, insert },
+      selection: { anchor: current.from, head: current.from + insert.length },
+      scrollIntoView: true
+    });
+    selectionChanged = true;
+  }
+  // 块级格式
+  if (copiedFormat.block) {
+    if (copiedFormat.block.startsWith('heading')) {
+      const prefix = '#'.repeat(Number(copiedFormat.block.slice(7))) + ' ';
+      selectionChanged = formatSelectedLines('heading', prefix) || selectionChanged;
+    } else if (['quote', 'unordered-list', 'ordered-list'].includes(copiedFormat.block)) {
+      selectionChanged = formatSelectedLines(copiedFormat.block) || selectionChanged;
+    }
+  }
+  if (selectionChanged) {
+    codeEditor.focus();
+    showToast(t('formatApplied'));
+  }
+  clearCopiedFormat();
+  return selectionChanged;
+}
+
+function clearCopiedFormat() {
+  copiedFormat = null;
+  copiedFormatSource = null;
+  clearTimeout(formatPainterApplyTimer);
+  const button = $('#formatPainterButton');
+  if (button) {
+    button.classList.remove('active');
+    button.setAttribute('aria-pressed', 'false');
+  }
 }
 
 function runFormatCommand(command) {
@@ -762,6 +878,7 @@ async function initializeCodeEditor() {
       if (update.docChanged || update.selectionSet) {
         updateEditorPosition();
         scrollPreviewToCursor();
+        if (update.selectionSet) scheduleFormatPainterApply();
       }
       updateUndoButton(update.state);
     })
@@ -1723,7 +1840,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.4.1';
+  $('#currentVersion').textContent = info.currentVersion || '2.4.2';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -1987,6 +2104,22 @@ els.editorUndoButton.addEventListener('click', () => {
   if (codeEditor && state.editing) {
     undo(codeEditor);
     focusCodeEditor();
+  }
+});
+$('#formatPainterButton').addEventListener('click', () => {
+  if (!state.editing) toggleEditor(true);
+  if (!codeEditor) return;
+  if (copiedFormat) {
+    clearCopiedFormat();
+    showToast(t('formatCleared'));
+  } else {
+    copyFormatFromSelection();
+  }
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && copiedFormat) {
+    clearCopiedFormat();
+    showToast(t('formatCleared'));
   }
 });
 els.exitEditButton.addEventListener('click', () => {

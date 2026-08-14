@@ -49,8 +49,8 @@ git push gitee main
 创建与 `wails.json` 完全一致的 tag 并推送到 GitHub（`release.yml` 由 push tag 自动触发；Gitee 的 tag 由 workflow 自动创建）：
 
 ```bash
-git tag -a v2.4.1 -m "MD Reader Assistant v2.4.1"
-git push origin v2.4.1
+git tag -a v2.4.2 -m "MD Reader Assistant v2.4.2"
+git push origin v2.4.2
 ```
 
 The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, uploads them to the GitHub Release, then (with `GITEE_TOKEN` configured) automatically mirrors the same assets to the Gitee Release for users in mainland China.
@@ -61,7 +61,7 @@ If a platform build fails after the tag and Release have already been created:
 
 1. Fix and push the workflow or source changes to `main`.
 2. Open **Actions → Build and Release → Run workflow**.
-3. Keep the branch set to `main` and enter the existing tag, such as `v2.4.1`.
+3. Keep the branch set to `main` and enter the existing tag, such as `v2.4.2`.
 4. Run the workflow. Successful assets are uploaded to the existing Release and files with the same names are replaced.
 
 The manual tag must exactly match the version in `wails.json`.

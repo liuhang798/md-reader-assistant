@@ -182,6 +182,7 @@
             <button type="button" data-format="italic" data-format-overflow="italic" data-format-label="italicTitle" data-format-group="inline" data-overflow-priority="85" data-i18n-title="italicTitle" title="斜体 (Ctrl+I)"><em>I</em></button>
             <button type="button" data-format="strikethrough" data-format-overflow="strikethrough" data-format-label="strikethroughTitle" data-format-group="inline" data-overflow-priority="80" data-i18n-title="strikethroughTitle" title="删除线 (Ctrl+Shift+X)"><span class="strikethrough-label">S</span></button>
             <button type="button" data-format="highlight" data-format-overflow="highlight" data-format-label="highlightTitle" data-format-group="inline" data-overflow-priority="75" data-i18n-title="highlightTitle" title="高亮 (Ctrl+Shift+H)"><span class="highlight-label">H</span></button>
+            <button id="formatPainterButton" type="button" data-i18n-title="formatPainterTitle" title="格式刷" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M13 2 3 12v5h5l10-10"/><path d="m15 5 4 4"/><path d="M17 2l5 5-9 9-5-1-1-5z"/></svg></button>
             <button type="button" data-format="link" data-format-overflow="link" data-format-label="linkTitle" data-format-group="inline" data-overflow-priority="70" data-i18n-title="linkTitle" title="插入链接 (Ctrl+K)"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2"/></svg></button>
             <button type="button" data-format="inline-code" data-format-overflow="inline-code" data-format-label="inlineCode" data-format-group="inline" data-overflow-priority="65" data-i18n-title="inlineCode" title="行内代码"><span class="code-label">&lt;/&gt;</span></button>
             <button type="button" data-format="code-block" data-format-overflow="code-block" data-format-label="codeBlock" data-format-group="inline" data-overflow-priority="60" data-i18n-title="codeBlock" title="代码块"><svg viewBox="0 0 24 24"><path d="m8 9-3 3 3 3m8-6 3 3-3 3M14 5l-4 14"/></svg></button>
@@ -262,7 +263,7 @@
     <button data-action="print"><span class="menu-label" data-i18n="printDocument">打印文档</span> <span>Ctrl P</span></button>
     <hr>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span> <span>GitHub</span></button>
-    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.4.1</span></button>
+    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.4.2</span></button>
   </div>
 
   <div id="codeLangMenu" class="popover code-lang-menu hidden no-drag" role="menu" aria-labelledby="codeLangMenuLabel">
@@ -332,7 +333,7 @@
         <div>
           <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
           <h2 id="aboutTitle" data-i18n="appName">MD阅读助手</h2>
-          <span class="about-version" data-i18n="aboutVersion">版本 2.4.1</span>
+          <span class="about-version" data-i18n="aboutVersion">版本 2.4.2</span>
         </div>
       </div>
       <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。</p>
@@ -369,9 +370,9 @@
         </div>
       </div>
       <div class="update-versions" aria-label="Version change">
-        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.4.1</strong></span>
+        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.4.2</strong></span>
         <svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
-        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.4.1</strong></span>
+        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.4.2</strong></span>
       </div>
       <div class="release-notes-panel">
         <strong data-i18n="releaseNotes">更新说明</strong>

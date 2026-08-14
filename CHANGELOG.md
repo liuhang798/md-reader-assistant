@@ -2,6 +2,16 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.4.2] - 2026-08-14
+
+### 简体中文
+
+- 编辑模式新增“格式刷”：选中一段带格式的文本（加粗、斜体、删除线、高亮、行内代码、标题、引用或列表），点击工具栏格式刷复制格式，再选中目标文本即自动应用，按 Esc 取消。
+
+### English
+
+- Added a “format painter” to the editor: select text with formatting (bold, italic, strikethrough, highlight, inline code, heading, quote, or list), click the painter button to copy the format, then select the target text to apply it automatically. Press Esc to cancel.
+
 ## [2.4.1] - 2026-08-12
 
 ### 简体中文
@@ -387,3 +397,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.3.13]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.13
 [2.4.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.0
 [2.4.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.1
+[2.4.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.2

@@ -390,6 +390,7 @@ body[data-doc-width="full"] .document-view { padding-left: 44px; padding-right: 
 .editor-format-bar button, .editor-format-bar select { flex: 0 0 auto; height: 31px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; }
 .editor-format-bar button { min-width: 31px; padding: 0 7px; display: grid; place-items: center; }
 .editor-format-bar button:hover, .editor-format-bar select:hover, .editor-format-bar button:focus-visible, .editor-format-bar select:focus-visible { color: var(--accent-strong); background: var(--accent-soft); outline: none; }
+.editor-format-bar button.active { color: var(--accent-strong); background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .editor-format-bar button:disabled { opacity: .34; cursor: default; background: transparent; color: var(--faint); }
 .editor-format-bar button svg { width: 17px; height: 17px; }
 .editor-format-bar select { max-width: 92px; padding: 0 8px; font-size: 11px; outline: none; }

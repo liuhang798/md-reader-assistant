@@ -23,6 +23,17 @@ test('format toolbar exposes all six headings and the missing practical Markdown
   }
 });
 
+test('format painter button exists and wires copy/apply/clear flow', () => {
+  assert.ok(html.includes('id="formatPainterButton"'));
+  assert.ok(renderer.includes('function copyFormatFromSelection()'));
+  assert.ok(renderer.includes('function applyCopiedFormat()'));
+  assert.ok(renderer.includes('function clearCopiedFormat()'));
+  assert.ok(renderer.includes('function analyzeFormat('));
+  assert.ok(renderer.includes('function scheduleFormatPainterApply()'));
+  assert.match(styles, /\.editor-format-bar button\.active\s*\{/);
+  assert.ok(renderer.includes("event.key === 'Escape' && copiedFormat"));
+});
+
 test('toolbar hides overflow and dynamically mirrors collapsed commands into More Formats', () => {
   assert.match(styles, /\.editor-format-bar\s*\{[^}]*overflow:\s*hidden/s);
   assert.doesNotMatch(styles, /\.editor-format-bar\s*\{[^}]*overflow-x:\s*auto/s);
