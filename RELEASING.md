@@ -31,29 +31,24 @@ wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 em
 
 ## 3. Publish
 
-### 前提
+### 推送代码
 
-GitHub 仓库 Actions secrets 中必须已配置 `GITEE_TOKEN`（Gitee 私人令牌，`projects` 权限），否则产物不会同步到 Gitee Release（workflow 会打印警告并跳过）。
-
-### 推送代码（自动双推）
-
-双击 `push-to-github.bat`，它会提交改动并依次推送 GitHub 与 Gitee（各带 3 次重试），或手动执行：
+双击 `push-to-github.bat`，它会提交改动并推送 GitHub（带 3 次重试），或手动执行：
 
 ```bash
 git push origin main
-git push gitee main
 ```
 
 ### 打 tag 触发构建
 
-创建与 `wails.json` 完全一致的 tag 并推送到 GitHub（`release.yml` 由 push tag 自动触发；Gitee 的 tag 由 workflow 自动创建）：
+创建与 `wails.json` 完全一致的 tag 并推送到 GitHub（`release.yml` 由 push tag 自动触发）：
 
 ```bash
 git tag -a v2.4.2 -m "MD Reader Assistant v2.4.2"
 git push origin v2.4.2
 ```
 
-The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, uploads them to the GitHub Release, then (with `GITEE_TOKEN` configured) automatically mirrors the same assets to the Gitee Release for users in mainland China.
+The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, and uploads them to the GitHub Release.
 
 ### Rebuild an existing Release
 

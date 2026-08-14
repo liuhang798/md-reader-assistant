@@ -5,9 +5,8 @@ title MD Reader Assistant - Automatic GitHub Push
 cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
-set "GITEE_REPO_URL=https://gitee.com/liuhang798/md-reader-assistant.git"
 set "BRANCH=main"
-set "COMMIT_MSG=Release v2.4.0: stable installer-free in-app updates"
+set "COMMIT_MSG=Release v2.4.2: format painter with auto-apply"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
 
@@ -16,7 +15,7 @@ echo ========================================
 echo   MD Reader Assistant - Automatic Push
 echo ========================================
 echo   Project: %CD%
-echo   Remote : %REPO_URL%   Gitee: %GITEE_REPO_URL%
+echo   Remote : %REPO_URL%
 echo.
 
 where git >nul 2>&1
@@ -36,11 +35,11 @@ if defined SYSTEM_PROXY (
 echo.
 
 if not exist ".git" (
-    echo [1/9] Initializing the Git repository...
+    echo [1/8] Initializing the Git repository...
     git init
     if errorlevel 1 goto :failed
 ) else (
-    echo [1/9] Git repository already initialized.
+    echo [1/8] Git repository already initialized.
 )
 
 git remote get-url origin >nul 2>&1
@@ -51,52 +50,44 @@ if errorlevel 1 (
 )
 if errorlevel 1 goto :failed
 
-git remote get-url gitee >nul 2>&1
-if errorlevel 1 (
-    git remote add gitee "%GITEE_REPO_URL%"
-) else (
-    git remote set-url gitee "%GITEE_REPO_URL%"
-)
-if errorlevel 1 goto :failed
-
-echo [2/9] Configuring Git author information...
+echo [2/8] Configuring Git author information...
 git config user.name >nul 2>&1
 if errorlevel 1 git config user.name "liuhang798"
 git config user.email >nul 2>&1
 if errorlevel 1 git config user.email "liuhang798@users.noreply.github.com"
 
-echo [3/9] Configuring the main branch...
+echo [3/8] Configuring the main branch...
 git branch -M "%BRANCH%"
 if errorlevel 1 goto :failed
 
-echo [4/9] Fetching the latest GitHub history...
+echo [4/8] Fetching the latest GitHub history...
 call :fetch_with_retry
 if errorlevel 1 goto :push_failed
 
 git rev-parse --verify HEAD >nul 2>&1
 if errorlevel 1 (
-    echo [5/9] Connecting this folder to the GitHub history...
+    echo [5/8] Connecting this folder to the GitHub history...
     git reset --mixed "origin/%BRANCH%"
     if errorlevel 1 goto :failed
 ) else (
     git merge-base HEAD "origin/%BRANCH%" >nul 2>&1
     if errorlevel 1 (
-        echo [5/9] Repairing unrelated local and GitHub histories...
+        echo [5/8] Repairing unrelated local and GitHub histories...
         git reset --soft "origin/%BRANCH%"
         if errorlevel 1 goto :failed
     ) else (
         git merge-base --is-ancestor "origin/%BRANCH%" HEAD >nul 2>&1
         if errorlevel 1 (
-            echo [5/9] Applying local work on top of the latest GitHub version...
+            echo [5/8] Applying local work on top of the latest GitHub version...
             git rebase --autostash "origin/%BRANCH%"
             if errorlevel 1 goto :failed
         ) else (
-            echo [5/9] Local history is ready.
+            echo [5/8] Local history is ready.
         )
     )
 )
 
-echo [6/9] Staging project files...
+echo [6/8] Staging project files...
 git add .
 if errorlevel 1 goto :failed
 
@@ -108,29 +99,21 @@ if errorlevel 1 (
 
 git diff --cached --quiet
 if errorlevel 1 (
-    echo [7/9] Creating an automatic commit...
+    echo [7/8] Creating an automatic commit...
     git commit -m "%COMMIT_MSG%"
     if errorlevel 1 goto :failed
 ) else (
-    echo [7/9] No new changes to commit.
+    echo [7/8] No new changes to commit.
 )
 
-echo [8/9] Pushing to GitHub...
+echo [8/8] Pushing to GitHub...
 call :push_with_retry
 if errorlevel 1 goto :push_failed
-
-echo [9/9] Syncing to the Gitee mirror...
-call :push_gitee_with_retry
-if errorlevel 1 (
-    echo [WARNING] Gitee mirror sync failed, but the GitHub push already succeeded.
-    echo           Sync it manually later with:  git push gitee main
-)
 
 echo.
 echo ========================================
 echo   Push completed successfully.
 echo   https://github.com/liuhang798/md-reader-assistant
-echo   https://gitee.com/liuhang798/md-reader-assistant
 echo ========================================
 ping 127.0.0.1 -n 4 >nul
 exit /b 0
@@ -166,18 +149,6 @@ set /a "ATTEMPT+=1"
 echo       Connection interrupted. Retrying in 5 seconds...
 timeout /t 5 /nobreak >nul
 goto :push_retry
-
-:push_gitee_with_retry
-set /a "ATTEMPT=1"
-:push_gitee_retry
-echo       Network attempt !ATTEMPT!/%MAX_RETRIES%...
-git -c http.version=HTTP/1.1 -c "http.proxy=" push -u gitee "%BRANCH%"
-if not errorlevel 1 exit /b 0
-if !ATTEMPT! GEQ %MAX_RETRIES% exit /b 1
-set /a "ATTEMPT+=1"
-echo       Connection interrupted. Retrying in 5 seconds...
-timeout /t 5 /nobreak >nul
-goto :push_gitee_retry
 
 :push_failed
 echo.
