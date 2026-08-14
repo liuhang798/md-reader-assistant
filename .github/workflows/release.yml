@@ -368,6 +368,9 @@ jobs:
           if [ -z "${body}" ]; then
             body="md-reader-assistant ${version}"
           fi
+          body="${body}
+
+          **安装包下载（国内镜像 Gitee）：** https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/tree/release-assets"
 
           echo "Creating Gitee release ${RELEASE_TAG}..."
           created=$(curl -sS -X POST "${base}/releases" \
