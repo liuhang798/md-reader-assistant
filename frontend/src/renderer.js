@@ -49,6 +49,7 @@ const state = {
   language: localStorage.getItem('language') === 'en' ? 'en' : 'zh-CN',
   sidebarWidth: Number(localStorage.getItem('sidebarWidth') || 258),
   tocWidth: Number(localStorage.getItem('tocWidth') || 205),
+  editorPreviewWidth: Number(localStorage.getItem('editorPreviewWidth') || 47),
   searchMatches: [],
   searchIndex: 0,
   editing: false,
@@ -81,7 +82,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.4.2', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.4.3', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
@@ -91,7 +92,7 @@ const translations = {
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', strikethroughTitle: '删除线 (Ctrl+Shift+X)', highlightTitle: '高亮 (Ctrl+Shift+H)', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', horizontalRule: '分隔线', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
     moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
     markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试', imageDialogHint: '选择本地图片，或粘贴在线图片链接。', imageUrlLabel: '图片链接', imageUrlPlaceholder: 'https:// 或 http:// 链接', imageAltPlaceholder: '可选的图片说明', localImage: '本地图片…', imageUrlInvalid: '请输入有效的 http:// 或 https:// 链接',
-    resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度'
+    resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度', resizeEditor: '拖动调整预览宽度'
   },
   en: {
     appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
@@ -115,7 +116,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.4.2', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.4.3', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
@@ -125,7 +126,7 @@ const translations = {
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', strikethroughTitle: 'Strikethrough (Ctrl+Shift+X)', highlightTitle: 'Highlight (Ctrl+Shift+H)', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', horizontalRule: 'Horizontal rule', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
     moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
     markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.', imageDialogHint: 'Pick a local image or paste an online image link.', imageUrlLabel: 'Image URL', imageUrlPlaceholder: 'https:// or http:// link', imageAltPlaceholder: 'Optional image description', localImage: 'Local image…', imageUrlInvalid: 'Enter a valid http:// or https:// link',
-    resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline'
+    resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline', resizeEditor: 'Drag to resize the preview'
   }
 };
 
@@ -198,6 +199,7 @@ const els = {
   fileList: $('#fileList'), libraryName: $('#libraryName'), tocPanel: $('#tocPanel'), toc: $('#toc'),
   breadcrumb: $('#breadcrumb'), readingTime: $('#readingTime'), progressBar: $('#progressBar'),
   appShell: $('.app-shell'), sidebar: $('#sidebar'), expandSidebar: $('#expandSidebar'), sidebarResizer: $('#sidebarResizer'), tocResizer: $('#tocResizer'), searchBar: $('#searchBar'),
+  editorResizer: $('#editorResizer'),
   searchInput: $('#searchInput'), searchCount: $('#searchCount'), dropOverlay: $('#dropOverlay'),
   moreMenu: $('#moreMenu'), accentMenu: $('#accentMenu'), recentContextMenu: $('#recentContextMenu'), toast: $('#toast'), editorView: $('#editorView'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
@@ -1738,8 +1740,8 @@ function toggleSidebar(collapsed) {
 }
 
 const panelSizeLimits = {
-  sidebar: { min: 210, max: 420, fallback: 258 },
-  toc: { min: 170, max: 360, fallback: 205 }
+  sidebar: { min: 120, max: 2000, fallback: 258 },
+  toc: { min: 120, max: 2000, fallback: 205 }
 };
 
 function clampPanelWidth(value, limits) {
@@ -1755,12 +1757,14 @@ function applyPaneWidths() {
   document.documentElement.style.setProperty('--toc-width', `${state.tocWidth}px`);
   els.sidebarResizer?.setAttribute('aria-valuenow', String(state.sidebarWidth));
   els.tocResizer?.setAttribute('aria-valuenow', String(state.tocWidth));
+  setEditorPreviewWidth(state.editorPreviewWidth);
 }
 
 function updatePaneResizerVisibility() {
   if (!els.sidebarResizer || !els.tocResizer) return;
   els.sidebarResizer.classList.toggle('hidden', els.sidebar.classList.contains('collapsed'));
   els.tocResizer.classList.toggle('hidden', state.editing || els.tocPanel.classList.contains('hidden'));
+  els.editorResizer?.classList.toggle('hidden', !state.editing);
 }
 
 function persistPaneWidth(panelName) {
@@ -1773,7 +1777,8 @@ function maximumPaneWidth(panelName) {
   const otherWidth = panelName === 'sidebar'
     ? (getComputedStyle(els.tocResizer).display === 'none' ? 0 : state.tocWidth + 7)
     : (getComputedStyle(els.sidebarResizer).display === 'none' ? 0 : state.sidebarWidth + 7);
-  return Math.max(limits.min, Math.min(limits.max, els.appShell.clientWidth - otherWidth - 427));
+  // 保留正文最小 240px，其余宽度全部可分配给侧栏/目录（不设固定最大宽度）
+  return Math.max(limits.min, Math.min(limits.max, els.appShell.clientWidth - otherWidth - 240));
 }
 
 function setPaneWidth(panelName, width, persist = false) {
@@ -1823,6 +1828,49 @@ function initializePaneResizers() {
   };
   configure(els.sidebarResizer, 'sidebar', 1);
   configure(els.tocResizer, 'toc', -1);
+  // 编辑模式分栏：左侧预览/右侧编辑器，可随意拖动（不设最大宽度，仅保留最小宽度）
+  const editorHandle = els.editorResizer;
+  if (editorHandle) {
+    editorHandle.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || editorHandle.classList.contains('hidden')) return;
+      event.preventDefault();
+      const startX = event.clientX;
+      const startPercent = state.editorPreviewWidth;
+      editorHandle.setPointerCapture?.(event.pointerId);
+      editorHandle.classList.add('active');
+      document.body.classList.add('resizing-panes');
+      const move = moveEvent => {
+        const total = els.editorView?.clientWidth || 1;
+        const deltaPercent = ((moveEvent.clientX - startX) / total) * 100;
+        setEditorPreviewWidth(startPercent + deltaPercent);
+      };
+      const finish = () => {
+        editorHandle.classList.remove('active');
+        document.body.classList.remove('resizing-panes');
+        editorHandle.removeEventListener('pointermove', move);
+        editorHandle.removeEventListener('pointerup', finish);
+        editorHandle.removeEventListener('pointercancel', finish);
+        localStorage.setItem('editorPreviewWidth', String(state.editorPreviewWidth));
+      };
+      editorHandle.addEventListener('pointermove', move);
+      editorHandle.addEventListener('pointerup', finish);
+      editorHandle.addEventListener('pointercancel', finish);
+    });
+    editorHandle.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      const change = event.key === 'ArrowRight' ? 2 : -2;
+      setEditorPreviewWidth(state.editorPreviewWidth + change);
+      localStorage.setItem('editorPreviewWidth', String(state.editorPreviewWidth));
+    });
+  }
+}
+
+function setEditorPreviewWidth(percent) {
+  // 最小保留 12% 预览宽度；不设固定最大宽度，只给右侧编辑器保留最小可用空间
+  const max = Math.max(12, 100 - 8);
+  state.editorPreviewWidth = Math.max(12, Math.min(max, Math.round(percent)));
+  document.documentElement.style.setProperty('--editor-preview-width', `${state.editorPreviewWidth}%`);
 }
 
 function openAbout() {
@@ -1840,7 +1888,7 @@ function closeAbout() {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.4.2';
+  $('#currentVersion').textContent = info.currentVersion || '2.4.3';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');

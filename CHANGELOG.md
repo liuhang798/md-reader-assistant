@@ -2,14 +2,28 @@
 
 All notable changes to MD Reader Assistant are documented here.
 
+## [2.4.3] - 2026-08-14
+
+### 简体中文
+
+- 文字放大缩小现在作用于全局：阅读正文、左侧最近阅读/资源浏览器、右侧本页目录同步缩放。
+- 左侧文档库与右侧目录的拖动分隔条不再限制最大宽度，可自由调整（仅保留正文最小空间），宽度自动记忆。
+
+### English
+
+- Text zoom now applies globally: the reading content, the recent/explorer sidebar, and the table of contents all scale together.
+- The sidebar and table-of-contents dividers no longer have a maximum width; they can be dragged freely (a minimal content width is kept) and the width is remembered.
+
 ## [2.4.2] - 2026-08-14
 
 ### 简体中文
 
+- 编辑分栏（左侧预览 / 右侧编辑器）新增拖动分隔条，可自由调整两侧宽度，无最大宽度限制，宽度自动记忆，下次打开保持。
 - 编辑模式新增“格式刷”：选中一段带格式的文本（加粗、斜体、删除线、高亮、行内代码、标题、引用或列表），点击工具栏格式刷复制格式，再选中目标文本即自动应用，按 Esc 取消。
 
 ### English
 
+- The editor split panes (live preview / editor) now have a draggable divider with no maximum width limit; the width is remembered and restored on the next launch.
 - Added a “format painter” to the editor: select text with formatting (bold, italic, strikethrough, highlight, inline code, heading, quote, or list), click the painter button to copy the format, then select the target text to apply it automatically. Press Esc to cancel.
 
 ## [2.4.1] - 2026-08-12
@@ -398,3 +412,4 @@ All notable changes to MD Reader Assistant are documented here.
 [2.4.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.0
 [2.4.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.1
 [2.4.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.2
+[2.4.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.3

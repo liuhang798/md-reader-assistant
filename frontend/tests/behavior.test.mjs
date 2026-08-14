@@ -151,3 +151,31 @@ test('code blocks let the user pick a common programming language', () => {
   assert.match(renderer, /document\.addEventListener\('click', \(\) => \{\s*els\.moreMenu\.classList\.add\('hidden'\);\s*els\.codeLangMenu\.classList\.add\('hidden'\);/);
   assert.match(styles, /\.code-lang-menu \{ right: auto; top: auto;/);
 });
+
+test('editor split panes are draggable without a maximum width limit', () => {
+  assert.match(html, /id="editorResizer" class="pane-resizer editor-resizer"/);
+  assert.match(renderer, /editorPreviewWidth/);
+  assert.match(renderer, /setEditorPreviewWidth\(startPercent \+ deltaPercent\)/);
+  assert.match(renderer, /Math\.max\(12, Math\.min\(max, Math\.round\(percent\)\)\)/);
+  assert.match(renderer, /els\.editorResizer\?\.classList\.toggle\('hidden', !state\.editing\)/);
+  assert.match(styles, /\.editor-preview-pane \{ flex: 0 0 var\(--editor-preview-width, 47%\);/);
+  assert.match(styles, /\.editor-preview-pane, \.editor-resizer \{ display: none; \}/);
+  assert.match(renderer, /localStorage\.setItem\('editorPreviewWidth', String\(state\.editorPreviewWidth\)\)/);
+  assert.match(html, /data-i18n-title="resizeEditor"/);
+});
+
+test('sidebar and TOC text scale with the global font scale', () => {
+  assert.match(styles, /\.file-copy strong \{ font-size: calc\(13px \* var\(--font-scale\)\);/);
+  assert.match(styles, /\.file-copy small \{ color: var\(--faint\); font-size: calc\(10\.5px \* var\(--font-scale\)\);/);
+  assert.match(styles, /\.toc a \{ color: var\(--muted\); text-decoration: none; font-size: calc\(11\.5px \* var\(--font-scale\)\);/);
+  assert.match(styles, /\.sidebar-tab \{ [^}]*font-size: calc\(11px \* var\(--font-scale\)\);/);
+  assert.match(styles, /\.eyebrow \{ display: block; color: var\(--faint\); font-size: calc\(10px \* var\(--font-scale\)\);/);
+  assert.match(styles, /\.sidebar-heading h2 \{ margin: 5px 0 0; font-size: calc\(18px \* var\(--font-scale\)\);/);
+});
+
+test('sidebar and TOC resizers have no practical maximum width', () => {
+  assert.match(renderer, /sidebar: \{ min: 120, max: 2000, fallback: 258 \}/);
+  assert.match(renderer, /toc: \{ min: 120, max: 2000, fallback: 205 \}/);
+  assert.match(renderer, /els\.appShell\.clientWidth - otherWidth - 240/);
+  assert.match(html, /aria-valuemax="2000"/);
+});
