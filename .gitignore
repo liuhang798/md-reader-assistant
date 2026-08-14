@@ -31,3 +31,7 @@ __pycache__/
 # Local tool configuration
 reasonix.toml
 .reasonix/
+
+# Session records and temp files
+codex-sessions/
+.tmp_*.json

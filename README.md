@@ -39,7 +39,7 @@
 | macOS | Intel + Apple Silicon 通用版（`.dmg`） | [下载最新版本](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 | Linux x64 | Debian 安装包 + 便携 AppImage | [下载最新版本](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 
-> **国内镜像下载（Gitee）：** GitHub 访问不便的用户，可到 [Gitee `release-assets` 分支](https://gitee.com/liuhang798/md-reader-assistant/tree/release-assets) 下载 Windows / macOS / Linux 三平台安装包（随 GitHub Release 自动同步）。
+> **国内镜像下载（Gitee）：** GitHub 访问不便的用户，可到 [Gitee 发行版页面](https://gitee.com/liuhang798/md-reader-assistant/releases/latest) 下载 Windows / macOS / Linux 三平台安装包。
 
 Windows 用户运行 `md-reader-assistant-版本-windows-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式、Markdown 文件关联、升级时沿用上次安装目录，并在安装完成后直接启动软件。安装向导中选择的语言会直接用于软件界面，首次进入时无需再次选择。
 

@@ -39,7 +39,7 @@ It is a good fit for reading long Markdown documents, editing README files, main
 | macOS | Universal Intel + Apple Silicon (`.dmg`) | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 | Linux x64 | Debian package + portable AppImage | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
 
-> **China mirror (Gitee):** If GitHub is slow or unreachable, download Windows / macOS / Linux packages from the [Gitee `release-assets` branch](https://gitee.com/liuhang798/md-reader-assistant/tree/release-assets) (auto-synced with GitHub Releases).
+> **China mirror (Gitee):** If GitHub is slow or unreachable, download Windows / macOS / Linux packages from the [Gitee releases page](https://gitee.com/liuhang798/md-reader-assistant/releases/latest).
 
 On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup. Its selected language is also used by the app, so first launch does not ask for it again.
 
