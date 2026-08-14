@@ -27,11 +27,16 @@ echo   Target : https://gitee.com/%GITEE_OWNER%/%GITEE_REPO%/releases
 echo ========================================
 echo.
 
+rem ---- token handling ----
+rem The token is NEVER stored in this script or written to disk.
+rem Priority: 1) environment variable GITEE_TOKEN (if already set)
+rem           2) interactive masked prompt (kept in memory only for this run)
 if "%GITEE_TOKEN%"=="" (
-    echo [ERROR] GITEE_TOKEN is not set.
-    echo Set it first ^(Gitee personal token with projects permission^):
-    echo   setx GITEE_TOKEN your_token_here
-    echo Then open a NEW terminal and run this script again.
+    echo Enter your Gitee personal token ^(projects permission^). Input is hidden:
+    for /f "usebackq delims=" %%T in (`powershell.exe -NoProfile -Command "$p=Read-Host -Prompt 'Gitee token' -AsSecureString; $b=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($p); [Runtime.InteropServices.Marshal]::PtrToStringAuto($b)"`) do set "GITEE_TOKEN=%%T"
+)
+if "%GITEE_TOKEN%"=="" (
+    echo [ERROR] No token provided.
     goto :failed
 )
 
