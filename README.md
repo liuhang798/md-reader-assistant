@@ -186,6 +186,12 @@ npm install
 npm run build
 ```
 
+在 macOS 上构建时使用统一脚本，生成的应用包会固定命名为 `MD阅读助手.app`：
+
+```bash
+bash scripts/build-macos.sh darwin/universal
+```
+
 生成 Windows 安装包：
 
 ```bash

@@ -6,11 +6,13 @@ All notable changes to MD Reader Assistant are documented here.
 
 ### 简体中文
 
+- 修复 macOS 本地构建可能以内部项目名 `md-reader-assistant` 出现在 Spotlight 或启动台的问题；应用包现在显式声明 `MD阅读助手` 显示名，本地与 CI 构建统一生成 `MD阅读助手.app`。
 - 文字放大缩小现在作用于全局：阅读正文、左侧最近阅读/资源浏览器、右侧本页目录同步缩放。
 - 左侧文档库与右侧目录的拖动分隔条不再限制最大宽度，可自由调整（仅保留正文最小空间），宽度自动记忆。
 
 ### English
 
+- Fixed macOS local builds appearing under the internal `md-reader-assistant` project name in Spotlight or Launchpad. The bundle now declares the `MD阅读助手` display name explicitly, and local and CI builds consistently produce `MD阅读助手.app`.
 - Text zoom now applies globally: the reading content, the recent/explorer sidebar, and the table of contents all scale together.
 - The sidebar and table-of-contents dividers no longer have a maximum width; they can be dragged freely (a minimal content width is kept) and the width is remembered.
 

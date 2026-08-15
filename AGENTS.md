@@ -6,7 +6,7 @@
 
 - 项目名称：MD阅读助手 / MD Reader Assistant
 - 仓库：`https://github.com/liuhang798/md-reader-assistant`
-- 当前版本：`2.4.0`
+- 当前版本：`2.4.3`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
 - 支持平台：Windows x64、macOS Universal、Linux x64
@@ -295,6 +295,12 @@ Windows 安装包：
 
 ```bash
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
+```
+
+macOS 应用包应通过统一脚本构建，脚本会把 Wails 的原始输出规范为 `MD阅读助手.app`，避免 Spotlight 或启动台显示项目内部名称：
+
+```bash
+bash scripts/build-macos.sh darwin/universal
 ```
 
 除非已经明确生成并检查过 `frontend/dist`，否则不要使用 `-s`/`-skipbindings` 跳过前端或绑定生成。

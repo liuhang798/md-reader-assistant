@@ -781,6 +781,41 @@ func TestReleaseVersionConsistency(t *testing.T) {
 	}
 }
 
+func TestMacBundleUsesProductDisplayNameAndCanonicalFilename(t *testing.T) {
+	for _, path := range []string{
+		filepath.Join("build", "darwin", "Info.plist"),
+		filepath.Join("build", "darwin", "Info.dev.plist"),
+	} {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		plist := string(data)
+		if !strings.Contains(plist, "<key>CFBundleDisplayName</key>") ||
+			!strings.Contains(plist, "<string>{{.Info.ProductName}}</string>") {
+			t.Errorf("%s must expose the configured product name through CFBundleDisplayName", path)
+		}
+	}
+
+	buildScript, err := os.ReadFile(filepath.Join("scripts", "build-macos.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(buildScript), `app_name="MD阅读助手.app"`) {
+		t.Fatal("macOS build wrapper must normalize the bundle filename to MD阅读助手.app")
+	}
+
+	workflow, err := os.ReadFile(filepath.Join(".github", "workflows", "release.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflowText := string(workflow)
+	if !strings.Contains(workflowText, "bash scripts/build-macos.sh darwin/universal") ||
+		!strings.Contains(workflowText, `app_path="build/bin/MD阅读助手.app"`) {
+		t.Fatal("release workflow must build and package the canonical macOS app bundle")
+	}
+}
+
 func TestPlainTextFilesAreSupportedEverywhere(t *testing.T) {
 	if !markdownExtensions[".txt"] {
 		t.Fatal("markdownExtensions must include .txt so folders, command-line args and drag-in accept plain text files")

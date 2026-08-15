@@ -191,6 +191,12 @@ Build on the current platform:
 wails build -clean -trimpath
 ```
 
+On macOS, use the wrapper to produce a consistently named `MD阅读助手.app` bundle:
+
+```bash
+bash scripts/build-macos.sh darwin/universal
+```
+
 Build the Windows installer:
 
 ```bash

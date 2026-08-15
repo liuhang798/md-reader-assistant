@@ -29,6 +29,12 @@ On Windows, build the installer with:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
+On macOS, use the repository wrapper so both the bundle filename and display name are `MD阅读助手`:
+
+```bash
+bash scripts/build-macos.sh darwin/universal
+```
+
 ## 3. Publish
 
 ### 推送代码
@@ -65,4 +71,5 @@ The manual tag must exactly match the version in `wails.json`.
 
 - Confirm all platform assets are present.
 - Install the Windows package and check the desktop icon and Markdown file association.
+- Mount the macOS DMG, confirm it contains exactly one `MD阅读助手.app`, and verify Spotlight shows `MD阅读助手` rather than the internal project name.
 - Verify that the in-app update checker opens the published Release page.

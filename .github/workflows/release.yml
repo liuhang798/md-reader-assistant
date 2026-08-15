@@ -171,12 +171,12 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
       - name: Build universal macOS application
-        run: wails build -clean -platform darwin/universal -o MDReaderAssistant -trimpath -nocolour
+        run: bash scripts/build-macos.sh darwin/universal
       - name: Create DMG
         shell: bash
         run: |
-          app_path="$(find build/bin -maxdepth 1 -type d -name '*.app' -print -quit)"
-          if [[ -z "${app_path}" ]]; then
+          app_path="build/bin/MD阅读助手.app"
+          if [[ ! -d "${app_path}" ]]; then
             find build/bin -maxdepth 3 -print
             echo "The macOS .app bundle was not found in build/bin" >&2
             exit 1
@@ -209,7 +209,7 @@ jobs:
       - name: Extract raw executable for in-app updates
         shell: bash
         run: |
-          app_path="$(find build/bin -maxdepth 1 -type d -name '*.app' -print -quit)"
+          app_path="build/bin/MD阅读助手.app"
           binary="${app_path}/Contents/MacOS/MDReaderAssistant"
           if [[ ! -x "${binary}" ]]; then
             echo "Expected macOS executable was not found: ${binary}" >&2
