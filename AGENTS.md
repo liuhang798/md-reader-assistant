@@ -54,6 +54,7 @@ app.go / updates.go（Go 后端）
 |---|---|
 | `main.go` | Wails 应用入口、窗口尺寸、单实例、拖放、macOS 菜单和平台窗口配置 |
 | `app.go` | 文档、文件夹、偏好设置、最近阅读、临时草稿、本地图片和系统集成 |
+| `export_docx.go` | 将前端安全渲染后的文档转换为标准 DOCX（OOXML），处理文字样式、列表、表格、代码、链接和图片 |
 | `updates.go` | GitHub Release 更新检查、版本比较、30 天暂停提醒 |
 | `app_test.go` | 后端单元测试、版本一致性和关键业务规则回归测试 |
 | `frontend/index.html` | 标题栏、侧栏、阅读页、分栏编辑器、菜单及弹窗结构 |
@@ -255,6 +256,7 @@ WebView 会限制直接访问 `file://` 图片。Markdown 源码仍保存正常�
 - 文件夹遍历限制深度和数量，并跳过隐藏目录与 `node_modules`。
 - 所有文件路径使用 `filepath.Clean`/`filepath.Abs`；Windows 路径比较需考虑大小写。
 - 不要将个人令牌、GitHub Token、签名证书或用户文件加入仓库。
+- “参与产品改进计划”只能在用户启用时后台静默提交清理本地路径后的软件错误日志、服务器解析的国家/省/市、系统类型（Windows/macOS/Linux）和软件版本。不得提交或保存 IP、安装标识、详细系统版本、架构、使用行为、文档内容、文件名或文件路径；请求必须短超时、不重试，任何失败不得提示或影响主功能。
 - 未配置 Windows Authenticode 和 Apple Developer ID；文档必须如实说明未签名构建可能触发安全提示。
 
 ## 12. 修改代码的推荐流程

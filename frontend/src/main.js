@@ -28,15 +28,17 @@ window.quilliteMarkdown = {
   openFile: () => desktopRuntime ? Backend.OpenFile() : resolved(null),
   openFolder: () => desktopRuntime ? Backend.OpenFolder() : resolved(null),
   readFile: filePath => desktopRuntime ? Backend.ReadFile(filePath) : resolved(null),
+  canEditFile: filePath => desktopRuntime ? Backend.CanEditFile(filePath) : resolved(true),
   saveFile: (filePath, content) => desktopRuntime ? Backend.SaveFile(filePath, content) : resolved(null),
   saveAs: (filePath, content) => desktopRuntime ? Backend.SaveAs(filePath, content) : resolved(null),
+  exportDOCX: (filePath, title, renderedHTML) => desktopRuntime ? Backend.ExportDOCX(filePath, title, renderedHTML) : resolved(''),
   selectImage: filePath => desktopRuntime ? Backend.SelectImage(filePath) : resolved(''),
   readImageData: (imagePath, documentDirectory) => desktopRuntime ? Backend.ReadImageData(imagePath, documentDirectory) : resolved(''),
   setDirty: dirty => desktopRuntime ? Backend.SetDirty(dirty) : resolved(),
   listFolder: root => desktopRuntime ? Backend.ListFolder(root) : resolved({ root, files: [] }),
   getPreferences: () => desktopRuntime
     ? Backend.GetPreferences()
-    : resolved({ language: localStorage.getItem('language') || 'zh-CN', recentFiles: [], recentFileStatuses: [], favoriteFiles: [], favoriteFileStatuses: [], explorerRoot: localStorage.getItem('explorerRoot') || '' }),
+    : resolved({ language: localStorage.getItem('language') || 'zh-CN', recentFiles: [], recentFileStatuses: [], favoriteFiles: [], favoriteFileStatuses: [], explorerRoot: localStorage.getItem('explorerRoot') || '', usageAnalytics: true }),
   needsLanguageSelection: () => desktopRuntime ? Backend.NeedsLanguageSelection() : resolved(false),
   removeRecent: filePath => desktopRuntime ? Backend.RemoveRecent(filePath) : resolved(),
   addFavorite: filePath => desktopRuntime ? Backend.AddFavorite(filePath) : resolved(),
@@ -50,6 +52,8 @@ window.quilliteMarkdown = {
   print: () => desktopRuntime ? Backend.Print() : window.print(),
   setTheme: dark => desktopRuntime ? Backend.SetTheme(dark) : resolved(),
   setLanguage: language => desktopRuntime ? Backend.SetLanguage(language) : resolved(),
+  setUsageAnalytics: enabled => desktopRuntime ? Backend.SetUsageAnalytics(enabled) : resolved({ usageAnalytics: enabled }),
+  reportErrorLog: (source, message, stack) => desktopRuntime ? Backend.ReportErrorLog(source, message, stack) : resolved(),
   checkForUpdates: force => desktopRuntime
     ? Backend.CheckForUpdates(force)
     : resolved(mockUpdate

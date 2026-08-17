@@ -31,6 +31,10 @@
 
 It is a good fit for reading long Markdown documents, editing README files, maintaining technical notes and working with local documentation folders.
 
+## Product improvement program
+
+About Quillite Markdown includes a “Join the product improvement program” checkbox. When enabled, only sanitized software error logs, server-resolved country/region/city, coarse Windows/macOS/Linux type, and app version are submitted silently after an error. IP addresses, install IDs, detailed OS versions, architecture, usage behavior, Markdown content, file names, and file paths are never uploaded. Offline, intranet, timeout, and server failures are ignored silently and never affect app features. Unchecking the option stops error reports.
+
 ## Download
 
 | Platform | Package | Download |
@@ -81,6 +85,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 
 - Plain-text `.txt` files are fully supported: the reader and the live editor preview render them as-is (no Markdown parsing), the editor uses plain text mode, and files open from the dialog, drag-in, or folder explorer. The installer registers the `.txt` association for double-click opening.
 - Insert images either from local files or by pasting an `http/https` online link with an optional description.
+- Before editing attachments opened from WeChat, WeCom, or other app caches, write access is checked. Read-only, locked, or restricted files stay in the reader and ask to be saved as a writable copy, without administrator privileges or deleting the original.
 - Added in-app automatic updates: the update dialog can download and apply the new version directly with a progress bar and integrity check, then restart automatically — no manual download, installer wizard, or macOS Gatekeeper approval needed. Supported on macOS and Windows; Linux keeps the manual download flow.
 
 ## What's new in 2.3.4
@@ -104,18 +109,19 @@ The macOS build follows the computer's light/dark appearance automatically while
 - Open, read, and edit plain-text `.txt` files too: the reader renders them as-is (no Markdown parsing), the editor uses plain text mode, and the `.txt` file association can be registered for double-click opening.
 - Insert images either from local files or by pasting an `http/https` online link with an optional description.
 - Split editing mode: live preview on the left, syntax-highlighted editor on the right.
-- The formatting toolbar covers H1–H6, bold, italic, strikethrough, highlight, links, inline/fenced code, quotes, lists, tasks, horizontal rules, tables and images. When space runs out, controls move into More Formats instead of creating a horizontal scrollbar. More Formats also adds bold italic, underline, superscript, subscript, hard breaks, footnotes, reference links, autolinks, syntax escaping, HTML/collapsible blocks, keyboard keys and comments. Common actions support `Ctrl/Cmd + B`, `Ctrl/Cmd + I`, `Ctrl/Cmd + K`, `Ctrl/Cmd + Shift + X` and `Ctrl/Cmd + Shift + H`.
+- The formatting toolbar covers H1–H6, bold, italic, strikethrough, highlight, text color, links, inline/fenced code, quotes, lists, tasks, horizontal rules, tables and images. The text-color control sits directly after Highlight and offers a complete 48-color square palette with the default color, seven grayscale steps and 40 spectrum shades. Changes preview live, can be recolored or reset, and remain fully undoable. When space runs out, controls move into More Formats instead of creating a horizontal scrollbar. More Formats also adds bold italic, underline, superscript, subscript, hard breaks, footnotes, reference links, autolinks, syntax escaping, HTML/collapsible blocks, keyboard keys and comments. Common actions support `Ctrl/Cmd + B`, `Ctrl/Cmd + I`, `Ctrl/Cmd + K`, `Ctrl/Cmd + Shift + X` and `Ctrl/Cmd + Shift + H`.
 - Inserting a code block lets you pick a common programming language (JavaScript, Python, Go, Java, C/C++, Rust, HTML, SQL, and more) and writes a language-tagged fenced block with highlighting. An “Exit editing” button in the editor header returns you to the immersive reading view at any time.
 - Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
 - `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls to the selected result; the polished find-and-replace panel follows the selected Chinese or English interface language.
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
-- Clickable table of contents, active section tracking, search, print and back-to-top.
-- Recent documents update immediately and individual records can be removed. Right-click a record for Edit, Show in Folder and Remove; Edit opens the Markdown document directly in editing mode, while reopening an existing item keeps its list position. Deleted, moved or temporarily unavailable source files are shown muted with a strikethrough and cannot be opened, but can still be removed from the menu.
+- Export Word and PDF documents: Go generates standard DOCX files locally, while PDF export uses the Windows WebView2 or macOS system print panel to preserve the preview styling for headings, tables, code blocks, and images.
+- A collapsible hierarchical outline with clickable navigation, active section tracking and per-document folding memory, plus search, print and back-to-top.
+- Recent documents update immediately and show their source directory below the filename, with the full path available on hover for distinguishing duplicate names. Right-click a record for Edit, Save As, Favorite, Show in Folder and Remove. Save As creates a writable copy directly from a WeChat cache, read-only source, or ordinary document. Deleted, moved or temporarily unavailable files remain removable from the menu.
 - Favorite documents from Recent or Explorer and manage them in a dedicated persistent Favorites view with Open, Edit, Show in Folder, and Remove from Favorites actions.
 - On macOS, closing the main window leaves the app running in the background. Clicking the Dock icon again restores and foregrounds the window, and Markdown files opened from Finder display directly.
 - Simplified Chinese and English interface with persistent language selection.
 - Accent color and light/dark mode are independent: choose Fresh Green, Clear Blue, Vivid Orange, Vivid Violet, Coral Red, Lake Cyan, Mist Slate or Clay Brown, then pair it with either color mode. Both choices are restored across launches.
-- Synchronized reading/editor text zoom up to 200%, remembered across launches.
+- Synchronized reading/editor text zoom up to 200%. On first use or without a manual preference, physical resolution and OS DPI are considered together: low-scaling 2K/4K displays start near 115%/130%, while displays already using high-DPI scaling are not enlarged twice. The More menu also offers automatic mode and 100%–200% presets, with remembered manual choices taking priority.
 - Switch the left sidebar among Recent, Favorites, and a refreshable resource explorer for Markdown folders.
 - Drag the library and document-outline dividers to customize panel widths; the layout is remembered locally.
 - The resource explorer remembers its selected folder and active view across launches; click the active Explorer tab again to choose another folder.
@@ -128,7 +134,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 
 | Category | Editable and previewable formats |
 |---|---|
-| Text | Bold, italic, bold italic, strikethrough, highlight, underline, superscript, subscript, inline code, keyboard keys and Markdown escaping |
+| Text | Bold, italic, bold italic, strikethrough, highlight, text color, underline, superscript, subscript, inline code, keyboard keys and Markdown escaping |
 | Structure | H1–H6, paragraphs, quotes, horizontal rules, hard breaks, fenced code, HTML/collapsible blocks and HTML comments |
 | Lists and data | Bulleted lists, numbered lists, task lists and tables |
 | References | Inline links, reference links, autolinks, images and footnotes |

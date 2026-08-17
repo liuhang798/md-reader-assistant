@@ -2,6 +2,34 @@
 
 All notable changes to Quillite Markdown are documented here.
 
+## [Unreleased]
+
+### 简体中文
+
+- 新增 Word 与 PDF 导出：Word 由 Go 在本地生成标准 `.docx`，保留标题、段落、列表、引用、表格、代码、链接、文字样式和已加载图片；PDF 使用 Windows WebView2／macOS 系统打印引擎，在系统面板中选择“Microsoft Print to PDF”或“存储为 PDF”，尽量保持阅读预览的排版效果。
+- 优化 Word 导出版式：统一中英文字体和段落节奏，标题不再被正文行距覆盖；列表改用 Word 原生多级编号并自动重新起始；表格采用固定列宽、单元格留白和重复表头，引用与代码块样式更加稳定。
+- “关于轻阅 Markdown”新增“参与产品改进计划”选项。启用后仅在软件发生异常时后台静默提交清理本地路径后的错误日志、服务器解析的地域、系统类型和软件版本；不再上报启动次数、安装标识、详细系统版本、架构或使用行为，断网和接口异常不会提示或影响功能。
+- “回到顶部”按钮现在跟随右侧目录的左边界定位；拖动调整目录宽度时会自动留在正文右下角，不再落入目录面板内部。
+- 本页目录升级为可折叠层级树：有子标题的节点显示展开箭头，可单独折叠或展开；点击标题仍会定位正文，折叠状态按文档保存，下次打开继续保持。
+- 最近阅读列表将文档名下方的通用“最近打开”改为文件所在目录，长路径保持单行省略，鼠标悬停可查看完整目录，便于区分微信缓存、下载目录和同名文档。
+- 改进微信、企业微信等聊天软件缓存附件的编辑体验：进入编辑页前先检测原文件是否可写；文件只读、被占用或权限不足时保持在阅读页并明确提示无编辑权限。最近阅读、收藏和资源浏览器的文档右键菜单新增“另存为”，可直接建立可编辑副本；保存阶段仍保留自动兜底，不删除原附件，也不要求管理员权限。
+- 新增高分辨率显示器字号自动适配：在未保存手动字号时，2K/4K 且系统缩放接近 100% 的屏幕分别采用约 115%/130% 初始字号；系统已经启用高 DPI 缩放时不会重复放大。更多菜单新增“自动适配显示器”和 100%–200% 快速预设，手动选择后优先记忆用户设置，自动模式下更换显示器会重新适配。
+- 编辑工具栏在“高亮”后新增文字颜色选择器，扩展为 48 色完整方格色板，覆盖默认色、7 档灰阶和 40 个综合色阶；色板采用无文字名称的 8×6 紧凑布局，并以主题色描边标记当前选择。支持选中文本后着色、再次换色、恢复默认颜色、实时预览和完整撤回，同时兼容旧版本已保存的颜色标记。
+- 修复 Windows“打开所在文件夹”可能在应用窗口后方打开的问题；现在会识别目标目录窗口，通过短暂提升并立即恢复正常层级的方式，将文件资源管理器可靠地切到应用前面，同时选中目标文档且不会让窗口永久置顶。
+
+### English
+
+- Added Word and PDF export. Word files are generated locally in Go as standard `.docx` packages with headings, paragraphs, lists, quotes, tables, code, links, text styling, and loaded images. PDF export uses the Windows WebView2 or macOS system print engine so the output closely follows the reading preview.
+- Refined the Word export layout with explicit bilingual typography and paragraph rhythm, native restartable multilevel lists, fixed table geometry with cell padding and repeatable headers, and more stable quote and code-block styling.
+- Added a “Join the product improvement program” option in About Quillite Markdown. When enabled, only sanitized software error logs, server-resolved region, coarse OS type, and app version are submitted silently. Startup counts, install IDs, detailed OS versions, architecture, and usage behavior are no longer reported; offline or server failures remain silent and never affect app features.
+- The back-to-top button now follows the document side of the outline divider, staying at the lower-right corner of the reading area as the outline width is resized.
+- Upgraded the document outline to a collapsible hierarchy. Nodes with child headings expose expand controls, heading links still navigate the document, and folding state is remembered separately for each file.
+- Recent now shows each document's source directory instead of the generic “Recently opened” subtitle. Long paths remain on one ellipsized line, with the full directory available on hover, making cache files, downloads, and duplicate names easier to distinguish.
+- Improved editing for attachments opened from WeChat, WeCom, and other application caches. The app now checks write access before entering the editor; read-only, locked, or restricted files stay in the reader with a clear permission message. A new Save As action in the document context menu creates a writable copy directly from Recent, Favorites, or Explorer. Save-time fallback remains as a second safeguard, without deleting or elevating the original attachment.
+- Added automatic text sizing for high-resolution displays. With no saved manual preference, low-DPI 2K and 4K screens start at about 115% and 130%, while displays already using OS DPI scaling are not enlarged twice. The More menu now includes Fit to Display and 100%–200% presets; manual choices take priority and persist, while automatic mode adapts again after moving to another display.
+- Added a text-color picker immediately after Highlight in the editor toolbar, expanded to a complete 48-color palette covering the default color, seven grayscale steps and 40 spectrum shades. The compact label-free 8×6 grid outlines the current choice with the active theme color. Selected text can be recolored or reset with live preview and full undo support, while color markers saved by earlier versions remain compatible.
+- Fixed “Show in Folder” opening behind the application on Windows; the target Explorer window is identified, briefly raised and immediately restored to normal layering so it reliably appears above the app without remaining always-on-top.
+
 ## [2.4.4] - 2026-08-17
 
 ### 简体中文

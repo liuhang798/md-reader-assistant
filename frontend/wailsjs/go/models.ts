@@ -101,6 +101,7 @@ export namespace main {
 	    language: string;
 	    lastUpdateCheck?: string;
 	    suppressUpdateUntil?: string;
+	    usageAnalytics: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Preferences(source);
@@ -118,6 +119,7 @@ export namespace main {
 	        this.language = source["language"];
 	        this.lastUpdateCheck = source["lastUpdateCheck"];
 	        this.suppressUpdateUntil = source["suppressUpdateUntil"];
+	        this.usageAnalytics = source["usageAnalytics"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

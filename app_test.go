@@ -77,6 +77,30 @@ func TestCreateNewMarkdownFileUsesFirstWritableDirectory(t *testing.T) {
 	}
 }
 
+func TestCanEditFileChecksExistingWritableDocuments(t *testing.T) {
+	filePath := filepath.Join(t.TempDir(), "editable.md")
+	if err := os.WriteFile(filePath, []byte("# Editable"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if !canEditFile(filePath) {
+		t.Fatal("a normal writable document should be editable")
+	}
+	if canEditFile(filepath.Join(t.TempDir(), "missing.md")) {
+		t.Fatal("a missing document must not be reported as editable")
+	}
+	if canEditFile(filepath.Dir(filePath)) {
+		t.Fatal("a directory must not be reported as an editable document")
+	}
+
+	if err := os.Chmod(filePath, 0o444); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(filePath, 0o644)
+	if canEditFile(filePath) {
+		t.Skip("the current elevated user or filesystem can still write a read-only file")
+	}
+}
+
 func TestMacNewDocumentsNeverUseTheReplaceableApplicationBundle(t *testing.T) {
 	executable := filepath.Join(string(filepath.Separator), "Applications", "轻阅 Markdown.app", "Contents", "MacOS", "QuilliteMarkdown")
 	home := filepath.Join(string(filepath.Separator), "Users", "reader")

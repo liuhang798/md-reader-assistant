@@ -75,6 +75,7 @@ type Preferences struct {
 	Language             string             `json:"language"`
 	LastUpdateCheck      string             `json:"lastUpdateCheck,omitempty"`
 	SuppressUpdateUntil  string             `json:"suppressUpdateUntil,omitempty"`
+	UsageAnalytics       bool               `json:"usageAnalytics"`
 }
 
 type App struct {
@@ -199,7 +200,7 @@ func (a *App) languageSelectionMarkerPath() string {
 }
 
 func defaultPreferences() Preferences {
-	return Preferences{RecentFiles: []string{}, FavoriteFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN"}
+	return Preferences{RecentFiles: []string{}, FavoriteFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN", UsageAnalytics: true}
 }
 
 func normaliseLanguage(language string) string {
@@ -666,6 +667,29 @@ func (a *App) ReadFile(filePath string) (*Document, error) {
 	return a.readDocument(filePath, true)
 }
 
+// CanEditFile checks whether the existing document can be opened for writing
+// without changing its contents. This catches read-only chat-app cache files,
+// restricted locations, and files currently locked against writes.
+func (a *App) CanEditFile(filePath string) bool {
+	return canEditFile(filePath)
+}
+
+func canEditFile(filePath string) bool {
+	if strings.TrimSpace(filePath) == "" {
+		return false
+	}
+	cleaned := filepath.Clean(filePath)
+	info, err := os.Stat(cleaned)
+	if err != nil || info.IsDir() {
+		return false
+	}
+	file, err := os.OpenFile(cleaned, os.O_WRONLY, 0)
+	if err != nil {
+		return false
+	}
+	return file.Close() == nil
+}
+
 func (a *App) SaveFile(filePath, content string) (*Document, error) {
 	if strings.TrimSpace(filePath) == "" {
 		return a.SaveAs("", content)
@@ -891,14 +915,7 @@ func (a *App) Dirname(filePath string) string {
 }
 
 func (a *App) ShowInFolder(filePath string) error {
-	switch goruntime.GOOS {
-	case "windows":
-		return exec.Command("explorer.exe", "/select,"+filepath.Clean(filePath)).Start()
-	case "darwin":
-		return exec.Command("open", "-R", filePath).Start()
-	default:
-		return exec.Command("xdg-open", filepath.Dir(filePath)).Start()
-	}
+	return revealInFolder(filePath)
 }
 
 func (a *App) OpenExternal(rawURL string) error {
@@ -986,7 +1003,7 @@ func (a *App) text(key string) string {
 			"discardAndOpen": "不保存并打开", "discardAndExit": "不保存并退出", "openMarkdown": "打开 Markdown 文档",
 			"markdownDocument": "Markdown 文档", "textFile": "文本文件", "allFiles": "所有文件", "openFolder": "打开文档文件夹",
 			"saveAsMarkdown": "另存为 Markdown 文档", "newDocument": "新建文档.md", "newMarkdown": "新建 Markdown 文档",
-			"selectImage": "选择要插入的图片", "imageFile": "图片文件",
+			"selectImage": "选择要插入的图片", "imageFile": "图片文件", "exportWord": "导出 Word 文档", "wordDocument": "Word 文档",
 		},
 		"en": {
 			"unsavedTitle": "Unsaved Changes", "openUnsavedMessage": "The current document has unsaved changes. Opening another document will discard them.",
@@ -994,7 +1011,7 @@ func (a *App) text(key string) string {
 			"discardAndOpen": "Discard and Open", "discardAndExit": "Discard and Exit", "openMarkdown": "Open Markdown Document",
 			"markdownDocument": "Markdown Document", "textFile": "Text File", "allFiles": "All Files", "openFolder": "Open Document Folder",
 			"saveAsMarkdown": "Save Markdown Document As", "newDocument": "New document.md", "newMarkdown": "New Markdown Document",
-			"selectImage": "Choose an image to insert", "imageFile": "Image files",
+			"selectImage": "Choose an image to insert", "imageFile": "Image files", "exportWord": "Export Word Document", "wordDocument": "Word Document",
 		},
 	}
 	if value := translations[a.language][key]; value != "" {

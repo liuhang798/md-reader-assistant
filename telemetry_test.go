@@ -1,0 +1,135 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+)
+
+func TestSendAppErrorLogContainsOnlyApprovedSoftwareFields(t *testing.T) {
+	received := make(chan map[string]any, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var event map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+			t.Fatal(err)
+		}
+		received <- event
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer server.Close()
+
+	if !sendAppErrorLog(server.URL, "save: permission denied", server.Client()) {
+		t.Fatal("软件错误日志发送失败")
+	}
+	event := <-received
+	for _, field := range []string{"eventId", "sentAt", "errorLog", "os", "appVersion"} {
+		value, ok := event[field].(string)
+		if !ok || strings.TrimSpace(value) == "" {
+			t.Fatalf("缺少字段 %s：%+v", field, event)
+		}
+	}
+	if len(event) != 5 {
+		t.Fatalf("错误日志包含未获准字段：%+v", event)
+	}
+	if _, err := time.Parse(time.RFC3339, event["sentAt"].(string)); err != nil {
+		t.Fatalf("事件时间格式不正确：%v", err)
+	}
+}
+
+func TestImprovementProgramPersistsOptOut(t *testing.T) {
+	app := NewApp()
+	app.preferencesOverride = filepath.Join(t.TempDir(), "preferences.json")
+	prefs, err := app.SetUsageAnalytics(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prefs.UsageAnalytics {
+		t.Fatal("关闭产品改进计划后仍处于启用状态")
+	}
+	data, err := os.ReadFile(app.preferencesOverride)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "anonymousInstallId") {
+		t.Fatal("偏好文件不应继续保存匿名安装标识")
+	}
+}
+
+func TestErrorReportingNeverBlocksAndHonoursOptOut(t *testing.T) {
+	app := NewApp()
+	app.preferencesOverride = filepath.Join(t.TempDir(), "preferences.json")
+	if _, err := app.SetUsageAnalytics(true); err != nil {
+		t.Fatal(err)
+	}
+	started := make(chan struct{})
+	release := make(chan struct{})
+	start := time.Now()
+	app.reportErrorLogInBackground("save", "permission denied", "", func(string) {
+		close(started)
+		<-release
+	})
+	if elapsed := time.Since(start); elapsed > 50*time.Millisecond {
+		t.Fatalf("错误上报阻塞了软件功能：%s", elapsed)
+	}
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("后台错误上报没有启动")
+	}
+	close(release)
+
+	if _, err := app.SetUsageAnalytics(false); err != nil {
+		t.Fatal(err)
+	}
+	called := make(chan struct{}, 1)
+	app.reportErrorLogInBackground("save", "permission denied", "", func(string) { called <- struct{}{} })
+	select {
+	case <-called:
+		t.Fatal("退出产品改进计划后不应上报")
+	case <-time.After(100 * time.Millisecond):
+	}
+}
+
+func TestErrorLogRemovesLocalPaths(t *testing.T) {
+	log := buildSanitizedErrorLog("open", `failed at C:\Users\someone\secret\document.md and private-notes.md`, `/home/someone/private/document.md:12`)
+	if strings.Contains(log, "document.md") || strings.Contains(log, "private-notes.md") || strings.Contains(log, "someone") {
+		t.Fatalf("错误日志仍包含本地路径：%q", log)
+	}
+}
+
+func TestErrorReportingSilentlyHandlesOfflineNetwork(t *testing.T) {
+	client := &http.Client{Transport: failingRoundTripper{}}
+	if sendAppErrorLog("https://telemetry.invalid/error", "render: failure", client) {
+		t.Fatal("断网时错误日志请求不应报告成功")
+	}
+}
+
+func TestErrorReportingSilentlyRecoversUnexpectedFailure(t *testing.T) {
+	app := NewApp()
+	app.preferencesOverride = filepath.Join(t.TempDir(), "preferences.json")
+	if _, err := app.SetUsageAnalytics(true); err != nil {
+		t.Fatal(err)
+	}
+	finished := make(chan struct{})
+	app.reportErrorLogInBackground("render", "failure", "", func(string) {
+		defer close(finished)
+		panic("模拟错误上报组件异常")
+	})
+	select {
+	case <-finished:
+	case <-time.After(time.Second):
+		t.Fatal("异常上报任务没有静默结束")
+	}
+}
+
+type failingRoundTripper struct{}
+
+func (failingRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, errors.New("模拟内网或断网")
+}

@@ -14,12 +14,18 @@ export function sameDocumentPath(left, right) {
   return Boolean(leftPath && rightPath && leftPath === rightPath);
 }
 
+export function directoryFromDocumentPath(filePath) {
+  const value = String(filePath || '').trim();
+  const separatorIndex = Math.max(value.lastIndexOf('\\'), value.lastIndexOf('/'));
+  return separatorIndex > 0 ? value.slice(0, separatorIndex) : '.';
+}
+
 export function filesFromPreferencePaths(paths = [], statuses = []) {
   const statusByPath = new Map(statuses.map(status => [normalizeDocumentPath(status.path), status.exists !== false]));
   return paths.map(filePath => ({
     path: filePath,
     name: String(filePath).split(/[\\/]/).pop(),
-    directory: null,
+    directory: directoryFromDocumentPath(filePath),
     exists: statusByPath.get(normalizeDocumentPath(filePath)) !== false,
   }));
 }

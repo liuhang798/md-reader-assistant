@@ -4,11 +4,15 @@ import {main} from '../models';
 
 export function AddFavorite(arg1:string):Promise<main.Preferences>;
 
+export function CanEditFile(arg1:string):Promise<boolean>;
+
 export function CheckForUpdates(arg1:boolean):Promise<main.UpdateInfo>;
 
 export function Dirname(arg1:string):Promise<string>;
 
 export function DownloadAndApplyUpdate():Promise<void>;
+
+export function ExportDOCX(arg1:string,arg2:string,arg3:string):Promise<string>;
 
 export function GetInitialFile():Promise<main.Document>;
 
@@ -40,6 +44,8 @@ export function RemoveFavorite(arg1:string):Promise<main.Preferences>;
 
 export function RemoveRecent(arg1:string):Promise<main.Preferences>;
 
+export function ReportErrorLog(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function RequestQuit():Promise<boolean>;
 
 export function SaveAs(arg1:string,arg2:string):Promise<main.Document>;
@@ -53,6 +59,8 @@ export function SetDirty(arg1:boolean):Promise<void>;
 export function SetLanguage(arg1:string):Promise<string>;
 
 export function SetTheme(arg1:boolean):Promise<void>;
+
+export function SetUsageAnalytics(arg1:boolean):Promise<main.Preferences>;
 
 export function ShowInFolder(arg1:string):Promise<void>;
 

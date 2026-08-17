@@ -6,6 +6,10 @@ export function AddFavorite(arg1) {
   return window['go']['main']['App']['AddFavorite'](arg1);
 }
 
+export function CanEditFile(arg1) {
+  return window['go']['main']['App']['CanEditFile'](arg1);
+}
+
 export function CheckForUpdates(arg1) {
   return window['go']['main']['App']['CheckForUpdates'](arg1);
 }
@@ -16,6 +20,10 @@ export function Dirname(arg1) {
 
 export function DownloadAndApplyUpdate() {
   return window['go']['main']['App']['DownloadAndApplyUpdate']();
+}
+
+export function ExportDOCX(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ExportDOCX'](arg1, arg2, arg3);
 }
 
 export function GetInitialFile() {
@@ -78,6 +86,10 @@ export function RemoveRecent(arg1) {
   return window['go']['main']['App']['RemoveRecent'](arg1);
 }
 
+export function ReportErrorLog(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ReportErrorLog'](arg1, arg2, arg3);
+}
+
 export function RequestQuit() {
   return window['go']['main']['App']['RequestQuit']();
 }
@@ -104,6 +116,10 @@ export function SetLanguage(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
+}
+
+export function SetUsageAnalytics(arg1) {
+  return window['go']['main']['App']['SetUsageAnalytics'](arg1);
 }
 
 export function ShowInFolder(arg1) {

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const renderer = await readFile(new URL('../src/renderer.js', import.meta.url), 'utf8');
+const mainSource = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
 const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8');
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 
@@ -10,6 +11,12 @@ test('opening an existing recent document updates it in place', () => {
   assert.match(renderer, /const existingIndex = state\.recentFiles\.findIndex\(file => sameDocumentPath\(file\.path, doc\.path\)\)/);
   assert.match(renderer, /state\.recentFiles\[existingIndex\] = recentEntry\(doc\)/);
   assert.doesNotMatch(renderer, /\[recentEntry\(doc\), \.\.\.state\.recentFiles\.filter/);
+});
+
+test('recent documents show their source directory instead of a generic recently opened label', () => {
+  assert.match(renderer, /directory: doc\.directory \|\| directoryFromDocumentPath\(doc\.path\)/);
+  assert.match(renderer, /: \(file\.directory \|\| directoryFromDocumentPath\(file\.path\)\)/);
+  assert.match(renderer, /<small title="\$\{escapeHtml\(sub\)\}">\$\{escapeHtml\(sub\)\}<\/small>/);
 });
 
 test('missing recent and favorite documents stay visible but cannot be opened', () => {
@@ -33,6 +40,7 @@ test('library rows use their full width and remove recent records from the conte
 test('right-clicking any library document opens an action menu', () => {
   assert.match(html, /id="recentContextMenu"/);
   assert.match(html, /data-recent-action="edit"/);
+  assert.match(html, /data-recent-action="save-as"/);
   assert.match(html, /data-recent-action="favorite"/);
   assert.match(html, /data-recent-action="reveal"/);
   assert.match(html, /data-recent-action="remove"/);
@@ -45,10 +53,12 @@ test('right-clicking any library document opens an action menu', () => {
 
 test('document context menu edits, favorites, reveals, or removes the selected document', () => {
   assert.match(renderer, /if \(action === 'edit'\) await editRecentDocument\(filePath\)/);
+  assert.match(renderer, /else if \(action === 'save-as'\) await saveLibraryDocumentAs\(filePath\)/);
   assert.match(renderer, /else if \(action === 'favorite'\) await setFavoriteRecord\(filePath/);
   assert.match(renderer, /else if \(action === 'reveal'\) await revealFileInFolder\(filePath\)/);
   assert.match(renderer, /else if \(action === 'remove'\) await removeRecentRecord\(filePath\)/);
   assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*window\.quilliteMarkdown\.readFile\(filePath\)[\s\S]*await toggleEditor\(true\)/);
+  assert.match(renderer, /async function saveLibraryDocumentAs\(filePath\)[\s\S]*window\.quilliteMarkdown\.saveAs\(source\.path, source\.content\)[\s\S]*displayDocument\(saved\)/);
   assert.match(renderer, /await window\.quilliteMarkdown\.showInFolder\(filePath\)/);
   assert.match(styles, /\.recent-context-menu \{[^}]*right: auto;[^}]*width: 190px;/);
 });
@@ -141,6 +151,34 @@ test('the update dialog offers in-app download and apply with progress', () => {
   assert.match(styles, /\.update-progress-bar \{ height: 100%; width: 0; border-radius: 4px; background: var\(--accent-strong\);/);
 });
 
+test('Word and PDF export are available from the document menu', () => {
+  assert.match(html, /data-action="export-word"/);
+  assert.match(html, /data-action="export-pdf"/);
+  assert.match(html, /data-i18n="exportWord"/);
+  assert.match(html, /data-i18n="exportPDF"/);
+  assert.match(mainSource, /exportDOCX: \(filePath, title, renderedHTML\) => desktopRuntime \? Backend\.ExportDOCX\(filePath, title, renderedHTML\)/);
+  assert.match(renderer, /async function exportWordDocument\(\)/);
+  assert.match(renderer, /cleanRenderedHTMLForExport\(container\)/);
+  assert.match(renderer, /if \(action === 'export-word'\) exportWordDocument\(\)/);
+  assert.match(renderer, /async function exportPDFDocument\(\)/);
+  assert.match(renderer, /if \(state\.editing\) toggleEditor\(false\)/);
+  assert.match(renderer, /if \(action === 'export-pdf'\) exportPDFDocument\(\)/);
+  assert.match(styles, /@media print \{[\s\S]*\.toast, \.popover, \.pane-resizer \{ display: none !important; \}/);
+});
+
+test('unwritable cache documents fall back to Save As without repeating failed autosaves', () => {
+  assert.match(mainSource, /canEditFile: filePath => desktopRuntime \? Backend\.CanEditFile\(filePath\) : resolved\(true\)/);
+  assert.match(renderer, /canEdit = await window\.quilliteMarkdown\.canEditFile\(state\.currentFile\.path\)/);
+  assert.match(renderer, /if \(!canEdit\) \{[\s\S]*state\.saveAsRequired = true;[\s\S]*showToast\(t\('editPermissionDenied'\)\);[\s\S]*return;/);
+  assert.match(renderer, /if \(state\.saveAsRequired && options\.auto\) return;/);
+  assert.match(renderer, /if \(state\.saveAsRequired && !options\.auto\) saveAs = true;/);
+  assert.match(renderer, /state\.saveAsRequired = true;/);
+  assert.match(renderer, /fallbackToSaveAs = true;/);
+  assert.match(renderer, /if \(fallbackToSaveAs\) await saveDocument\(true, options\);/);
+  assert.match(renderer, /saveAsRequiredHint: '原文件可能来自微信缓存/);
+  assert.match(renderer, /replacingUnwritableSource && !sameDocumentPath\(saved\.path, originalPath\)/);
+});
+
 test('the editor header offers an exit editing button', () => {
   assert.match(html, /id="exitEditButton" class="text-button exit-edit-button"/);
   assert.match(html, /data-i18n="exitEdit"/);
@@ -174,10 +212,18 @@ test('editor split panes are draggable without a maximum width limit', () => {
 test('sidebar and TOC text scale with the global font scale', () => {
   assert.match(styles, /\.file-copy strong \{ font-size: calc\(13px \* var\(--font-scale\)\);/);
   assert.match(styles, /\.file-copy small \{ color: var\(--faint\); font-size: calc\(10\.5px \* var\(--font-scale\)\);/);
-  assert.match(styles, /\.toc a \{ color: var\(--muted\); text-decoration: none; font-size: calc\(11\.5px \* var\(--font-scale\)\);/);
+  assert.match(styles, /\.toc a \{[^}]*font-size: calc\(11\.5px \* var\(--font-scale\)\);/);
   assert.match(styles, /\.sidebar-tab \{ [^}]*font-size: calc\(11px \* var\(--font-scale\)\);/);
   assert.match(styles, /\.eyebrow \{ display: block; color: var\(--faint\); font-size: calc\(10px \* var\(--font-scale\)\);/);
   assert.match(styles, /\.sidebar-heading h2 \{ margin: 5px 0 0; font-size: calc\(18px \* var\(--font-scale\)\);/);
+});
+
+test('the document outline renders as a persistent collapsible tree', () => {
+  assert.match(renderer, /const tree = buildTocTree\(/);
+  assert.match(renderer, /data-toc-toggle=/);
+  assert.match(renderer, /writeCollapsedToc\(localStorage, state\.currentFile\?\.path, collapsed\)/);
+  assert.match(styles, /\.toc-children\.hidden \{ display: none; \}/);
+  assert.match(styles, /\.toc-node\.collapsed > \.toc-row \.toc-toggle svg/);
 });
 
 test('sidebar and TOC resizers have no practical maximum width', () => {
@@ -185,4 +231,10 @@ test('sidebar and TOC resizers have no practical maximum width', () => {
   assert.match(renderer, /toc: \{ min: 120, max: 2000, fallback: 205 \}/);
   assert.match(renderer, /els\.appShell\.clientWidth - otherWidth - 240/);
   assert.match(html, /aria-valuemax="2000"/);
+});
+
+test('back-to-top follows the left edge of the resized TOC panel', () => {
+  assert.match(styles, /\.back-to-top \{[^}]*right: calc\(var\(--toc-width\) \+ 24px\);/);
+  assert.match(styles, /body:has\(\.toc-panel\.hidden\) \.back-to-top \{ right: 24px; \}/);
+  assert.match(styles, /@media \(max-width: 1120px\)[\s\S]*\.back-to-top \{ right: 24px; \}/);
 });
