@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=MD阅读助手
-Comment=Markdown reader and editor
-Exec=md-reader-assistant %F
-Icon=md-reader-assistant
+Name=轻阅 Markdown
+Comment=Lightweight Markdown reader and editor
+Exec=quillite-markdown %F
+Icon=quillite-markdown
 Terminal=false
 Categories=Office;TextEditor;
 MimeType=text/markdown;text/plain;

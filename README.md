@@ -1,27 +1,27 @@
 <div align="center">
-  <img src="build/appicon.png" width="96" alt="MD阅读助手图标">
-  <h1>MD阅读助手</h1>
+  <img src="build/appicon.png" width="96" alt="轻阅 Markdown 图标">
+  <h1>轻阅 Markdown</h1>
   <p><strong>快速、本地优先的 Markdown 阅读器、查看器和编辑器——Windows 安装包仅约 7 MB。</strong></p>
   <p>实时预览 · 语法高亮 · 本地文件 · Windows、macOS、Linux</p>
   <p><strong>简体中文</strong> · <a href="README.en.md">English</a></p>
   <p>
-    <a href="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml"><img src="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml/badge.svg" alt="构建状态"></a>
-    <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/md-reader-assistant" alt="最新版本"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/md-reader-assistant" alt="MIT 许可证"></a>
+    <a href="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml"><img src="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml/badge.svg" alt="构建状态"></a>
+    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/quillite-markdown" alt="最新版本"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/quillite-markdown" alt="MIT 许可证"></a>
     <img src="https://img.shields.io/badge/平台-Windows%20%7C%20macOS%20%7C%20Linux-526b58" alt="支持 Windows、macOS 和 Linux">
   </p>
   <p>
     <a href="https://liuhang798.github.io/"><strong>访问官网</strong></a>
     ·
-    <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><strong>下载最新版本</strong></a>
+    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><strong>下载最新版本</strong></a>
     · <a href="#项目截图">查看截图</a>
     · <a href="#本地开发">从源码构建</a>
   </p>
 </div>
 
-![MD阅读助手左右分栏 Markdown 编辑、实时预览和语法高亮界面](screenshots/03-split-editor.png)
+![轻阅 Markdown左右分栏 Markdown 编辑、实时预览和语法高亮界面](screenshots/03-split-editor.png)
 
-## 为什么选择 MD阅读助手？
+## 为什么选择轻阅 Markdown？
 
 - **真正轻量：**使用 Go + Wails 构建，不依赖 Electron，Windows 安装包仅约 **7 MB**。
 - **本地优先：**直接读取和保存电脑中的普通 Markdown 文件，无需账号、专用仓库或云端绑定。
@@ -35,16 +35,21 @@
 
 | 平台 | 安装包 | 下载 |
 |---|---|---|
-| Windows x64 | 分步安装程序（`.exe`） | [下载最新版本](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
-| macOS | Intel + Apple Silicon 通用版（`.dmg`） | [下载最新版本](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
-| Linux x64 | Debian 安装包 + 便携 AppImage | [下载最新版本](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
+| Windows x64 | 分步安装程序（`.exe`） | [下载最新版本](https://github.com/liuhang798/quillite-markdown/releases/latest) |
+| macOS | Intel + Apple Silicon 通用版（`.dmg`） | [下载最新版本](https://github.com/liuhang798/quillite-markdown/releases/latest) |
+| Linux x64 | Debian 安装包 + 便携 AppImage | [下载最新版本](https://github.com/liuhang798/quillite-markdown/releases/latest) |
 
-Windows 用户运行 `md-reader-assistant-版本-windows-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式、Markdown 文件关联、升级时沿用上次安装目录，并在安装完成后直接启动软件。安装向导中选择的语言会直接用于软件界面，首次进入时无需再次选择。
+Windows 用户运行 `quillite-markdown-版本-windows-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式、Markdown 文件关联、升级时沿用上次安装目录，并在安装完成后直接启动软件。Windows 的安装、升级与卸载流程统一使用简体中文；全新安装默认以简体中文启动软件，进入软件后仍可切换 English 界面。
 
 macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时手动切换；临时选择会保持到系统下一次切换白天或黑夜模式，随后自动恢复跟随。系统模式变化时界面与原生标题栏同步切换；使用在轻薄标题栏中垂直居中的系统原生窗口控制按钮与应用菜单，半屏平铺和窗口缩放时按钮位置保持稳定。进入全屏后 Logo 和软件名称会自动向左对齐，退出后立即恢复窗口按钮安全间距且不会短暂重叠。支持标准 Command 快捷键：`Command + W` 关闭窗口并留在后台，`Command + Q` 真正退出应用。全屏关闭时会先退出全屏再隐藏到后台；编辑器和资源浏览器采用延迟初始化，减少冷启动等待。
 
 ## 2.4.3 更新亮点
 
+- 默认品牌绿统一为精确的 `#159A63`；主按钮不再自动加深为 `#10744A`，按钮、选中态、强调文字及应用图标保持同一绿色。
+- 左上角品牌标识改为透明背景的打开书本图形，书本线条跟随当前主题色，不再使用方形底板、边框或阴影。
+- 标题栏书本图标与“轻阅 Markdown”文字采用一致的视觉高度并上下居中对齐，Windows 与 macOS 紧凑标题栏分别适配。
+- 取消新建文档、回到顶部、首页叶子图标等主题色按钮的投影阴影，界面更干净利落；选中状态仍保留主题色描边标识。
+- Windows 安装、升级与卸载向导统一为简体中文，不再显示安装语言选择窗口；系统兼容提示、WebView2 安装提示和文件打开方式等细节同步中文化。
 - 文字放大缩小作用于全局：阅读正文、左侧最近阅读/资源浏览器、右侧本页目录同步缩放。
 - 左侧文档库与右侧目录分隔条不再限制最大宽度，可自由调整并自动记忆。
 
@@ -63,7 +68,7 @@ macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时�
 
 - 修复 Windows 应用内更新的文件占用问题：更新 helper 从独立临时 exe 运行，不再锁住待替换的主程序。
 - 新版本下载并校验后可自动关闭旧版、覆盖程序并重新打开，无需再次运行安装向导。
-- 更新失败时会在用户配置目录的 `MD阅读助手/update/apply-update.log` 中记录明确原因。
+- 更新失败时会在用户配置目录的 `轻阅 Markdown/update/apply-update.log` 中记录明确原因。
 - 旧客户端的 updater 无法自行修复，因此需要手动安装 2.3.12 或更高版本一次；之后即可使用应用内无安装更新。
 
 ## 2.3.5 更新亮点
@@ -74,7 +79,7 @@ macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时�
 
 ## 2.3.4 更新亮点
 
-- 当前文档被其他软件修改后，切回 MD阅读助手会自动重新读取并刷新预览；本软件存在未保存编辑时不会覆盖当前内容。
+- 当前文档被其他软件修改后，切回轻阅 Markdown 会自动重新读取并刷新预览；本软件存在未保存编辑时不会覆盖当前内容。
 - “更多”菜单新增文档宽度调整：窄 / 中 / 宽 / 全宽四档，阅读页与编辑实时预览同步生效并自动记忆。
 - 修复阅读页查找无法匹配 Markdown 行内代码和代码块内容的问题，代码文字现在会正常计数、高亮并定位。
 
@@ -156,7 +161,7 @@ macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时�
 - `packaging/`：Linux 桌面集成与软件包元数据。
 - `scripts/`：可重复执行的项目资源维护脚本。
 
-新建 Markdown 文档时无需选择保存目录。macOS 会固定保存到用户的 `文稿/MD Reader Assistant`，避免应用升级覆盖文档；Windows 与 Linux 便携版继续优先使用应用目录，不可写时自动回退到用户文档目录。新建文档另存后会自动删除临时草稿及重复的最近阅读记录。绝对路径和相对路径引用的本地图片均由 Go 后端安全读取，可在预览区正常显示。
+新建 Markdown 文档时无需选择保存目录。macOS 会固定保存到用户的 `文稿/Quillite Markdown`，避免应用升级覆盖文档；Windows 与 Linux 便携版继续优先使用应用目录，不可写时自动回退到用户文档目录。新建文档另存后会自动删除临时草稿及重复的最近阅读记录。绝对路径和相对路径引用的本地图片均由 Go 后端安全读取，可在预览区正常显示。
 
 ## 多平台版本
 
@@ -186,7 +191,7 @@ npm install
 npm run build
 ```
 
-在 macOS 上构建时使用统一脚本，生成的应用包会固定命名为 `MD阅读助手.app`：
+在 macOS 上构建时使用统一脚本，生成的应用包会固定命名为 `轻阅 Markdown.app`：
 
 ```bash
 bash scripts/build-macos.sh darwin/universal

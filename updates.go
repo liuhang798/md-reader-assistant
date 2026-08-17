@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const latestReleaseAPI = "https://api.github.com/repos/liuhang798/md-reader-assistant/releases/latest"
+const latestReleaseAPI = "https://api.github.com/repos/liuhang798/quillite-markdown/releases/latest"
 
 type UpdateInfo struct {
 	Checked        bool   `json:"checked"`
@@ -51,7 +51,7 @@ func (a *App) fetchLatestRelease() (*githubRelease, error) {
 	}
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("User-Agent", "MDReaderAssistant/"+appVersion)
+	request.Header.Set("User-Agent", "QuilliteMarkdown/"+appVersion)
 
 	response, err := (&http.Client{Timeout: 8 * time.Second}).Do(request)
 	if err != nil {
@@ -105,7 +105,7 @@ func (a *App) CheckForUpdates(force bool) (UpdateInfo, error) {
 		result.ReleaseName = "v" + latest
 	}
 	if parsed, parseErr := url.Parse(result.ReleaseURL); parseErr != nil || parsed.Scheme != "https" || !strings.EqualFold(parsed.Host, "github.com") {
-		result.ReleaseURL = "https://github.com/liuhang798/md-reader-assistant/releases/latest"
+		result.ReleaseURL = "https://github.com/liuhang798/quillite-markdown/releases/latest"
 	}
 
 	if _, err := a.updatePreferences(func(latestPrefs *Preferences) {

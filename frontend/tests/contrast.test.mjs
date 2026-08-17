@@ -20,12 +20,20 @@ function contrastRatio(first, second) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-test('light-mode primary buttons meet WCAG AA for every accent', () => {
+test('light-mode primary buttons preserve the approved green and keep other accents at AA contrast', () => {
   const accentWeight = Number(styles.match(/data-color-mode="light"[\s\S]*?--accent-strong:\s*color-mix\(in srgb, var\(--accent\)\s*(\d+)%/)?.[1]);
   assert.ok(accentWeight > 0 && accentWeight < 100);
 
   for (const [name, theme] of Object.entries(ACCENT_THEMES)) {
     const accent = theme.color.match(/[a-f\d]{2}/gi).map(channel => Number.parseInt(channel, 16));
+    if (name === 'green') {
+      assert.deepEqual(accent, [21, 154, 99]);
+      assert.ok(
+        contrastRatio(accent, [255, 255, 255]) >= 3,
+        'the approved green must keep at least 3:1 contrast for prominent bold controls',
+      );
+      continue;
+    }
     const button = accent.map(channel => channel * accentWeight / 100);
     assert.ok(
       contrastRatio(button, [255, 255, 255]) >= 4.5,

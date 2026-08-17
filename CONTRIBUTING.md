@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for helping improve MD Reader Assistant.
+Thank you for helping improve Quillite Markdown.
 
 ## Development setup
 

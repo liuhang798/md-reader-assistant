@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-title MD Reader Assistant - Automatic GitHub Push
+title Quillite Markdown - Automatic GitHub Push
 cd /d "%~dp0"
 
-set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
+set "REPO_URL=https://github.com/liuhang798/quillite-markdown.git"
 set "BRANCH=main"
 set "COMMIT_MSG=Release v2.4.2: format painter with auto-apply"
 set "MAX_RETRIES=3"
@@ -12,7 +12,7 @@ set "SYSTEM_PROXY="
 
 echo.
 echo ========================================
-echo   MD Reader Assistant - Automatic Push
+echo   Quillite Markdown - Automatic Push
 echo ========================================
 echo   Project: %CD%
 echo   Remote : %REPO_URL%
@@ -113,7 +113,7 @@ if errorlevel 1 goto :push_failed
 echo.
 echo ========================================
 echo   Push completed successfully.
-echo   https://github.com/liuhang798/md-reader-assistant
+echo   https://github.com/liuhang798/quillite-markdown
 echo ========================================
 ping 127.0.0.1 -n 4 >nul
 exit /b 0

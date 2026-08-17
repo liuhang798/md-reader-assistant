@@ -94,11 +94,11 @@ jobs:
           Write-Host "NSIS ready: $existing"
       - name: Build Windows installer
         shell: pwsh
-        run: wails build -clean -platform windows/amd64 -o MDReaderAssistant.exe -nsis -installscope user -webview2 embed -trimpath -nocolour
+        run: wails build -clean -platform windows/amd64 -o QuilliteMarkdown.exe -nsis -installscope user -webview2 embed -trimpath -nocolour
       - name: Prepare Windows release asset
         shell: pwsh
         run: |
-          $binary = "build/bin/MDReaderAssistant.exe"
+          $binary = "build/bin/QuilliteMarkdown.exe"
           if (-not (Test-Path -LiteralPath $binary -PathType Leaf)) {
             Get-ChildItem build/bin -Recurse | Format-Table FullName, Length
             throw "Expected Windows application binary was not found: $binary"
@@ -119,7 +119,7 @@ jobs:
 
           Push-Location build/windows/installer
           try {
-            & $makensis "-DWAILS_INSTALL_SCOPE=user" "-DREQUEST_EXECUTION_LEVEL=user" "-DARG_WAILS_AMD64_BINARY=..\..\bin\MDReaderAssistant.exe" "project.nsi"
+            & $makensis "-DWAILS_INSTALL_SCOPE=user" "-DREQUEST_EXECUTION_LEVEL=user" "-DARG_WAILS_AMD64_BINARY=..\..\bin\QuilliteMarkdown.exe" "project.nsi"
             if ($LASTEXITCODE -ne 0) {
               throw "NSIS exited with code $LASTEXITCODE"
             }
@@ -127,21 +127,21 @@ jobs:
             Pop-Location
           }
 
-          $installer = "build/bin/md-reader-assistant-$env:APP_VERSION-windows-amd64.exe"
+          $installer = "build/bin/quillite-markdown-$env:APP_VERSION-windows-amd64.exe"
           if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
             Get-ChildItem build/bin -Recurse | Format-Table FullName, Length
             throw "Expected NSIS installer was not found: $installer"
           }
 
           $releaseDir = New-Item -ItemType Directory -Force build/bin/release
-          $target = Join-Path $releaseDir.FullName "md-reader-assistant-$env:APP_VERSION-windows-amd64.exe"
+          $target = Join-Path $releaseDir.FullName "quillite-markdown-$env:APP_VERSION-windows-amd64.exe"
           Copy-Item -LiteralPath $installer -Destination $target -Force
-          $binaryTarget = Join-Path $releaseDir.FullName "md-reader-assistant-$env:APP_VERSION-windows-amd64.bin"
+          $binaryTarget = Join-Path $releaseDir.FullName "quillite-markdown-$env:APP_VERSION-windows-amd64.bin"
           Copy-Item -LiteralPath $binary -Destination $binaryTarget -Force
           Get-Item -LiteralPath $target, $binaryTarget | Format-Table FullName, Length
       - uses: actions/upload-artifact@v4
         with:
-          name: md-reader-assistant-windows-x64
+          name: quillite-markdown-windows-x64
           path: build/bin/release/*
           if-no-files-found: error
 
@@ -175,7 +175,7 @@ jobs:
       - name: Create DMG
         shell: bash
         run: |
-          app_path="build/bin/MD阅读助手.app"
+          app_path="build/bin/轻阅 Markdown.app"
           if [[ ! -d "${app_path}" ]]; then
             find build/bin -maxdepth 3 -print
             echo "The macOS .app bundle was not found in build/bin" >&2
@@ -184,16 +184,16 @@ jobs:
 
           release_dir="build/bin/release"
           staging_dir="$(mktemp -d)"
-          output_path="${release_dir}/md-reader-assistant-${APP_VERSION}-macos-universal.dmg"
+          output_path="${release_dir}/quillite-markdown-${APP_VERSION}-macos-universal.dmg"
           mkdir -p "${release_dir}"
-          cp -R "${app_path}" "${staging_dir}/MD阅读助手.app"
+          cp -R "${app_path}" "${staging_dir}/轻阅 Markdown.app"
           ln -s /Applications "${staging_dir}/Applications"
 
           created=false
           for attempt in 1 2 3; do
             echo "Creating DMG (attempt ${attempt}/3)..."
             rm -f "${output_path}"
-            if hdiutil create -volname "MD阅读助手" -srcfolder "${staging_dir}" -ov -format UDZO "${output_path}"; then
+            if hdiutil create -volname "轻阅 Markdown" -srcfolder "${staging_dir}" -ov -format UDZO "${output_path}"; then
               created=true
               break
             fi
@@ -209,18 +209,18 @@ jobs:
       - name: Extract raw executable for in-app updates
         shell: bash
         run: |
-          app_path="build/bin/MD阅读助手.app"
-          binary="${app_path}/Contents/MacOS/MDReaderAssistant"
+          app_path="build/bin/轻阅 Markdown.app"
+          binary="${app_path}/Contents/MacOS/QuilliteMarkdown"
           if [[ ! -x "${binary}" ]]; then
             echo "Expected macOS executable was not found: ${binary}" >&2
             exit 1
           fi
           release_dir="build/bin/release"
-          cp "${binary}" "${release_dir}/md-reader-assistant-${APP_VERSION}-macos-universal.bin"
-          ls -lh "${release_dir}/md-reader-assistant-${APP_VERSION}-macos-universal.bin"
+          cp "${binary}" "${release_dir}/quillite-markdown-${APP_VERSION}-macos-universal.bin"
+          ls -lh "${release_dir}/quillite-markdown-${APP_VERSION}-macos-universal.bin"
       - uses: actions/upload-artifact@v4
         with:
-          name: md-reader-assistant-macos-universal
+          name: quillite-markdown-macos-universal
           path: build/bin/release/*
           if-no-files-found: error
 
@@ -253,33 +253,33 @@ jobs:
           sudo apt-get install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
           go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
       - name: Build Linux executable
-        run: wails build -clean -platform linux/amd64 -o md-reader-assistant -tags webkit2_41 -trimpath -nocolour
+        run: wails build -clean -platform linux/amd64 -o quillite-markdown -tags webkit2_41 -trimpath -nocolour
       - name: Build DEB and AppImage packages
         run: |
           mkdir -p package-root/DEBIAN package-root/usr/bin package-root/usr/share/applications package-root/usr/share/icons/hicolor/512x512/apps package-root/usr/share/mime/packages
-          install -m 755 build/bin/md-reader-assistant package-root/usr/bin/md-reader-assistant
-          install -m 644 packaging/linux/md-reader-assistant.desktop package-root/usr/share/applications/md-reader-assistant.desktop
-          install -m 644 packaging/linux/md-reader-assistant.xml package-root/usr/share/mime/packages/md-reader-assistant.xml
-          install -m 644 build/appicon.png package-root/usr/share/icons/hicolor/512x512/apps/md-reader-assistant.png
+          install -m 755 build/bin/quillite-markdown package-root/usr/bin/quillite-markdown
+          install -m 644 packaging/linux/quillite-markdown.desktop package-root/usr/share/applications/quillite-markdown.desktop
+          install -m 644 packaging/linux/quillite-markdown.xml package-root/usr/share/mime/packages/quillite-markdown.xml
+          install -m 644 build/appicon.png package-root/usr/share/icons/hicolor/512x512/apps/quillite-markdown.png
           sed "s/@VERSION@/${APP_VERSION}/g" packaging/linux/control > package-root/DEBIAN/control
           install -m 755 packaging/linux/postinst package-root/DEBIAN/postinst
           install -m 755 packaging/linux/postrm package-root/DEBIAN/postrm
-          dpkg-deb --build package-root "build/bin/md-reader-assistant-${APP_VERSION}-linux-amd64.deb"
+          dpkg-deb --build package-root "build/bin/quillite-markdown-${APP_VERSION}-linux-amd64.deb"
 
           mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/512x512/apps
-          install -m 755 build/bin/md-reader-assistant AppDir/usr/bin/md-reader-assistant
+          install -m 755 build/bin/quillite-markdown AppDir/usr/bin/quillite-markdown
           install -m 755 packaging/linux/AppRun AppDir/AppRun
-          install -m 644 packaging/linux/md-reader-assistant.desktop AppDir/md-reader-assistant.desktop
-          install -m 644 build/appicon.png AppDir/md-reader-assistant.png
+          install -m 644 packaging/linux/quillite-markdown.desktop AppDir/quillite-markdown.desktop
+          install -m 644 build/appicon.png AppDir/quillite-markdown.png
           curl -L --fail -o appimagetool.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool.AppImage
-          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir "build/bin/md-reader-assistant-${APP_VERSION}-linux-x86_64.AppImage"
+          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir "build/bin/quillite-markdown-${APP_VERSION}-linux-x86_64.AppImage"
       - uses: actions/upload-artifact@v4
         with:
-          name: md-reader-assistant-linux-x64
+          name: quillite-markdown-linux-x64
           path: |
-            build/bin/md-reader-assistant-*-linux-amd64.deb
-            build/bin/md-reader-assistant-*-linux-x86_64.AppImage
+            build/bin/quillite-markdown-*-linux-amd64.deb
+            build/bin/quillite-markdown-*-linux-x86_64.AppImage
           if-no-files-found: error
 
   release:
@@ -301,7 +301,7 @@ jobs:
             capture { print }
           ' CHANGELOG.md > release-notes.md
           if [[ ! -s release-notes.md ]]; then
-            printf 'md-reader-assistant %s\n\nSee the repository changelog for details.\n' "${version}" > release-notes.md
+            printf 'quillite-markdown %s\n\nSee the repository changelog for details.\n' "${version}" > release-notes.md
           fi
       - name: Publish release assets
         env:
@@ -310,17 +310,17 @@ jobs:
         run: |
           version="${RELEASE_TAG#v}"
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            gh release edit "${RELEASE_TAG}" --title "md-reader-assistant ${version}" --notes-file release-notes.md
+            gh release edit "${RELEASE_TAG}" --title "quillite-markdown ${version}" --notes-file release-notes.md
             gh release upload "${RELEASE_TAG}" release-assets/* --clobber
 
             mapfile -t existing_assets < <(gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name')
             for asset in "${existing_assets[@]}"; do
               case "${asset}" in
-                MD.*|MD阅读助手-*|MDReaderAssistant-Setup-*)
+                md-reader-assistant-*|MD.*|轻阅 Markdown-*|QuilliteMarkdown-Setup-*)
                   gh release delete-asset "${RELEASE_TAG}" "${asset}" --yes
                   ;;
               esac
             done
           else
-            gh release create "${RELEASE_TAG}" release-assets/* --notes-file release-notes.md --title "md-reader-assistant ${version}"
+            gh release create "${RELEASE_TAG}" release-assets/* --notes-file release-notes.md --title "quillite-markdown ${version}"
           fi

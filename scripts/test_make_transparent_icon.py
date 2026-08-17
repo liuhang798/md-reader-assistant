@@ -16,7 +16,7 @@ class TransparentIconTests(unittest.TestCase):
     def test_removes_black_canvas_without_erasing_bright_green_mark(self):
         source = Image.new("RGB", (64, 64), "black")
         draw = ImageDraw.Draw(source)
-        draw.rounded_rectangle((4, 4, 59, 59), radius=12, fill="#2CB044")
+        draw.rounded_rectangle((4, 4, 59, 59), radius=12, fill="#159A63")
         draw.rectangle((20, 20, 44, 44), fill="white")
 
         result = MODULE.remove_white_canvas(source)
@@ -53,10 +53,20 @@ class TransparentIconTests(unittest.TestCase):
                 [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (96, 96), (128, 128), (192, 192), (256, 256)],
             )
 
+        file_png = root / "build" / "mdFileIcon.png"
+        file_ico = root / "build" / "windows" / "mdFileIcon.ico"
+        with Image.open(file_png) as source:
+            file_icon = source.convert("RGBA")
+        actual = file_icon.getpixel((64, 64))[:3]
+        distance = sum((actual[index] - MODULE.SOURCE_ACCENT[index]) ** 2 for index in range(3)) ** 0.5
+        self.assertLess(distance, 18, (file_png, actual, MODULE.SOURCE_ACCENT))
+        with Image.open(file_ico) as ico:
+            self.assertIn((256, 256), ico.info["sizes"])
+
     def test_recolors_green_pixels_without_changing_white_or_alpha(self):
         source = Image.new("RGBA", (4, 1), (0, 0, 0, 0))
-        source.putpixel((1, 0), (44, 176, 68, 255))
-        source.putpixel((2, 0), (22, 88, 34, 128))
+        source.putpixel((1, 0), (21, 154, 99, 255))
+        source.putpixel((2, 0), (10, 77, 50, 128))
         source.putpixel((3, 0), (250, 249, 247, 255))
 
         recolor = getattr(MODULE, "generate_accent_logo", lambda image, _target: image)
@@ -70,7 +80,7 @@ class TransparentIconTests(unittest.TestCase):
     def test_all_runtime_accent_logos_are_transparent_and_match_the_palette(self):
         root = SCRIPT.parents[1]
         palette = {
-            "green": (7, 169, 54),
+            "green": (21, 154, 99),
             "blue": (7, 93, 243),
             "orange": (245, 124, 4),
             "violet": (121, 64, 224),

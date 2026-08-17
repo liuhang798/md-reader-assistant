@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-title MD Reader Assistant - Get Latest Code
+title Quillite Markdown - Get Latest Code
 cd /d "%~dp0"
 
-set "REPO_URL=https://github.com/liuhang798/md-reader-assistant.git"
+set "REPO_URL=https://github.com/liuhang798/quillite-markdown.git"
 set "BRANCH=main"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
@@ -12,7 +12,7 @@ set "STATUS_FILE=%TEMP%\md-reader-pull-%RANDOM%-%RANDOM%.tmp"
 
 echo.
 echo ========================================
-echo   MD Reader Assistant - Get Latest Code
+echo   Quillite Markdown - Get Latest Code
 echo ========================================
 echo   Project: %CD%
 echo   Remote : %REPO_URL%
@@ -29,7 +29,7 @@ if errorlevel 1 (
 
 if not exist ".git" (
     echo [ERROR] This folder is not a Git repository.
-    echo Run this file from the MD Reader Assistant project folder.
+    echo Run this file from the Quillite Markdown project folder.
     goto :failed
 )
 

@@ -71,7 +71,7 @@ func (a *App) DownloadAndApplyUpdate() error {
 	if err != nil {
 		return err
 	}
-	updateDir := filepath.Join(configDir, "MD阅读助手", "update")
+	updateDir := filepath.Join(configDir, appNameZH, "update")
 	if err := os.MkdirAll(updateDir, 0o755); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (a *App) downloadFile(url, destination string) error {
 	if err != nil {
 		return err
 	}
-	request.Header.Set("User-Agent", "MDReaderAssistant/"+appVersion)
+	request.Header.Set("User-Agent", "QuilliteMarkdown/"+appVersion)
 
 	response, err := (&http.Client{Timeout: 30 * time.Minute}).Do(request)
 	if err != nil {

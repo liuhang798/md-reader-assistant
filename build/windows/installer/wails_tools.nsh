@@ -5,16 +5,16 @@
 !include "FileFunc.nsh"
 
 !ifndef INFO_PROJECTNAME
-    !define INFO_PROJECTNAME "md-reader-assistant"
+    !define INFO_PROJECTNAME "quillite-markdown"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "LeafMD Open Source"
+    !define INFO_COMPANYNAME "Quillite Open Source"
 !endif
 !ifndef INFO_PRODUCTNAME
-    !define INFO_PRODUCTNAME "MD阅读助手"
+    !define INFO_PRODUCTNAME "轻阅 Markdown"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "2.3.10"
+    !define INFO_PRODUCTVERSION "2.4.3"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright © 2026 柳航"
@@ -238,52 +238,40 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 
 !macro wails.associateFiles
     ; Create file associations
-
-      !insertmacro APP_ASSOCIATE "md" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-
-      File "..\mdFileIcon.ico"
-
-      !insertmacro APP_ASSOCIATE "markdown" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+      !insertmacro APP_ASSOCIATE "md" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "使用 ${INFO_PRODUCTNAME} 打开" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
 
       File "..\mdFileIcon.ico"
-
-      !insertmacro APP_ASSOCIATE "mdown" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
-
-      File "..\mdFileIcon.ico"
-
-      !insertmacro APP_ASSOCIATE "mkd" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+      !insertmacro APP_ASSOCIATE "markdown" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "使用 ${INFO_PRODUCTNAME} 打开" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
 
       File "..\mdFileIcon.ico"
-
-      !insertmacro APP_ASSOCIATE "txt" "Text Document" "文本文件" "$INSTDIR\mdFileIcon.ico" "Open with ${INFO_PRODUCTNAME}" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+      !insertmacro APP_ASSOCIATE "mdown" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "使用 ${INFO_PRODUCTNAME} 打开" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
 
       File "..\mdFileIcon.ico"
+      !insertmacro APP_ASSOCIATE "mkd" "Markdown Document" "Markdown 文档" "$INSTDIR\mdFileIcon.ico" "使用 ${INFO_PRODUCTNAME} 打开" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
 
+      File "..\mdFileIcon.ico"
+      !insertmacro APP_ASSOCIATE "txt" "Text Document" "文本文件" "$INSTDIR\mdFileIcon.ico" "使用 ${INFO_PRODUCTNAME} 打开" "$INSTDIR\${PRODUCT_EXECUTABLE} $\"%1$\""
+
+      File "..\mdFileIcon.ico"
 !macroend
 
 !macro wails.unassociateFiles
     ; Delete app associations
-
       !insertmacro APP_UNASSOCIATE "md" "Markdown Document"
 
       Delete "$INSTDIR\mdFileIcon.ico"
-
       !insertmacro APP_UNASSOCIATE "markdown" "Markdown Document"
 
       Delete "$INSTDIR\mdFileIcon.ico"
-
       !insertmacro APP_UNASSOCIATE "mdown" "Markdown Document"
 
       Delete "$INSTDIR\mdFileIcon.ico"
-
       !insertmacro APP_UNASSOCIATE "mkd" "Markdown Document"
 
       Delete "$INSTDIR\mdFileIcon.ico"
-
       !insertmacro APP_UNASSOCIATE "txt" "Text Document"
 
       Delete "$INSTDIR\mdFileIcon.ico"
-
 !macroend
 
 !macro CUSTOM_PROTOCOL_ASSOCIATE PROTOCOL DESCRIPTION ICON COMMAND
@@ -302,10 +290,8 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 
 !macro wails.associateCustomProtocols
     ; Create custom protocols associations
-
 !macroend
 
 !macro wails.unassociateCustomProtocols
     ; Delete app custom protocol associations
-
 !macroend

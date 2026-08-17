@@ -23,10 +23,13 @@ import (
 )
 
 const (
-	appNameZH  = "MD阅读助手"
-	appNameEN  = "MD Reader Assistant"
-	appVersion = "2.4.3"
-	maxRecent  = 10
+	appNameZH       = "轻阅 Markdown"
+	appNameShortZH  = "轻阅"
+	appNameEN       = "Quillite Markdown"
+	legacyAppNameZH = "MD阅读助手"
+	legacyAppNameEN = "MD Reader Assistant"
+	appVersion      = "2.4.3"
+	maxRecent       = 10
 )
 
 var markdownExtensions = map[string]bool{
@@ -154,6 +157,43 @@ func (a *App) preferencePath() string {
 	return filepath.Join(base, appNameZH, "preferences.json")
 }
 
+// migrateLegacyPreferences preserves user settings across the product rename.
+// The legacy file is copied, not removed, so users can safely roll back once.
+func (a *App) migrateLegacyPreferences() {
+	if a.preferencesOverride != "" {
+		return
+	}
+	newPath := a.preferencePath()
+	if _, err := os.Stat(newPath); err == nil {
+		return
+	}
+	base, err := os.UserConfigDir()
+	if err != nil {
+		return
+	}
+	_ = migrateLegacyPreferencesFile(newPath, []string{
+		filepath.Join(base, legacyAppNameZH, "preferences.json"),
+		filepath.Join(base, legacyAppNameEN, "preferences.json"),
+	})
+}
+
+func migrateLegacyPreferencesFile(newPath string, legacyPaths []string) error {
+	if _, err := os.Stat(newPath); err == nil {
+		return nil
+	}
+	for _, legacyPath := range legacyPaths {
+		data, err := os.ReadFile(legacyPath)
+		if err != nil {
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(newPath), 0o755); err != nil {
+			return err
+		}
+		return os.WriteFile(newPath, data, 0o644)
+	}
+	return nil
+}
+
 func (a *App) languageSelectionMarkerPath() string {
 	return filepath.Join(filepath.Dir(a.preferencePath()), "first-run-language.flag")
 }
@@ -176,6 +216,7 @@ func (a *App) readPreferences() (Preferences, error) {
 }
 
 func (a *App) readPreferencesUnlocked() (Preferences, error) {
+	a.migrateLegacyPreferences()
 	prefs := defaultPreferences()
 	data, err := os.ReadFile(a.preferencePath())
 	if errors.Is(err, os.ErrNotExist) {

@@ -39,7 +39,7 @@ func main() {
 		OnStartup:         app.startup,
 		OnBeforeClose:     app.beforeClose,
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId:               "com.liuhang.md-reader-assistant",
+			UniqueId:               "com.liuhang.quillite-markdown",
 			OnSecondInstanceLaunch: app.onSecondInstanceLaunch,
 		},
 		DragAndDrop: &options.DragAndDrop{EnableFileDrop: true, DisableWebViewDrop: false},

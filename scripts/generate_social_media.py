@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 ROOT = Path(__file__).resolve().parents[1]
 SCREENSHOTS = ROOT / "screenshots"
 OUTPUT = ROOT / "social-media" / "portrait-2026-07-22"
-ACCENT = (7, 142, 55)
+ACCENT = (21, 154, 99)
 DARK = (17, 61, 42)
 MUTED = (54, 104, 78)
 
@@ -80,7 +80,7 @@ def brand(canvas: Image.Image, y: int, large: bool = False) -> int:
     logo = Image.open(ROOT / "frontend" / "src" / "assets" / "images" / "app-logo-green.png").convert("RGBA")
     logo.thumbnail((logo_size, logo_size), Image.Resampling.LANCZOS)
     title_font = font(56 if large else 38, bold=True)
-    title = "MD阅读助手"
+    title = "轻阅 Markdown"
     title_box = ImageDraw.Draw(canvas).textbbox((0, 0), title, font=title_font)
     total_width = logo_size + 28 + title_box[2] - title_box[0]
     x = (1080 - total_width) // 2
@@ -125,7 +125,7 @@ def make_cover_9x16() -> None:
     centered(draw, "Windows  ·  macOS  ·  Linux", 645, font(29), (44, 55, 49))
     paste_card(canvas, SCREENSHOTS / "03-split-editor.png", (54, 790, 972, 570))
     centered(draw, "开源免费  ·  本地优先  ·  约 7 MB", 1500, font(27), MUTED)
-    centered(draw, "MD Reader Assistant  v2.4.0", 1560, font(22), (101, 118, 108))
+    centered(draw, "Quillite Markdown  v2.4.0", 1560, font(22), (101, 118, 108))
     OUTPUT.mkdir(parents=True, exist_ok=True)
     canvas.save(OUTPUT / "01-cover-douyin-9x16.png", optimize=True)
 

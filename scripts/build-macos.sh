@@ -8,10 +8,10 @@ platform="${1:-darwin/universal}"
 if [[ $# -gt 0 ]]; then
   shift
 fi
-app_name="MD阅读助手.app"
+app_name="轻阅 Markdown.app"
 
 cd "${project_dir}"
-wails build -clean -platform "${platform}" -o MDReaderAssistant -trimpath -nocolour "$@"
+wails build -clean -platform "${platform}" -o QuilliteMarkdown -trimpath -nocolour "$@"
 
 source_app="$(find build/bin -maxdepth 1 -type d -name '*.app' -print -quit)"
 if [[ -z "${source_app}" ]]; then
@@ -30,7 +30,7 @@ if [[ "${source_app}" != "${target_app}" ]]; then
 fi
 
 display_name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "${target_app}/Contents/Info.plist")"
-if [[ "${display_name}" != "MD阅读助手" ]]; then
+if [[ "${display_name}" != "轻阅 Markdown" ]]; then
   echo "Unexpected macOS display name: ${display_name}" >&2
   exit 1
 fi

@@ -1,5 +1,5 @@
 export const ACCENT_THEMES = Object.freeze({
-  green: Object.freeze({ zhCN: '清新绿', en: 'Fresh Green', color: '#07A936', logo: new URL('./assets/images/app-logo-green.png', import.meta.url).href }),
+  green: Object.freeze({ zhCN: '清新绿', en: 'Fresh Green', color: '#159A63', logo: new URL('./assets/images/app-logo-green.png', import.meta.url).href }),
   blue: Object.freeze({ zhCN: '晴空蓝', en: 'Clear Blue', color: '#075DF3', logo: new URL('./assets/images/app-logo-blue.png', import.meta.url).href }),
   orange: Object.freeze({ zhCN: '活力橙', en: 'Vivid Orange', color: '#F57C04', logo: new URL('./assets/images/app-logo-orange.png', import.meta.url).href }),
   violet: Object.freeze({ zhCN: '灵动紫', en: 'Vivid Violet', color: '#7940E0', logo: new URL('./assets/images/app-logo-violet.png', import.meta.url).href }),

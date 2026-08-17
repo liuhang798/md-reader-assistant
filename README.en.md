@@ -1,27 +1,27 @@
 <div align="center">
-  <img src="build/appicon.png" width="96" alt="MD Reader Assistant icon">
-  <h1>MD Reader Assistant</h1>
+  <img src="build/appicon.png" width="96" alt="Quillite Markdown icon">
+  <h1>Quillite Markdown</h1>
   <p><strong>A fast, local-first Markdown reader, viewer and editor — about 7 MB on Windows.</strong></p>
   <p>Live preview · Syntax highlighting · Plain local files · Windows, macOS and Linux</p>
   <p><a href="README.md">简体中文</a> · <strong>English</strong></p>
   <p>
-    <a href="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml"><img src="https://github.com/liuhang798/md-reader-assistant/actions/workflows/release.yml/badge.svg" alt="Build status"></a>
-    <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/md-reader-assistant" alt="Latest release"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/md-reader-assistant" alt="MIT License"></a>
+    <a href="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml"><img src="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml/badge.svg" alt="Build status"></a>
+    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/quillite-markdown" alt="Latest release"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/quillite-markdown" alt="MIT License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-526b58" alt="Windows, macOS and Linux">
   </p>
   <p>
     <a href="https://liuhang798.github.io/"><strong>Official website</strong></a>
     ·
-    <a href="https://github.com/liuhang798/md-reader-assistant/releases/latest"><strong>Download latest release</strong></a>
+    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><strong>Download latest release</strong></a>
     · <a href="#screenshots">Screenshots</a>
     · <a href="#development">Build from source</a>
   </p>
 </div>
 
-![MD Reader Assistant split-view Markdown editor with live preview and syntax highlighting](screenshots/en/03-split-editor.png)
+![Quillite Markdown split-view Markdown editor with live preview and syntax highlighting](screenshots/en/03-split-editor.png)
 
-## Why MD Reader Assistant?
+## Why Quillite Markdown?
 
 - **Lightweight by design:** the Windows installer is only about **7 MB**, built with Go and Wails instead of Electron.
 - **Local-first and private:** open and edit ordinary Markdown files on your computer—no account, proprietary vault or cloud lock-in.
@@ -35,16 +35,21 @@ It is a good fit for reading long Markdown documents, editing README files, main
 
 | Platform | Package | Download |
 |---|---|---|
-| Windows x64 | Step-by-step installer (`.exe`) | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
-| macOS | Universal Intel + Apple Silicon (`.dmg`) | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
-| Linux x64 | Debian package + portable AppImage | [Latest release](https://github.com/liuhang798/md-reader-assistant/releases/latest) |
+| Windows x64 | Step-by-step installer (`.exe`) | [Latest release](https://github.com/liuhang798/quillite-markdown/releases/latest) |
+| macOS | Universal Intel + Apple Silicon (`.dmg`) | [Latest release](https://github.com/liuhang798/quillite-markdown/releases/latest) |
+| Linux x64 | Debian package + portable AppImage | [Latest release](https://github.com/liuhang798/quillite-markdown/releases/latest) |
 
-On Windows, run `md-reader-assistant-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup. Its selected language is also used by the app, so first launch does not ask for it again.
+On Windows, run `quillite-markdown-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup. The Windows install, upgrade, and uninstall flow is presented entirely in Simplified Chinese. A fresh installation starts the app in Chinese, while the app interface can still be switched to English afterward.
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
 ## What's new in 2.4.3
 
+- Unified the default brand green at the exact `#159A63`; primary controls are no longer automatically darkened to `#10744A`, keeping buttons, selections, accent text, and application icons on the same green.
+- Replaced the top-left brand tile with a transparent open-book mark whose strokes follow the selected accent, with no square plate, border, or shadow.
+- Aligned the title-bar book mark and “Quillite Markdown” label to the same visual height, with dedicated sizing for the compact macOS title bar.
+- Removed drop shadows from accent-colored buttons (New Document, back-to-top, home leaf icon) for a cleaner look; selected states keep their theme-colored outline.
+- The Windows install, upgrade, and uninstall wizard is now Simplified Chinese only, with no setup-language dialog; compatibility messages, WebView2 progress text, and file-open actions are localized as well.
 - Text zoom now applies globally: the reading content, the recent/explorer sidebar, and the table of contents all scale together.
 - The sidebar and table-of-contents dividers no longer have a maximum width; they can be dragged freely and the width is remembered.
 
@@ -63,7 +68,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 
 - Fixed the Windows in-app updater's executable-locking issue by running its helper from a separate temporary executable instead of the installed application file.
 - After download and verification, the app can close the old version, replace it, and reopen automatically without another installer wizard.
-- Update failures now include an explicit reason in `MD阅读助手/update/apply-update.log` under the user's configuration directory.
+- Update failures now include an explicit reason in `轻阅 Markdown/update/apply-update.log` under the user's configuration directory.
 - Older clients cannot repair their own updater, so 2.3.12 or later must be installed manually once; future releases can then use installer-free in-app updates.
 
 ## What's new in 2.3.5
@@ -74,7 +79,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 
 ## What's new in 2.3.4
 
-- Returning to MD Reader Assistant now reloads the active document after another application changes it, while local unsaved edits remain protected from replacement.
+- Returning to Quillite Markdown now reloads the active document after another application changes it, while local unsaved edits remain protected from replacement.
 - The More menu now offers document width presets — narrow, medium, wide, and full width — applied to both the reader and the live editor preview and remembered across sessions.
 - Fixed reader search skipping Markdown inline code and fenced code blocks; code text is now counted, highlighted, and navigated correctly.
 
@@ -155,7 +160,7 @@ Version 2.0 and later replace Electron with Go and Wails while retaining the exi
 - `packaging/`: Linux desktop integration and package metadata.
 - `scripts/`: repeatable project asset-maintenance scripts.
 
-New Markdown documents do not require a location prompt. On macOS they are always stored in the user's `Documents/MD Reader Assistant` folder so application upgrades cannot overwrite them. Portable Windows and Linux builds retain the application-directory preference with a Documents fallback. Saving a new document under another name removes its auto-created draft and duplicate Recent entry. Local images referenced by absolute or relative paths are loaded securely through the Go backend for reliable previewing.
+New Markdown documents do not require a location prompt. On macOS they are always stored in the user's `Documents/Quillite Markdown` folder so application upgrades cannot overwrite them. Portable Windows and Linux builds retain the application-directory preference with a Documents fallback. Saving a new document under another name removes its auto-created draft and duplicate Recent entry. Local images referenced by absolute or relative paths are loaded securely through the Go backend for reliable previewing.
 
 ## Downloads
 
@@ -191,7 +196,7 @@ Build on the current platform:
 wails build -clean -trimpath
 ```
 
-On macOS, use the wrapper to produce a consistently named `MD阅读助手.app` bundle:
+On macOS, use the wrapper to produce a consistently named `轻阅 Markdown.app` bundle:
 
 ```bash
 bash scripts/build-macos.sh darwin/universal

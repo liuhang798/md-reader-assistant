@@ -1,4 +1,4 @@
-module github.com/liuhang798/md-reader-assistant/v2
+module github.com/liuhang798/quillite-markdown/v2
 
 go 1.25.0
 

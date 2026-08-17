@@ -18,6 +18,41 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 )
 
+func TestMigrateLegacyPreferencesFilePreservesExistingSettings(t *testing.T) {
+	root := t.TempDir()
+	legacyPath := filepath.Join(root, legacyAppNameZH, "preferences.json")
+	newPath := filepath.Join(root, appNameZH, "preferences.json")
+	legacyData := []byte(`{"language":"en","recentFiles":["C:\\notes\\guide.md"]}`)
+	if err := os.MkdirAll(filepath.Dir(legacyPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(legacyPath, legacyData, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrateLegacyPreferencesFile(newPath, []string{legacyPath}); err != nil {
+		t.Fatal(err)
+	}
+	migrated, err := os.ReadFile(newPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(migrated, legacyData) {
+		t.Fatalf("migrated preferences = %q, want %q", migrated, legacyData)
+	}
+
+	existing := []byte(`{"language":"zh-CN"}`)
+	if err := os.WriteFile(newPath, existing, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrateLegacyPreferencesFile(newPath, []string{legacyPath}); err != nil {
+		t.Fatal(err)
+	}
+	unchanged, _ := os.ReadFile(newPath)
+	if !bytes.Equal(unchanged, existing) {
+		t.Fatal("an existing new-brand preference file must never be overwritten")
+	}
+}
+
 func TestCreateNewMarkdownFileUsesFirstWritableDirectory(t *testing.T) {
 	first := filepath.Join(t.TempDir(), "install")
 	fallback := filepath.Join(t.TempDir(), "documents")
@@ -43,7 +78,7 @@ func TestCreateNewMarkdownFileUsesFirstWritableDirectory(t *testing.T) {
 }
 
 func TestMacNewDocumentsNeverUseTheReplaceableApplicationBundle(t *testing.T) {
-	executable := filepath.Join(string(filepath.Separator), "Applications", "MD阅读助手.app", "Contents", "MacOS", "MDReaderAssistant")
+	executable := filepath.Join(string(filepath.Separator), "Applications", "轻阅 Markdown.app", "Contents", "MacOS", "QuilliteMarkdown")
 	home := filepath.Join(string(filepath.Separator), "Users", "reader")
 	config := filepath.Join(home, "Library", "Application Support")
 
@@ -63,7 +98,7 @@ func TestMacNewDocumentsNeverUseTheReplaceableApplicationBundle(t *testing.T) {
 }
 
 func TestOtherPlatformsRetainPortableExecutableDirectoryPreference(t *testing.T) {
-	executable := filepath.Join(string(filepath.Separator), "opt", "md-reader", "MDReaderAssistant")
+	executable := filepath.Join(string(filepath.Separator), "opt", "md-reader", "QuilliteMarkdown")
 	home := filepath.Join(string(filepath.Separator), "Users", "reader")
 	config := filepath.Join(home, ".config")
 
@@ -78,7 +113,7 @@ func TestOtherPlatformsRetainPortableExecutableDirectoryPreference(t *testing.T)
 func TestRecoveredMacDraftReferencesMoveToTheSafeDocumentsDirectory(t *testing.T) {
 	app := testApp(t)
 	home := t.TempDir()
-	legacyPath := filepath.Join(string(filepath.Separator), "Applications", "MD阅读助手.app", "Contents", "MacOS", "新建文档-20260808-211433.md")
+	legacyPath := filepath.Join(string(filepath.Separator), "Applications", "轻阅 Markdown.app", "Contents", "MacOS", "新建文档-20260808-211433.md")
 	recoveredPath := filepath.Join(home, "Documents", appNameEN, filepath.Base(legacyPath))
 	if err := os.MkdirAll(filepath.Dir(recoveredPath), 0o755); err != nil {
 		t.Fatal(err)
@@ -621,18 +656,23 @@ func TestLanguagePersistenceAndArgumentDetection(t *testing.T) {
 	}
 }
 
-func TestWindowsInstallerUsesItsLanguageAsTheInitialAppLanguage(t *testing.T) {
+func TestWindowsInstallerIsSimplifiedChineseOnly(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("build", "windows", "installer", "project.nsi"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	installer := string(data)
 	for _, required := range []string{
+		`!define WAILS_WIN10_REQUIRED "轻阅 Markdown 仅支持 Windows 10（Server 2016）及更高版本。"`,
+		`!define WAILS_ARCHITECTURE_NOT_SUPPORTED "当前 Windows 系统架构不受支持。支持的架构：${ARCH}"`,
+		`!define WAILS_INSTALL_WEBVIEW_DETAILPRINT "正在安装 Microsoft WebView2 运行时"`,
+		`!insertmacro MUI_LANGUAGE "SimpChinese"`,
+		`StrCpy $LANGUAGE ${LANG_SIMPCHINESE}`,
+		`ShowInstDetails nevershow`,
 		`Delete "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag"`,
 		`IfFileExists "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" installerLanguageDone`,
-		`StrCmp $LANGUAGE ${LANG_ENGLISH} installerLanguageEnglish installerLanguageChinese`,
-		`$\"language$\":$\"en$\"`,
 		`$\"language$\":$\"zh-CN$\"`,
+		`"使用 ${INFO_PRODUCTNAME} 打开"`,
 	} {
 		if !strings.Contains(installer, required) {
 			t.Errorf("Windows installer is missing initial-language rule %q", required)
@@ -640,6 +680,18 @@ func TestWindowsInstallerUsesItsLanguageAsTheInitialAppLanguage(t *testing.T) {
 	}
 	if strings.Contains(installer, `FileOpen $0 "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag"`) {
 		t.Fatal("Windows installer must not create a marker that asks for language again in the application")
+	}
+	for _, forbidden := range []string{
+		`!insertmacro MUI_LANGUAGE "English"`,
+		`MUI_LANGDLL_DISPLAY`,
+		`MUI_UNGETLANGUAGE`,
+		`${LANG_ENGLISH}`,
+		`$\"language$\":$\"en$\"`,
+		`Open with ${INFO_PRODUCTNAME}`,
+	} {
+		if strings.Contains(installer, forbidden) {
+			t.Errorf("Windows installer must not contain English/multilingual setup rule %q", forbidden)
+		}
 	}
 }
 
@@ -650,13 +702,13 @@ func TestWindowsInstallerUsesReinstallSafeShortcutIcons(t *testing.T) {
 	}
 	installer := string(data)
 
-	if strings.Contains(installer, `File "/oname=MDReaderAssistant-${INFO_PRODUCTVERSION}.ico"`) {
+	if strings.Contains(installer, `File "/oname=QuilliteMarkdown-${INFO_PRODUCTVERSION}.ico"`) {
 		t.Fatal("Windows installer must not overwrite a standalone shortcut icon that Explorer may still have locked")
 	}
 	for _, required := range []string{
 		`CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0`,
 		`CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0`,
-		`Delete /REBOOTOK "$INSTDIR\MDReaderAssistant-*.ico"`,
+		`Delete /REBOOTOK "$INSTDIR\QuilliteMarkdown-*.ico"`,
 	} {
 		if !strings.Contains(installer, required) {
 			t.Errorf("Windows installer is missing reinstall-safe shortcut rule %q", required)
@@ -695,7 +747,6 @@ func TestWindowsInstallerOffersToCloseALockedRunningApplication(t *testing.T) {
 	installer := string(data)
 
 	for _, required := range []string{
-		`LangString CloseRunningAppPrompt ${LANG_ENGLISH}`,
 		`LangString CloseRunningAppPrompt ${LANG_SIMPCHINESE}`,
 		`Function EnsureApplicationClosed`,
 		`Call EnsureApplicationClosed`,
@@ -801,8 +852,8 @@ func TestMacBundleUsesProductDisplayNameAndCanonicalFilename(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(buildScript), `app_name="MD阅读助手.app"`) {
-		t.Fatal("macOS build wrapper must normalize the bundle filename to MD阅读助手.app")
+	if !strings.Contains(string(buildScript), `app_name="轻阅 Markdown.app"`) {
+		t.Fatal("macOS build wrapper must normalize the bundle filename to 轻阅 Markdown.app")
 	}
 
 	workflow, err := os.ReadFile(filepath.Join(".github", "workflows", "release.yml"))
@@ -811,7 +862,7 @@ func TestMacBundleUsesProductDisplayNameAndCanonicalFilename(t *testing.T) {
 	}
 	workflowText := string(workflow)
 	if !strings.Contains(workflowText, "bash scripts/build-macos.sh darwin/universal") ||
-		!strings.Contains(workflowText, `app_path="build/bin/MD阅读助手.app"`) {
+		!strings.Contains(workflowText, `app_path="build/bin/轻阅 Markdown.app"`) {
 		t.Fatal("release workflow must build and package the canonical macOS app bundle")
 	}
 }

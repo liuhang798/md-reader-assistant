@@ -13,18 +13,18 @@ import (
 
 func TestPickUpdateAsset(t *testing.T) {
 	assets := []githubReleaseAsset{
-		{Name: "md-reader-assistant-2.3.11-linux-amd64.deb"},
-		{Name: "md-reader-assistant-2.3.11-macos-universal.dmg"},
-		{Name: "md-reader-assistant-2.3.11-macos-universal.bin"},
-		{Name: "md-reader-assistant-2.3.11-windows-amd64.exe"},
-		{Name: "md-reader-assistant-2.3.11-windows-amd64.bin"},
+		{Name: "quillite-markdown-2.3.11-linux-amd64.deb"},
+		{Name: "quillite-markdown-2.3.11-macos-universal.dmg"},
+		{Name: "quillite-markdown-2.3.11-macos-universal.bin"},
+		{Name: "quillite-markdown-2.3.11-windows-amd64.exe"},
+		{Name: "quillite-markdown-2.3.11-windows-amd64.bin"},
 	}
 
 	darwin, err := pickUpdateAsset(assets, "darwin")
 	if err != nil {
 		t.Fatalf("darwin: %v", err)
 	}
-	if darwin.Name != "md-reader-assistant-2.3.11-macos-universal.bin" {
+	if darwin.Name != "quillite-markdown-2.3.11-macos-universal.bin" {
 		t.Fatalf("darwin picked %q, want the .bin executable", darwin.Name)
 	}
 
@@ -32,7 +32,7 @@ func TestPickUpdateAsset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("windows: %v", err)
 	}
-	if windows.Name != "md-reader-assistant-2.3.11-windows-amd64.bin" {
+	if windows.Name != "quillite-markdown-2.3.11-windows-amd64.bin" {
 		t.Fatalf("windows picked %q, want the portable .bin executable", windows.Name)
 	}
 

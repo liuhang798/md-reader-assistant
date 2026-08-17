@@ -1,11 +1,11 @@
-# MD阅读助手：AI 项目技术指南
+# 轻阅 Markdown：AI 项目技术指南
 
 本文是提供给代码代理、自动化编程助手和新维护者的项目上下文。开始修改前应完整阅读本文，再按任务范围查看相关源码。
 
 ## 1. 项目概览
 
-- 项目名称：MD阅读助手 / MD Reader Assistant
-- 仓库：`https://github.com/liuhang798/md-reader-assistant`
+- 项目名称：轻阅 Markdown / Quillite Markdown
+- 仓库：`https://github.com/liuhang798/quillite-markdown`
 - 当前版本：`2.4.3`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
@@ -38,7 +38,7 @@
 用户操作
   ↓
 frontend/index.html + frontend/src/renderer.js
-  ↓ window.leafMD
+  ↓ window.quilliteMarkdown
 frontend/src/main.js（统一桥接层）
   ↓ Wails 生成绑定
 app.go / updates.go（Go 后端）
@@ -128,7 +128,7 @@ app.go / updates.go（Go 后端）
 
 ### `Preferences`
 
-偏好文件位于 `os.UserConfigDir()/MD阅读助手/preferences.json`，主要字段：
+偏好文件位于 `os.UserConfigDir()/轻阅 Markdown/preferences.json`，主要字段：
 
 - `recentFiles`：最多 10 个最近文档路径。
 - `favoriteFiles`：用户主动收藏的文档路径；独立于最近阅读，原文件失效时仍保留记录。
@@ -147,7 +147,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 ### 文档
 
 - `OpenFile()`：显示系统选择窗口并读取文档。
-- `NewFile()`：静默创建唯一文件名；macOS 固定写入用户 `Documents/MD Reader Assistant`，避免 `.app` 升级覆盖用户文档；Windows/Linux 便携版优先写入应用目录，不可写时回退到用户 Documents。
+- `NewFile()`：静默创建唯一文件名；macOS 固定写入用户 `Documents/Quillite Markdown`，避免 `.app` 升级覆盖用户文档；Windows/Linux 便携版优先写入应用目录，不可写时回退到用户 Documents。
 - `ReadFile(path)`：读取指定文件并写入最近阅读。
 - `SaveFile(path, content)`：覆盖保存。
 - `SaveAs(currentPath, content)`：另存并处理临时草稿替换。
@@ -179,7 +179,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 
 ## 8. 前端状态与桥接
 
-前端禁止在多个文件中直接调用 `window.go.main.App`。所有后端调用统一通过 `frontend/src/main.js` 暴露的 `window.leafMD`，这样浏览器预览和桌面运行可以共享代码。
+前端禁止在多个文件中直接调用 `window.go.main.App`。所有后端调用统一通过 `frontend/src/main.js` 暴露的 `window.quilliteMarkdown`，这样浏览器预览和桌面运行可以共享代码。
 
 `renderer.js` 的 `state` 是当前唯一前端状态源：
 
@@ -244,7 +244,7 @@ WebView 会限制直接访问 `file://` 图片。Markdown 源码仍保存正常�
    - `-DWAILS_INSTALL_SCOPE=user`
    - `-DREQUEST_EXECUTION_LEVEL=user`
 10. 升级安装不能生成重复桌面图标或重复卸载项，并且必须自动沿用上次选择的安装目录；兼容旧版时可从卸载项的 `DisplayIcon` 反推目录。安装完成页默认勾选运行应用，但必须允许用户取消。
-11. Windows 安装向导必须提供简体中文与 English；仅全新安装写入 `first-run-language.flag`，用户选择语言后删除。macOS/Linux 以偏好文件是否存在判断首次运行；旧版本升级绝不能出现首次语言选择。
+11. Windows 安装、升级与卸载向导必须全程使用简体中文；全新安装默认写入中文偏好，旧版本升级必须迁移并保留已有语言与其他设置。macOS/Linux 以偏好文件是否存在判断首次运行。
 12. 版本号、安装包名称、关于窗口、更新检查和 CHANGELOG 必须一致。
 
 ## 11. 安全边界
@@ -297,7 +297,7 @@ Windows 安装包：
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-macOS 应用包应通过统一脚本构建，脚本会把 Wails 的原始输出规范为 `MD阅读助手.app`，避免 Spotlight 或启动台显示项目内部名称：
+macOS 应用包应通过统一脚本构建，脚本会把 Wails 的原始输出规范为 `轻阅 Markdown.app`，避免 Spotlight 或启动台显示项目内部名称：
 
 ```bash
 bash scripts/build-macos.sh darwin/universal

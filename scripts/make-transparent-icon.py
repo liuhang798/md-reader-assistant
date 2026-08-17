@@ -10,10 +10,12 @@ SOURCE = ROOT / "build" / "appicon.png"
 FRONTEND_ICON = ROOT / "frontend" / "src" / "assets" / "images" / "app-logo.png"
 ROOT_ICO = ROOT / "build" / "appicon.ico"
 WINDOWS_ICO = ROOT / "build" / "windows" / "icon.ico"
+FILE_ICON_SOURCE = ROOT / "build" / "mdFileIcon.png"
+WINDOWS_FILE_ICO = ROOT / "build" / "windows" / "mdFileIcon.ico"
 ICO_SIZES = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (96, 96), (128, 128), (192, 192), (256, 256)]
-SOURCE_ACCENT = (44, 176, 68)
+SOURCE_ACCENT = (21, 154, 99)
 ACCENT_PALETTE = {
-    "green": (7, 169, 54),
+    "green": SOURCE_ACCENT,
     "blue": (7, 93, 243),
     "orange": (245, 124, 4),
     "violet": (121, 64, 224),
@@ -125,6 +127,8 @@ def main() -> None:
         themed.save(FRONTEND_ICON.with_name(f"app-logo-{name}.png"), optimize=True)
     transparent.save(ROOT_ICO, format="ICO", sizes=ICO_SIZES, bitmap_format="png")
     WINDOWS_ICO.write_bytes(ROOT_ICO.read_bytes())
+    file_icon = Image.open(FILE_ICON_SOURCE).convert("RGBA")
+    file_icon.save(WINDOWS_FILE_ICO, format="ICO", sizes=ICO_SIZES, bitmap_format="png")
 
     alpha = transparent.getchannel("A")
     if alpha.getpixel((0, 0)) != 0 or alpha.getpixel((transparent.width - 1, transparent.height - 1)) != 0:

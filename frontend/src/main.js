@@ -23,7 +23,7 @@ if (desktopRuntime) {
 }
 document.documentElement.dataset.platform = platform;
 
-window.leafMD = {
+window.quilliteMarkdown = {
   newFile: () => desktopRuntime ? Backend.NewFile() : resolved({ path: 'New document.md', name: 'New document.md', directory: '.', content: '' }),
   openFile: () => desktopRuntime ? Backend.OpenFile() : resolved(null),
   openFolder: () => desktopRuntime ? Backend.OpenFolder() : resolved(null),
@@ -58,9 +58,9 @@ window.leafMD = {
           available: true,
           currentVersion: '2.4.3',
           latestVersion: '2.4.3',
-          releaseName: 'MD阅读助手 2.4.3',
+          releaseName: '轻阅 Markdown 2.4.3',
           releaseNotes: '新增阅读模式快捷操作\n优化大文档加载性能\n修复若干已知问题',
-          releaseUrl: 'https://github.com/liuhang798/md-reader-assistant/releases/latest'
+          releaseUrl: 'https://github.com/liuhang798/quillite-markdown/releases/latest'
         }
       : { checked: true, available: false, currentVersion: '2.4.3', latestVersion: '2.4.3' }),
   snoozeUpdates: days => desktopRuntime ? Backend.SnoozeUpdates(days) : resolved(),

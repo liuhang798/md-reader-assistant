@@ -61,7 +61,7 @@ const state = {
 
 const translations = {
   'zh-CN': {
-    appName: 'MD阅读助手', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
+    appName: '轻阅 Markdown', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
     accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '临时切换白天/黑夜模式；系统下次切换时恢复自动跟随', temporaryColorModeChanged: '已临时切换为{mode}模式；系统下次切换时恢复自动跟随', lightModeName: '白天', darkModeName: '黑夜', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
     library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', favoriteDocuments: '收藏文档', resourceExplorer: '资源浏览器', recentTab: '最近', favoritesTab: '收藏', explorerTab: '资源', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
@@ -95,7 +95,7 @@ const translations = {
     resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度', resizeEditor: '拖动调整预览宽度'
   },
   en: {
-    appName: 'MD Reader Assistant', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
+    appName: 'Quillite Markdown', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
     accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Temporarily switch light/dark mode; automatic following resumes at the next system appearance change', temporaryColorModeChanged: 'Temporarily switched to {mode} mode; automatic following resumes at the next system appearance change', lightModeName: 'light', darkModeName: 'dark', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
     library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', favoriteDocuments: 'Favorites', resourceExplorer: 'Explorer', recentTab: 'Recent', favoritesTab: 'Favorites', explorerTab: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
@@ -172,7 +172,7 @@ function setLanguage(language, silent = false, persist = true) {
   state.language = language === 'en' ? 'en' : 'zh-CN';
   localStorage.setItem('language', state.language);
   applyStaticTranslations();
-  const persistence = persist ? window.leafMD.setLanguage(state.language) : Promise.resolve(state.language);
+  const persistence = persist ? window.quilliteMarkdown.setLanguage(state.language) : Promise.resolve(state.language);
   els.editButtonLabel.textContent = t(state.editing ? 'preview' : 'edit');
   if (!state.currentFile) els.editorFileName.textContent = t('untitledDocument');
   updateLibraryHeading();
@@ -765,7 +765,7 @@ function insertImage() {
 async function insertLocalImage() {
   if (!state.currentFile) return;
   try {
-    const imagePath = await window.leafMD.selectImage(state.currentFile.path);
+    const imagePath = await window.quilliteMarkdown.selectImage(state.currentFile.path);
     if (!imagePath) return;
     const selected = els.imageAltInput.value.trim().replaceAll('[', '\\[').replaceAll(']', '\\]') || selectedImageAlt() || t('imageAlt');
     const markdownPath = /[\s()]/.test(imagePath) ? `<${imagePath.replaceAll('>', '%3E')}>` : imagePath;
@@ -934,7 +934,7 @@ function setColorMode(mode, persist = true) {
   document.documentElement.dataset.colorMode = state.colorMode;
   if (persist) localStorage.setItem('colorMode', state.colorMode);
   $('#colorModeButton').setAttribute('aria-pressed', String(state.colorMode === 'dark'));
-  window.leafMD.setTheme(state.colorMode === 'dark');
+  window.quilliteMarkdown.setTheme(state.colorMode === 'dark');
 }
 
 function toggleColorMode() {
@@ -983,7 +983,7 @@ let macWindowModePollDeadline = 0;
 async function syncMacWindowFullscreen() {
   if (document.documentElement.dataset.platform !== 'darwin') return;
   try {
-    const fullscreen = await window.leafMD.isWindowFullscreen();
+    const fullscreen = await window.quilliteMarkdown.isWindowFullscreen();
     document.documentElement.dataset.windowFullscreen = fullscreen ? 'true' : 'false';
   } catch (error) {
     console.warn('Unable to read macOS fullscreen state', error);
@@ -1114,7 +1114,7 @@ function applyLibraryPreferences(prefs) {
 
 async function refreshLibraryFileStatuses() {
   try {
-    applyLibraryPreferences(await window.leafMD.getPreferences());
+    applyLibraryPreferences(await window.quilliteMarkdown.getPreferences());
     renderFileList();
   } catch (error) {
     console.warn('Unable to refresh library file statuses', error);
@@ -1132,7 +1132,7 @@ function addRecentDocument(doc) {
 }
 
 async function removeRecentRecord(filePath) {
-  await window.leafMD.removeRecent(filePath);
+  await window.quilliteMarkdown.removeRecent(filePath);
   state.recentFiles = state.recentFiles.filter(file => !sameDocumentPath(file.path, filePath));
   if (state.sidebarMode === 'recent') state.files = [...state.recentFiles];
   renderFileList();
@@ -1140,9 +1140,9 @@ async function removeRecentRecord(filePath) {
 }
 
 async function setFavoriteRecord(filePath, shouldFavorite) {
-  if (shouldFavorite) await window.leafMD.addFavorite(filePath);
-  else await window.leafMD.removeFavorite(filePath);
-  applyLibraryPreferences(await window.leafMD.getPreferences());
+  if (shouldFavorite) await window.quilliteMarkdown.addFavorite(filePath);
+  else await window.quilliteMarkdown.removeFavorite(filePath);
+  applyLibraryPreferences(await window.quilliteMarkdown.getPreferences());
   renderFileList();
   showToast(t(shouldFavorite ? 'favoriteAdded' : 'favoriteRemoved'));
 }
@@ -1186,7 +1186,7 @@ async function refreshExplorer() {
   }
   try {
     const previousMode = state.sidebarMode;
-    const folder = await window.leafMD.listFolder(state.root);
+    const folder = await window.quilliteMarkdown.listFolder(state.root);
     state.explorerFiles = folder?.files || [];
     setSidebarMode(previousMode);
   } catch (error) {
@@ -1200,7 +1200,7 @@ function restoreExplorerAfterFirstPaint(savedRoot) {
   requestAnimationFrame(() => requestAnimationFrame(async () => {
     if (state.root !== savedRoot) return;
     try {
-      const folder = await window.leafMD.listFolder(savedRoot);
+      const folder = await window.quilliteMarkdown.listFolder(savedRoot);
       if (state.root !== savedRoot) return;
       state.root = folder?.root || savedRoot;
       state.explorerFiles = folder?.files || [];
@@ -1266,7 +1266,7 @@ function escapeHtml(value = '') {
 
 async function revealFileInFolder(filePath) {
   try {
-    await window.leafMD.showInFolder(filePath);
+    await window.quilliteMarkdown.showInFolder(filePath);
   } catch (error) {
     console.warn('Unable to show file in folder', error);
     showToast(t('recentRevealFailed'));
@@ -1276,7 +1276,7 @@ async function revealFileInFolder(filePath) {
 async function editRecentDocument(filePath) {
   if (!maybeDiscardChanges()) return;
   try {
-    displayDocument(await window.leafMD.readFile(filePath));
+    displayDocument(await window.quilliteMarkdown.readFile(filePath));
     await toggleEditor(true);
   } catch (error) {
     showToast(t('openFailed'));
@@ -1335,7 +1335,7 @@ function updateWindowTitle() {
 
 function setDirty(dirty) {
   state.dirty = Boolean(dirty);
-  window.leafMD.setDirty(state.dirty);
+  window.quilliteMarkdown.setDirty(state.dirty);
   els.editorSaveState.textContent = t(state.dirty ? 'unsaved' : 'saved');
   els.editorSaveState.classList.toggle('dirty', state.dirty);
   updateWindowTitle();
@@ -1362,7 +1362,7 @@ function renderMarkdownTo(container, doc, content) {
     if (/^(https?:|data:)/i.test(markdownSrc)) return;
     img.removeAttribute('src');
     img.classList.add('local-image-loading');
-    window.leafMD.readImageData(markdownSrc, doc.directory).then(dataUrl => {
+    window.quilliteMarkdown.readImageData(markdownSrc, doc.directory).then(dataUrl => {
       if (!img.isConnected) return;
       if (!dataUrl) throw new Error('Local image returned no data');
       img.src = dataUrl;
@@ -1452,7 +1452,7 @@ function displayDocument(doc) {
 async function newFile() {
   if (!maybeDiscardChanges()) return;
   try {
-    const doc = await window.leafMD.newFile();
+    const doc = await window.quilliteMarkdown.newFile();
     if (!doc?.path) return;
     displayDocument(doc);
     await toggleEditor(true);
@@ -1466,7 +1466,7 @@ async function newFile() {
 async function loadFile(filePath) {
   if (!maybeDiscardChanges()) return;
   try {
-    displayDocument(await window.leafMD.readFile(filePath));
+    displayDocument(await window.quilliteMarkdown.readFile(filePath));
   } catch (error) {
     showToast(t('openFailed'));
     console.error(error);
@@ -1478,7 +1478,7 @@ async function refreshCurrentFileFromDisk() {
   const requestedPath = state.currentFile.path;
   externalRefreshInProgress = true;
   try {
-    const refreshed = await window.leafMD.readFile(requestedPath);
+    const refreshed = await window.quilliteMarkdown.readFile(requestedPath);
     if (!state.currentFile || !sameDocumentPath(state.currentFile.path, requestedPath) || state.dirty || state.saving) return;
     if (!refreshed?.path || refreshed.content === state.currentFile.content) return;
 
@@ -1580,8 +1580,8 @@ async function saveDocument(saveAs = false, options = {}) {
   state.saving = true;
   try {
     const saved = saveAs
-      ? await window.leafMD.saveAs(originalPath, editingContent)
-      : await window.leafMD.saveFile(originalPath, editingContent);
+      ? await window.quilliteMarkdown.saveAs(originalPath, editingContent)
+      : await window.quilliteMarkdown.saveFile(originalPath, editingContent);
     if (!saved) return;
     const unchangedSinceSave = !state.editing || editorContent() === editingContent;
     if (saved.replacedPath) {
@@ -1629,14 +1629,14 @@ function bindDocumentActions(container = els.content) {
     const href = link.getAttribute('href') || '';
     if (/^https?:\/\//i.test(href)) {
       event.preventDefault();
-      window.leafMD.openExternal(href);
+      window.quilliteMarkdown.openExternal(href);
     }
   }));
 }
 
 async function openFile() {
   if (!maybeDiscardChanges()) return;
-  const doc = await window.leafMD.openFile();
+  const doc = await window.quilliteMarkdown.openFile();
   if (doc) {
     setSidebarMode('recent');
     displayDocument(doc);
@@ -1645,14 +1645,14 @@ async function openFile() {
 
 async function openFolder() {
   if (!maybeDiscardChanges()) return;
-  const folder = await window.leafMD.openFolder();
+  const folder = await window.quilliteMarkdown.openFolder();
   if (!folder) return;
   state.root = folder.root;
   state.explorerFiles = folder.files;
   setSidebarMode('explorer');
   if (folder.files[0]) {
     try {
-      displayDocument(await window.leafMD.readFile(folder.files[0].path));
+      displayDocument(await window.quilliteMarkdown.readFile(folder.files[0].path));
     } catch {
       showToast(t('folderOpenFailed'));
     }
@@ -1898,7 +1898,7 @@ function openUpdateDialog(info) {
     const href = link.getAttribute('href') || '';
     if (!/^https?:\/\//i.test(href)) return;
     event.preventDefault();
-    window.leafMD.openExternal(href);
+    window.quilliteMarkdown.openExternal(href);
   }));
   els.updateDialog.classList.remove('hidden');
   document.body.classList.add('dialog-open');
@@ -1919,7 +1919,7 @@ function closeUpdate() {
 async function checkForUpdates(manual = false) {
   if (manual) showToast(t('checkingForUpdates'));
   try {
-    const info = await window.leafMD.checkForUpdates(manual);
+    const info = await window.quilliteMarkdown.checkForUpdates(manual);
     if (info?.available) openUpdateDialog(info);
     else if (manual && info?.checked) showToast(t('alreadyLatest'));
   } catch (error) {
@@ -1960,7 +1960,7 @@ async function completeFirstRunLanguage(language) {
 
 async function snoozeUpdates() {
   try {
-    await window.leafMD.snoozeUpdates(30);
+    await window.quilliteMarkdown.snoozeUpdates(30);
     closeUpdate();
     showToast(t('updateSnoozed'));
   } catch (error) {
@@ -1993,10 +1993,10 @@ async function startDownloadAndUpdate() {
   $('#updateProgress').classList.remove('hidden');
   setUpdateProgress(0, 1);
   try {
-    await window.leafMD.downloadAndApplyUpdate();
+    await window.quilliteMarkdown.downloadAndApplyUpdate();
     $('#updateProgressLabel').textContent = t('preparingUpdate');
     $('#updateProgressBar').style.width = '100%';
-    setTimeout(() => window.leafMD.closeWindow(), 500);
+    setTimeout(() => window.quilliteMarkdown.closeWindow(), 500);
   } catch (error) {
     console.warn('In-app update failed:', error);
     applyingUpdate = false;
@@ -2015,18 +2015,18 @@ async function initialize() {
   setFontScale(state.fontScale, true);
   setDocumentWidth(state.docWidth, true);
   scheduleMacWindowModeSync();
-  const prefs = await window.leafMD.getPreferences();
-  const needsLanguageSelection = await window.leafMD.needsLanguageSelection();
+  const prefs = await window.quilliteMarkdown.getPreferences();
+  const needsLanguageSelection = await window.quilliteMarkdown.needsLanguageSelection();
   setLanguage(prefs.language || state.language, true, !needsLanguageSelection);
   applyLibraryPreferences(prefs);
   const savedExplorerRoot = String(prefs.explorerRoot || '').trim();
   state.root = savedExplorerRoot || null;
   state.explorerFiles = [];
   setSidebarMode(state.sidebarMode === 'explorer' && !state.root ? 'recent' : state.sidebarMode);
-  const initialFile = await window.leafMD.getInitialFile();
+  const initialFile = await window.quilliteMarkdown.getInitialFile();
   if (initialFile?.path) {
     displayDocument(initialFile);
-    if (await window.leafMD.getStartupMode() === 'edit') await toggleEditor(true);
+    if (await window.quilliteMarkdown.getStartupMode() === 'edit') await toggleEditor(true);
   }
   restoreExplorerAfterFirstPaint(savedExplorerRoot);
   if (needsLanguageSelection) openFirstRunLanguageDialog();
@@ -2080,7 +2080,7 @@ els.searchInput.addEventListener('keydown', event => {
 $('#revealButton').addEventListener('click', () => state.currentFile && revealFileInFolder(state.currentFile.path));
 $('#printButton').addEventListener('click', () => {
   if (state.editing) toggleEditor(false);
-  window.leafMD.print();
+  window.quilliteMarkdown.print();
 });
 $('#moreButton').addEventListener('click', event => {
   event.stopPropagation();
@@ -2089,12 +2089,12 @@ $('#moreButton').addEventListener('click', event => {
   els.codeLangMenu.classList.add('hidden');
   els.moreMenu.classList.toggle('hidden');
 });
-$('#windowMinimise').addEventListener('click', () => window.leafMD.minimiseWindow());
-$('#windowMaximise').addEventListener('click', () => window.leafMD.toggleMaximiseWindow());
-$('#windowClose').addEventListener('click', () => window.leafMD.closeWindow());
+$('#windowMinimise').addEventListener('click', () => window.quilliteMarkdown.minimiseWindow());
+$('#windowMaximise').addEventListener('click', () => window.quilliteMarkdown.toggleMaximiseWindow());
+$('#windowClose').addEventListener('click', () => window.quilliteMarkdown.closeWindow());
 $('#windowMaximise').addEventListener('dblclick', event => event.stopPropagation());
 $('.titlebar').addEventListener('dblclick', event => {
-  if (!event.target.closest('button, input')) window.leafMD.toggleMaximiseWindow();
+  if (!event.target.closest('button, input')) window.quilliteMarkdown.toggleMaximiseWindow();
 });
 $('#closeAbout').addEventListener('click', closeAbout);
 $('#aboutDone').addEventListener('click', closeAbout);
@@ -2106,18 +2106,18 @@ els.aboutDialog.addEventListener('click', event => {
 });
 els.aboutDialog.querySelectorAll('[data-external]').forEach(link => link.addEventListener('click', event => {
   event.preventDefault();
-  window.leafMD.openExternal(link.dataset.external);
+  window.quilliteMarkdown.openExternal(link.dataset.external);
 }));
 $('#closeUpdate').addEventListener('click', closeUpdate);
 $('#updateLater').addEventListener('click', closeUpdate);
 $('#updateSnooze').addEventListener('click', snoozeUpdates);
 $('#applyUpdate').addEventListener('click', startDownloadAndUpdate);
-window.leafMD.onUpdateProgress(progress => {
+window.quilliteMarkdown.onUpdateProgress(progress => {
   if (applyingUpdate) setUpdateProgress(Number(progress?.done) || 0, Number(progress?.total) || 0);
 });
 $('#openUpdatePage').addEventListener('click', () => {
   const releaseURL = state.updateInfo?.releaseUrl;
-  if (releaseURL) window.leafMD.openExternal(releaseURL);
+  if (releaseURL) window.quilliteMarkdown.openExternal(releaseURL);
   closeUpdate();
 });
 els.updateDialog.addEventListener('click', event => {
@@ -2196,12 +2196,12 @@ els.moreMenu.addEventListener('click', event => {
   if (action === 'zoom-reset') setFontScale(1);
   if (button?.dataset.docWidth) setDocumentWidth(button.dataset.docWidth);
   if (action === 'default-app') {
-    window.leafMD.openDefaultApps();
+    window.quilliteMarkdown.openDefaultApps();
     showToast(t('defaultAppHint'));
   }
   if (action === 'print') {
     if (state.editing) toggleEditor(false);
-    window.leafMD.print();
+    window.quilliteMarkdown.print();
   }
   if (action === 'check-update') checkForUpdates(true);
   if (action === 'about') openAbout();
@@ -2241,7 +2241,7 @@ document.addEventListener('keydown', event => {
   else if (primaryModifier && event.key.toLowerCase() === 'e') { event.preventDefault(); toggleEditor(); }
   else if (primaryModifier && event.key.toLowerCase() === 'o') { event.preventDefault(); openFile(); }
   else if (primaryModifier && event.key.toLowerCase() === 'f') { event.preventDefault(); openSearch(); }
-  else if (primaryModifier && event.key.toLowerCase() === 'p') { event.preventDefault(); window.leafMD.print(); }
+  else if (primaryModifier && event.key.toLowerCase() === 'p') { event.preventDefault(); window.quilliteMarkdown.print(); }
   else if (primaryModifier && (event.key === '+' || event.key === '=')) { event.preventDefault(); setFontScale(state.fontScale + .08); }
   else if (primaryModifier && event.key === '-') { event.preventDefault(); setFontScale(state.fontScale - .08); }
   else if (primaryModifier && event.key === '0') { event.preventDefault(); setFontScale(1); }
@@ -2265,13 +2265,13 @@ document.addEventListener('drop', async event => {
   els.dropOverlay.classList.add('hidden');
   const file = event.dataTransfer.files[0];
   if (!file) return;
-  const filePath = window.leafMD.pathForFile(file);
+  const filePath = window.quilliteMarkdown.pathForFile(file);
   if (!filePath) return;
   if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
   else showToast(t('dropUnsupported'));
 });
 
-window.leafMD.onFileDrop(paths => {
+window.quilliteMarkdown.onFileDrop(paths => {
   dragDepth = 0;
   els.dropOverlay.classList.add('hidden');
   const filePath = paths[0];
@@ -2291,7 +2291,7 @@ initialize();
 setInterval(() => {
   if (state.editing && state.dirty && state.currentFile?.path && !state.saving) saveDocument(false, { auto: true, silent: true });
 }, 10000);
-window.leafMD.onOpenFile(doc => {
+window.quilliteMarkdown.onOpenFile(doc => {
   setSidebarMode('recent');
   displayDocument(doc);
 });

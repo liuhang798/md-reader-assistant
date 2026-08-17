@@ -157,7 +157,7 @@ func TestApplyUpdateCanReplaceTheExecutableThatLaunchedIt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	installedExecutable := filepath.Join(dir, "MD阅读助手.exe")
+	installedExecutable := filepath.Join(dir, "轻阅 Markdown.exe")
 	testExecutableData, err := os.ReadFile(testExecutable)
 	if err != nil {
 		t.Fatal(err)
@@ -174,7 +174,7 @@ func TestApplyUpdateCanReplaceTheExecutableThatLaunchedIt(t *testing.T) {
 	if err := os.WriteFile(newSource, []byte(newSourceCode), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	newBinary := filepath.Join(dir, "md-reader-assistant-next-windows-amd64.bin")
+	newBinary := filepath.Join(dir, "quillite-markdown-next-windows-amd64.bin")
 	build := exec.Command("go", "build", "-o", newBinary, newSource)
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build replacement binary: %v\n%s", err, output)

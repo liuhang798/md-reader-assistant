@@ -25,11 +25,15 @@
 ## !define INFO_PRODUCTVERSION "1.0.0"     # Default "{{.Info.ProductVersion}}"
 ## !define INFO_COPYRIGHT      "Copyright" # Default "{{.Info.Copyright}}"
 ###
-!define INFO_PROJECTNAME    "md-reader-assistant"
-!define INFO_COMPANYNAME    "LeafMD Open Source"
-!define INFO_PRODUCTNAME    "MD阅读助手"
+!define INFO_PROJECTNAME    "quillite-markdown"
+!define INFO_COMPANYNAME    "Quillite Open Source"
+!define INFO_PRODUCTNAME    "轻阅 Markdown"
 !define INFO_PRODUCTVERSION "2.4.3"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
+!define PRODUCT_EXECUTABLE  "QuilliteMarkdown.exe"
+!define LEGACY_PRODUCTNAME  "MD阅读助手"
+!define LEGACY_EXECUTABLE   "MDReaderAssistant.exe"
+!define LEGACY_UNINST_KEY   "Software\Microsoft\Windows\CurrentVersion\Uninstall\LeafMD Open SourceMD阅读助手"
 ###
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
 ## !define UNINST_KEY_NAME     "UninstKeyInRegistry"  # Default "${INFO_COMPANYNAME}${INFO_PRODUCTNAME}"
@@ -38,6 +42,9 @@
 ####
 ## Include the wails tools
 ####
+!define WAILS_WIN10_REQUIRED "轻阅 Markdown 仅支持 Windows 10（Server 2016）及更高版本。"
+!define WAILS_ARCHITECTURE_NOT_SUPPORTED "当前 Windows 系统架构不受支持。支持的架构：${ARCH}"
+!define WAILS_INSTALL_WEBVIEW_DETAILPRINT "正在安装 Microsoft WebView2 运行时"
 !include "wails_tools.nsh"
 
 # The version information for this two must consist of 4 parts
@@ -45,7 +52,7 @@ VIProductVersion "${INFO_PRODUCTVERSION}.0"
 VIFileVersion    "${INFO_PRODUCTVERSION}.0"
 
 VIAddVersionKey "CompanyName"     "${INFO_COMPANYNAME}"
-VIAddVersionKey "FileDescription" "${INFO_PRODUCTNAME} Installer"
+VIAddVersionKey "FileDescription" "${INFO_PRODUCTNAME} 安装程序"
 VIAddVersionKey "ProductVersion"  "${INFO_PRODUCTVERSION}"
 VIAddVersionKey "FileVersion"     "${INFO_PRODUCTVERSION}"
 VIAddVersionKey "LegalCopyright"  "${INFO_COPYRIGHT}"
@@ -58,10 +65,6 @@ ManifestDPIAware true
 
 !define MUI_ICON "..\icon.ico"
 !define MUI_UNICON "..\icon.ico"
-!define MUI_LANGDLL_ALLLANGUAGES
-!define MUI_LANGDLL_REGISTRY_ROOT HKCU
-!define MUI_LANGDLL_REGISTRY_KEY "Software\${INFO_COMPANYNAME}\${INFO_PROJECTNAME}"
-!define MUI_LANGDLL_REGISTRY_VALUENAME "InstallerLanguage"
 # !define MUI_WELCOMEFINISHPAGE_BITMAP "resources\leftimage.bmp" #Include this to add a bitmap on the left side of the Welcome Page. Must be a size of 164x314
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXECUTABLE}"
@@ -76,14 +79,10 @@ ManifestDPIAware true
 
 !insertmacro MUI_UNPAGE_INSTFILES # Uinstalling page
 
-!insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 
-LangString FinishRunText ${LANG_ENGLISH} "Run ${INFO_PRODUCTNAME}"
 LangString FinishRunText ${LANG_SIMPCHINESE} "运行 ${INFO_PRODUCTNAME}"
-LangString CloseRunningAppPrompt ${LANG_ENGLISH} "${INFO_PRODUCTNAME} is still running and must be closed before the upgrade. Close it now and continue installing? Unsaved changes may be lost."
 LangString CloseRunningAppPrompt ${LANG_SIMPCHINESE} "${INFO_PRODUCTNAME} 仍在运行，升级前必须关闭。是否立即关闭并继续安装？未保存的修改可能会丢失。"
-LangString CloseRunningAppFailed ${LANG_ENGLISH} "The running application could not be closed. Close it manually, then click Retry."
 LangString CloseRunningAppFailed ${LANG_SIMPCHINESE} "无法关闭正在运行的软件。请手动关闭后点击重试。"
 
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
@@ -91,7 +90,7 @@ LangString CloseRunningAppFailed ${LANG_SIMPCHINESE} "无法关闭正在运行�
 #!finalize 'signtool --file "%1"'
 
 Name "${INFO_PRODUCTNAME}"
-OutFile "..\..\bin\md-reader-assistant-${INFO_PRODUCTVERSION}-windows-${ARCH}.exe" # Keep release filenames ASCII-safe for CI.
+OutFile "..\..\bin\quillite-markdown-${INFO_PRODUCTVERSION}-windows-${ARCH}.exe" # Keep release filenames ASCII-safe for CI.
 !ifdef WAILS_INSTALL_SCOPE
   !if "${WAILS_INSTALL_SCOPE}" == "user"
     InstallDir "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"
@@ -102,16 +101,16 @@ OutFile "..\..\bin\md-reader-assistant-${INFO_PRODUCTVERSION}-windows-${ARCH}.ex
   InstallDir "$PROGRAMFILES64\${INFO_COMPANYNAME}\${INFO_PRODUCTNAME}"
 !endif # Default installing folder ($PROGRAMFILES is Program Files folder).
 InstallDirRegKey HKCU "${UNINST_KEY}" "InstallLocation"
-ShowInstDetails show # This will always show the installation details.
+ShowInstDetails nevershow # Hide NSIS' English technical log; the localized progress page remains visible.
 
 Function .onInit
+   StrCpy $LANGUAGE ${LANG_SIMPCHINESE}
    !insertmacro wails.checkArchitecture
    Call ResolvePreviousInstallDir
-   !insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 
 Function un.onInit
-   !insertmacro MUI_UNGETLANGUAGE
+   StrCpy $LANGUAGE ${LANG_SIMPCHINESE}
 FunctionEnd
 
 # Prefer the directory recorded by 2.2.3 and later. Version 2.2.2 did not
@@ -119,10 +118,14 @@ FunctionEnd
 Function ResolvePreviousInstallDir
     SetRegView 64
     ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
-    StrCmp $0 "" previousInstallFromIcon previousInstallFound
+    StrCmp $0 "" previousLegacyInstall previousInstallFound
+
+    previousLegacyInstall:
+        ReadRegStr $0 HKCU "${LEGACY_UNINST_KEY}" "InstallLocation"
+        StrCmp $0 "" previousInstallFromIcon previousInstallFound
 
     previousInstallFromIcon:
-        ReadRegStr $0 HKCU "${UNINST_KEY}" "DisplayIcon"
+        ReadRegStr $0 HKCU "${LEGACY_UNINST_KEY}" "DisplayIcon"
         StrCmp $0 "" previousInstallDone
         ${GetParent} "$0" $1
         StrCmp $1 "" previousInstallDone
@@ -138,6 +141,11 @@ FunctionEnd
 # let the user explicitly close the old process; silent upgrades (started by
 # the in-app updater) force-close the old process and continue.
 Function EnsureApplicationClosed
+    # Close the legacy executable during the one-time product rename upgrade.
+    # A missing process is harmless and taskkill simply returns a non-zero code.
+    nsExec::ExecToStack '"$SYSDIR\taskkill.exe" /F /T /IM "${LEGACY_EXECUTABLE}"'
+    Pop $0
+    Pop $1
     IfFileExists "$INSTDIR\${PRODUCT_EXECUTABLE}" 0 applicationClosed
     ClearErrors
     FileOpen $0 "$INSTDIR\${PRODUCT_EXECUTABLE}" a
@@ -183,11 +191,11 @@ FunctionEnd
 # Wails' generated association macro writes a standalone .ico on every install.
 # Explorer can keep that file locked. Use the executable's embedded icon instead.
 !macro AssociateMarkdownFiles
-    !insertmacro APP_ASSOCIATE "md" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
-    !insertmacro APP_ASSOCIATE "markdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
-    !insertmacro APP_ASSOCIATE "mdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
-    !insertmacro APP_ASSOCIATE "mkd" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
-    !insertmacro APP_ASSOCIATE "txt" "Text Document" "文本文件" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "Open with ${INFO_PRODUCTNAME}" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "md" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "使用 ${INFO_PRODUCTNAME} 打开" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "markdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "使用 ${INFO_PRODUCTNAME} 打开" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "mdown" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "使用 ${INFO_PRODUCTNAME} 打开" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "mkd" "Markdown Document" "Markdown 文档" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "使用 ${INFO_PRODUCTNAME} 打开" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
+    !insertmacro APP_ASSOCIATE "txt" "Text Document" "文本文件" "$INSTDIR\${PRODUCT_EXECUTABLE},0" "使用 ${INFO_PRODUCTNAME} 打开" "$\"$INSTDIR\${PRODUCT_EXECUTABLE}$\" $\"%1$\""
 !macroend
 
 # Electron releases and early Wails installers used different uninstall keys
@@ -195,6 +203,7 @@ FunctionEnd
 # name so Windows shows a single installed application after an upgrade.
 Function RemoveLegacyUninstallEntries
     SetRegView 64
+    DeleteRegKey HKCU "${LEGACY_UNINST_KEY}"
     StrCpy $0 0
     legacyHKCU:
         EnumRegKey $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall" $0
@@ -224,20 +233,18 @@ Section
 
     !insertmacro wails.files
 
-    # The installer language becomes the initial application language. Keep an
-    # existing preference file on upgrades, but remove the legacy marker so the
-    # application never asks the user to choose the same language twice.
+    # Preserve preferences written by MD阅读助手 during the product rename.
+    # Windows setup is Simplified Chinese only, so only a genuinely fresh
+    # installation receives the default Chinese preferences.
     CreateDirectory "$APPDATA\${INFO_PRODUCTNAME}"
     Delete "$APPDATA\${INFO_PRODUCTNAME}\first-run-language.flag"
     IfFileExists "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" installerLanguageDone
+    IfFileExists "$APPDATA\${LEGACY_PRODUCTNAME}\preferences.json" 0 installerFreshPreferences
+    CopyFiles /SILENT "$APPDATA\${LEGACY_PRODUCTNAME}\preferences.json" "$APPDATA\${INFO_PRODUCTNAME}\preferences.json"
+    Goto installerLanguageDone
+    installerFreshPreferences:
     FileOpen $0 "$APPDATA\${INFO_PRODUCTNAME}\preferences.json" w
-    StrCmp $LANGUAGE ${LANG_ENGLISH} installerLanguageEnglish installerLanguageChinese
-    installerLanguageEnglish:
-        FileWrite $0 "{$\"recentFiles$\":[],$\"favoriteFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"en$\"}"
-        Goto installerLanguageClose
-    installerLanguageChinese:
-        FileWrite $0 "{$\"recentFiles$\":[],$\"favoriteFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"zh-CN$\"}"
-    installerLanguageClose:
+    FileWrite $0 "{$\"recentFiles$\":[],$\"favoriteFiles$\":[],$\"draftFiles$\":[],$\"language$\":$\"zh-CN$\"}"
     FileClose $0
     installerLanguageDone:
 
@@ -248,9 +255,13 @@ Section
     SetShellVarContext current
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+    Delete "$SMPROGRAMS\${LEGACY_PRODUCTNAME}.lnk"
+    Delete "$DESKTOP\${LEGACY_PRODUCTNAME}.lnk"
     SetShellVarContext all
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+    Delete "$SMPROGRAMS\${LEGACY_PRODUCTNAME}.lnk"
+    Delete "$DESKTOP\${LEGACY_PRODUCTNAME}.lnk"
 
     IfFileExists "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" publicStartMenuRemains createUserStartMenu
     createUserStartMenu:
@@ -270,6 +281,8 @@ Section
     # file locked during a same-version reinstall, so shortcuts now use the icon
     # embedded in the executable and stale icon files are removed when possible.
     Delete /REBOOTOK "$INSTDIR\MDReaderAssistant-*.ico"
+    Delete /REBOOTOK "$INSTDIR\QuilliteMarkdown-*.ico"
+    Delete /REBOOTOK "$INSTDIR\${LEGACY_EXECUTABLE}"
 
     !insertmacro AssociateMarkdownFiles
     Delete /REBOOTOK "$INSTDIR\mdFileIcon.ico"
@@ -297,9 +310,13 @@ Section "uninstall"
     SetShellVarContext current
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+    Delete "$SMPROGRAMS\${LEGACY_PRODUCTNAME}.lnk"
+    Delete "$DESKTOP\${LEGACY_PRODUCTNAME}.lnk"
     SetShellVarContext all
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+    Delete "$SMPROGRAMS\${LEGACY_PRODUCTNAME}.lnk"
+    Delete "$DESKTOP\${LEGACY_PRODUCTNAME}.lnk"
     SetShellVarContext current
 
     !insertmacro wails.unassociateFiles

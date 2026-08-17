@@ -41,8 +41,8 @@ test('document context menu edits, favorites, reveals, or removes the selected d
   assert.match(renderer, /else if \(action === 'favorite'\) await setFavoriteRecord\(filePath/);
   assert.match(renderer, /else if \(action === 'reveal'\) await revealFileInFolder\(filePath\)/);
   assert.match(renderer, /else if \(action === 'remove'\) await removeRecentRecord\(filePath\)/);
-  assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*window\.leafMD\.readFile\(filePath\)[\s\S]*await toggleEditor\(true\)/);
-  assert.match(renderer, /await window\.leafMD\.showInFolder\(filePath\)/);
+  assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*window\.quilliteMarkdown\.readFile\(filePath\)[\s\S]*await toggleEditor\(true\)/);
+  assert.match(renderer, /await window\.quilliteMarkdown\.showInFolder\(filePath\)/);
   assert.match(styles, /\.recent-context-menu \{[^}]*right: auto;[^}]*width: 190px;/);
 });
 
@@ -64,7 +64,7 @@ test('reader search includes Markdown inline code and fenced code text', () => {
 test('returning to the app reloads an externally changed document without overwriting local edits', () => {
   assert.match(renderer, /async function refreshCurrentFileFromDisk\(\)/);
   assert.match(renderer, /if \(!state\.currentFile\?\.path \|\| state\.dirty \|\| state\.saving \|\| externalRefreshInProgress\) return/);
-  assert.match(renderer, /const refreshed = await window\.leafMD\.readFile\(requestedPath\)/);
+  assert.match(renderer, /const refreshed = await window\.quilliteMarkdown\.readFile\(requestedPath\)/);
   assert.match(renderer, /if \(!state\.currentFile \|\| !sameDocumentPath\(state\.currentFile\.path, requestedPath\) \|\| state\.dirty \|\| state\.saving\) return/);
   assert.match(renderer, /window\.addEventListener\('focus', \(\) => \{[\s\S]*scheduleMacWindowModeSync\(\);[\s\S]*refreshCurrentFileFromDisk\(\);[\s\S]*\}\)/);
 });
@@ -112,7 +112,7 @@ test('inserting an image supports online links with an optional description', ()
   assert.match(renderer, /if \(!\/\^https\?:\\\/\\\/\\S\+\$\/i\.test\(url\)\)/);
   assert.match(renderer, /const markdownPath = \/\[\\s\(\)\]\/\.test\(url\) \? `<\$\{url\.replaceAll\('>', '%3E'\)\}>` : url;/);
   assert.match(renderer, /function insertLocalImage\(\)/);
-  assert.match(renderer, /window\.leafMD\.selectImage\(state\.currentFile\.path\)/);
+  assert.match(renderer, /window\.quilliteMarkdown\.selectImage\(state\.currentFile\.path\)/);
   assert.match(renderer, /els\.imageAltInput\.value\.trim\(\)\.replaceAll\('\[', '\\\\\['\)\.replaceAll\('\]', '\\\\\]'\) \|\| selectedImageAlt\(\) \|\| t\('imageAlt'\)/);
   assert.match(renderer, /\$\('#pickLocalImage'\)\.addEventListener\('click', \(\) => \{ closeImageDialog\(\); insertLocalImage\(\); \}\)/);
   assert.match(renderer, /els\.imageUrl\.addEventListener\('keydown', event => \{\s*if \(event\.key === 'Enter'\) insertImageFromUrl\(\);/);
@@ -125,12 +125,12 @@ test('the update dialog offers in-app download and apply with progress', () => {
   assert.match(html, /id="updateProgressBar"/);
   assert.match(html, /id="updateProgressLabel"/);
   assert.match(renderer, /async function startDownloadAndUpdate\(\)/);
-  assert.match(renderer, /await window\.leafMD\.downloadAndApplyUpdate\(\)/);
-  assert.match(renderer, /window\.leafMD\.onUpdateProgress\(progress =>/);
+  assert.match(renderer, /await window\.quilliteMarkdown\.downloadAndApplyUpdate\(\)/);
+  assert.match(renderer, /window\.quilliteMarkdown\.onUpdateProgress\(progress =>/);
   assert.match(renderer, /\$\('#applyUpdate'\)\.addEventListener\('click', startDownloadAndUpdate\)/);
   assert.match(renderer, /platform !== 'darwin' && platform !== 'windows'/);
   assert.match(renderer, /state\.dirty && state\.currentFile\?\.path\) \{\s*await saveDocument\(false, \{ auto: true, silent: true \}\)/);
-  assert.match(renderer, /setTimeout\(\(\) => window\.leafMD\.closeWindow\(\), 500\)/);
+  assert.match(renderer, /setTimeout\(\(\) => window\.quilliteMarkdown\.closeWindow\(\), 500\)/);
   assert.match(styles, /\.update-progress-bar \{ height: 100%; width: 0; border-radius: 4px; background: var\(--accent-strong\);/);
 });
 

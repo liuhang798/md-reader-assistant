@@ -1,18 +1,32 @@
 # Changelog
 
-All notable changes to MD Reader Assistant are documented here.
+All notable changes to Quillite Markdown are documented here.
 
 ## [2.4.3] - 2026-08-14
 
 ### 简体中文
 
-- 修复 macOS 本地构建可能以内部项目名 `md-reader-assistant` 出现在 Spotlight 或启动台的问题；应用包现在显式声明 `MD阅读助手` 显示名，本地与 CI 构建统一生成 `MD阅读助手.app`。
+- 产品正式更名为“轻阅 Markdown”（英文名 `Quillite Markdown`），仓库同步迁移为 `liuhang798/quillite-markdown`；应用标识、安装包、macOS 应用包、Linux 包、更新地址、文档和构建流程全部统一新品牌。
+- Windows 覆盖升级会识别“MD阅读助手”旧安装目录，自动关闭旧进程、迁移用户偏好并清理旧快捷方式、旧卸载项和旧程序文件，避免改名后出现双图标或设置丢失。
+- 默认品牌绿统一为精确的 `#159A63`；主按钮不再自动加深为 `#10744A`，应用按钮、选中态、强调文字以及应用/文件图标保持同一绿色。
+- 左上角品牌标识改为透明背景的打开书本图形，书本线条跟随当前主题色，移除方形底板、边框与阴影。
+- 标题栏书本图标与“轻阅 Markdown”文字采用一致高度并上下居中对齐，Windows 与 macOS 紧凑标题栏分别适配。
+- 取消新建文档、回到顶部、首页叶子图标等主题色按钮的投影阴影，界面更干净利落；选中状态仍保留主题色描边标识。
+- Windows 安装、升级与卸载向导统一为简体中文，不再显示语言选择窗口；系统版本/架构提示、WebView2 安装进度、运行中软件提示和文件打开方式同步中文化。全新安装默认使用简体中文界面，更新安装保留已有语言偏好。
+- 修复 macOS 本地构建可能以内部项目名 `quillite-markdown` 出现在 Spotlight 或启动台的问题；应用包现在显式声明 `轻阅 Markdown` 显示名，本地与 CI 构建统一生成 `轻阅 Markdown.app`。
 - 文字放大缩小现在作用于全局：阅读正文、左侧最近阅读/资源浏览器、右侧本页目录同步缩放。
 - 左侧文档库与右侧目录的拖动分隔条不再限制最大宽度，可自由调整（仅保留正文最小空间），宽度自动记忆。
 
 ### English
 
-- Fixed macOS local builds appearing under the internal `md-reader-assistant` project name in Spotlight or Launchpad. The bundle now declares the `MD阅读助手` display name explicitly, and local and CI builds consistently produce `MD阅读助手.app`.
+- Renamed the product to **Quillite Markdown** (Chinese: **轻阅 Markdown**) and moved the repository to `liuhang798/quillite-markdown`. Application identifiers, packages, update URLs, documentation, and release automation now use the new brand consistently.
+- Windows upgrades detect the legacy MD Reader Assistant installation, preserve its directory and preferences, and clean up the old executable, shortcuts, and uninstall entry to prevent duplicates or lost settings.
+- Unified the default brand green at the exact `#159A63`; primary controls are no longer automatically darkened to `#10744A`, keeping buttons, selections, accent text, and app/file icons on the same green.
+- Replaced the top-left brand tile with a transparent open-book mark whose strokes follow the selected accent, removing the square plate, border, and shadow.
+- Aligned the title-bar book mark and product label to the same visual height, with dedicated sizing for the compact macOS title bar.
+- Removed drop shadows from accent-colored buttons (New Document, back-to-top, home leaf icon) for a cleaner look; selected states keep their theme-colored outline.
+- The Windows install, upgrade, and uninstall wizard is now Simplified Chinese only, with no language-selection dialog. Compatibility messages, WebView2 progress, running-app prompts, and file-open actions are localized; fresh installs start in Chinese while upgrades keep the existing language preference.
+- Fixed macOS local builds appearing under the internal `quillite-markdown` project name in Spotlight or Launchpad. The bundle now declares the `轻阅 Markdown` display name explicitly, and local and CI builds consistently produce `轻阅 Markdown.app`.
 - Text zoom now applies globally: the reading content, the recent/explorer sidebar, and the table of contents all scale together.
 - The sidebar and table-of-contents dividers no longer have a maximum width; they can be dragged freely (a minimal content width is kept) and the width is remembered.
 
@@ -226,7 +240,7 @@ All notable changes to MD Reader Assistant are documented here.
 - 修复 macOS 半屏平铺或调整窗口尺寸时原生红、黄、绿按钮短暂上下跳动，以及退出全屏时 Logo 和软件名称复位延迟造成的画面重叠。
 - macOS 进入全屏后，Logo 与软件名称会自动向左对齐到内容边距；退出全屏后恢复窗口按钮安全间距，切换过程平滑且不依赖屏幕尺寸猜测。
 - macOS 原生红、黄、绿窗口按钮现在会在 42px 轻薄标题栏内垂直居中，并在窗口缩放、重新获得焦点及进出全屏后保持对齐。
-- 修复 macOS 新建文档被错误保存在可替换的 `.app` 应用包内、导致重新安装后显示丢失的问题；新文档现在固定保存到用户“文稿/MD Reader Assistant”，不会随应用升级被覆盖，已恢复的旧草稿也会自动更新最近阅读路径。
+- 修复 macOS 新建文档被错误保存在可替换的 `.app` 应用包内、导致重新安装后显示丢失的问题；新文档现在固定保存到用户“文稿/Quillite Markdown”，不会随应用升级被覆盖，已恢复的旧草稿也会自动更新最近阅读路径。
 - 最近阅读会检测原文件是否仍然存在；已删除、移动或暂时无法访问的文档会显示为灰色删除线并禁用打开，同时保留清理记录按钮，避免外接磁盘未挂载时误删历史。
 - Markdown 格式工具栏取消横向滚动条，窗口宽度不足时会按优先级自动把格式收进“更多格式”；同时补充粗斜体、自动链接、Markdown 转义和 HTML 区块。
 - macOS 新增标准 `Command + W` 关闭窗口快捷键，行为与红色关闭按钮一致；保留 `Command + Q` 真正退出应用及未保存内容确认。
@@ -242,7 +256,7 @@ All notable changes to MD Reader Assistant are documented here.
 - Fixed native macOS traffic lights briefly jumping vertically during tiling or window resizing, and removed the delayed Logo/title reset that could overlap the controls while leaving fullscreen.
 - On macOS, the Logo and application name now move left to the content margin in fullscreen and restore the traffic-light safe area when returning to a window, using the native fullscreen state rather than screen-size guesses.
 - Centered the native macOS red, yellow and green window controls vertically within the compact 42 px title bar, retaining alignment after resize, focus and fullscreen transitions.
-- Fixed new macOS documents being stored inside the replaceable `.app` bundle and appearing lost after reinstalling. New documents now live in the user's `Documents/MD Reader Assistant` folder and survive application upgrades, while references to recovered legacy drafts are migrated automatically.
+- Fixed new macOS documents being stored inside the replaceable `.app` bundle and appearing lost after reinstalling. New documents now live in the user's `Documents/Quillite Markdown` folder and survive application upgrades, while references to recovered legacy drafts are migrated automatically.
 - Recent now detects whether each source file is still available. Deleted, moved or temporarily unavailable documents appear muted with a strikethrough and cannot be opened, while their remove-record action remains available so disconnected drives do not erase history automatically.
 - Removed horizontal scrolling from the Markdown toolbar. Controls now collapse into More Formats by priority when space is limited, with new bold-italic, autolink, Markdown escaping and HTML-block actions.
 - Added the standard macOS `Command + W` close-window shortcut with the same behavior as the red close button, while retaining `Command + Q` for quitting with unsaved-change confirmation.
@@ -322,9 +336,9 @@ All notable changes to MD Reader Assistant are documented here.
 - 编辑工具栏新增撤回按钮；每次打开文档都会建立独立撤回历史，`Ctrl/Cmd + Z` 最多只能回到文档刚打开时的原始内容。
 - 修复本地图片预览失败：改由 Go 后端安全读取绝对路径和相对路径图片，不再依赖被 WebView 限制的 `file://` 地址。
 - 修复新建文档“另存为”后出现两条最近阅读记录；另存成功后会删除自动创建的临时草稿及其记录，草稿标记在软件重启后仍然有效。
-- 修复升级安装后 Windows 可能出现两个“MD阅读助手”应用或快捷方式的问题；安装范围统一为当前用户，安装器会清理旧 Electron/早期版本遗留的重复卸载项和快捷方式。
+- 修复升级安装后 Windows 可能出现两个“轻阅 Markdown”应用或快捷方式的问题；安装范围统一为当前用户，安装器会清理旧 Electron/早期版本遗留的重复卸载项和快捷方式。
 - Windows 更新安装时自动沿用上次选择的安装目录；从未记录目录的 2.2.2 升级时，也会根据现有卸载信息识别原安装位置。
-- Windows 安装完成页默认勾选“运行 MD阅读助手”，点击“完成”后直接启动应用，并允许用户取消勾选。
+- Windows 安装完成页默认勾选“运行 轻阅 Markdown”，点击“完成”后直接启动应用，并允许用户取消勾选。
 - Windows 安装向导新增简体中文与 English 语言选择，欢迎页、目录页、安装进度和完成页会使用所选语言。
 - 全新安装后第一次启动会要求选择软件界面语言；选择结果会持久保存，后续启动不再弹出，从不含此功能的旧版本升级也不会弹出。
 
@@ -342,7 +356,7 @@ All notable changes to MD Reader Assistant are documented here.
 - Fixed duplicate Recent entries after saving a newly created document under another name; the auto-created draft and its record are removed after a successful Save As, even after restarting the app.
 - Fixed duplicate Windows app entries or shortcuts after upgrading by consistently using per-user installation and cleaning stale uninstall records and shortcuts left by Electron or early installers.
 - Windows upgrades now reuse the previously selected installation directory, with a compatibility fallback that detects the install location used by 2.2.2.
-- The Windows setup completion page now launches MD Reader Assistant by default after Finish, with an option to opt out.
+- The Windows setup completion page now launches Quillite Markdown by default after Finish, with an option to opt out.
 - Added Simplified Chinese and English selection for the complete Windows setup flow.
 - A new installation asks for the app interface language on its first launch and remembers the choice; upgrades from versions that predate this feature are explicitly excluded from the prompt.
 
@@ -353,7 +367,7 @@ All notable changes to MD Reader Assistant are documented here.
 - macOS 改用左侧原生窗口控制按钮、应用菜单、系统字体和 Command 快捷键，并增大窗口按钮与软件名称之间的距离。
 - 启动软件时自动检查 GitHub 最新稳定版本，不再因 24 小时时间限制错过刚发布的更新。
 - 更新弹窗现在支持排版显示 Markdown 更新说明。
-- GitHub Release 标题和各平台安装包统一采用 `md-reader-assistant 2.2.2` 英文命名。
+- GitHub Release 标题和各平台安装包统一采用 `quillite-markdown 2.2.2` 英文命名。
 - 发布流程自动从本文件提取当前版本内容作为更新说明。
 
 ### English
@@ -361,7 +375,7 @@ All notable changes to MD Reader Assistant are documented here.
 - Adopted native left-side macOS window controls, application menus, system fonts, and Command shortcuts, with more space before the app brand.
 - Checks the latest stable GitHub Release once on every startup so newly published versions are not missed by a 24-hour throttle.
 - Renders Markdown release notes properly in the update dialog.
-- Standardized GitHub Release titles and downloadable asset names as `md-reader-assistant 2.2.2` and ASCII-safe platform filenames.
+- Standardized GitHub Release titles and downloadable asset names as `quillite-markdown 2.2.2` and ASCII-safe platform filenames.
 - Automatically extracts the current version section from this changelog for GitHub Release notes.
 - Aligned GitHub Actions with Go 1.25 used by the project.
 
@@ -391,27 +405,27 @@ All notable changes to MD Reader Assistant are documented here.
 - The split editor reliably accepts pointer focus and displays live preview on the left.
 - Desktop shortcuts are recreated with a versioned icon path to avoid stale Windows icon caching.
 
-[2.2.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.1
-[2.2.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.2
-[2.2.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.3
-[2.2.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.4
-[2.2.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.5
-[2.2.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.2.6
-[2.3.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.0
-[2.3.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.1
-[2.3.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.2
-[2.3.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.3
-[2.3.4]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.4
-[2.3.5]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.5
-[2.3.6]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.6
-[2.3.7]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.7
-[2.3.8]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.8
-[2.3.9]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.9
-[2.3.10]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.10
-[2.3.11]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.11
-[2.3.12]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.12
-[2.3.13]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.3.13
-[2.4.0]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.0
-[2.4.1]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.1
-[2.4.2]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.2
-[2.4.3]: https://github.com/liuhang798/md-reader-assistant/releases/tag/v2.4.3
+[2.2.1]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.2.1
+[2.2.2]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.2.2
+[2.2.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.2.3
+[2.2.4]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.2.4
+[2.2.5]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.2.5
+[2.2.6]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.2.6
+[2.3.0]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.0
+[2.3.1]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.1
+[2.3.2]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.2
+[2.3.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.3
+[2.3.4]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.4
+[2.3.5]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.5
+[2.3.6]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.6
+[2.3.7]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.7
+[2.3.8]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.8
+[2.3.9]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.9
+[2.3.10]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.10
+[2.3.11]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.11
+[2.3.12]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.12
+[2.3.13]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.3.13
+[2.4.0]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.0
+[2.4.1]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.1
+[2.4.2]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.2
+[2.4.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.3

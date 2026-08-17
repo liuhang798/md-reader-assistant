@@ -10,7 +10,7 @@ const renderer = await readFile(new URL('../src/renderer.js', import.meta.url), 
 
 const accentIds = ['green', 'blue', 'orange', 'violet', 'coral', 'cyan', 'slate', 'clay'];
 const expectedColors = {
-  green: '#07A936',
+  green: '#159A63',
   blue: '#075DF3',
   orange: '#F57C04',
   violet: '#7940E0',
@@ -51,8 +51,24 @@ test('accent menu contains exactly eight accessible radio options', () => {
 
 test('all in-app brand images participate in runtime accent switching', () => {
   const brandImages = [...html.matchAll(/<img\s+[^>]*src="\/src\/assets\/images\/app-logo\.png"[^>]*>/g)];
-  assert.ok(brandImages.length >= 4);
+  assert.ok(brandImages.length >= 3);
   for (const [image] of brandImages) assert.match(image, /data-themed-logo/);
+});
+
+test('title bar uses a borderless theme-colored open-book mark', () => {
+  const brandMark = html.match(/<span class="brand-mark">[\s\S]*?<\/span>/)?.[0] ?? '';
+  assert.match(brandMark, /<svg class="brand-book-mark"/);
+  assert.doesNotMatch(brandMark, /<img\b/);
+  assert.match(styles, /\.brand-mark\s*\{[^}]*color:\s*var\(--accent\);/s);
+  assert.match(styles, /\.brand-book-mark\s*\{[^}]*stroke:\s*currentColor;/s);
+  assert.doesNotMatch(styles, /\.brand-mark\s*\{[^}]*(?:background|border|box-shadow):/s);
+});
+
+test('title-bar book mark and product name share the same vertical height', () => {
+  assert.match(styles, /\.brand\s*\{[^}]*align-items:\s*center;[^}]*line-height:\s*21px;/s);
+  assert.match(styles, /\.brand-mark\s*\{[^}]*width:\s*21px;[^}]*height:\s*21px;[^}]*align-self:\s*center;/s);
+  assert.match(styles, /data-platform="darwin"[^\n]*\.brand\s*\{[^}]*line-height:\s*19px;/s);
+  assert.match(styles, /data-platform="darwin"[^\n]*\.brand-mark\s*\{[^}]*width:\s*19px;[^}]*height:\s*19px;/s);
 });
 
 test('CSS separates two color modes from all eight accent palettes', () => {
@@ -63,6 +79,13 @@ test('CSS separates two color modes from all eight accent palettes', () => {
     assert.match(styles, new RegExp(`data-accent=["']${id}["'][^{]*\\{[^}]*--accent:\\s*${expectedColors[id]}`, 's'));
   }
   assert.doesNotMatch(styles, /data-theme=/);
+});
+
+test('default green uses the exact approved color without automatic darkening', () => {
+  assert.match(
+    styles,
+    /data-accent=["']green["'][^{]*\{[^}]*--accent:\s*#159A63;[^}]*--accent-strong:\s*#159A63;[^}]*--accent-contrast:\s*#ffffff;/s,
+  );
 });
 
 test('dark mode alone controls sun and moon icon visibility', () => {
@@ -89,11 +112,13 @@ test('selected sidebar document has a theme-colored frame without changing its s
   assert.match(styles, /\.file-item\.active\s*\{[^}]*box-shadow:\s*inset 0 0 0 1px var\(--accent\)/s);
 });
 
-test('prominent accent surfaces use restrained shadows', () => {
-  assert.match(styles, /\.brand-mark\s*\{[^}]*box-shadow:\s*0 1px 4px rgba\(37, 54, 41, \.10\)/s);
-  assert.match(styles, /\.primary\s*\{[^}]*box-shadow:\s*0 2px 8px color-mix\(in srgb, var\(--accent\) 10%, transparent\)/s);
-  assert.match(styles, /\.leaf-float\s*\{[^}]*box-shadow:\s*0 5px 14px color-mix\(in srgb, var\(--accent\) 12%, transparent\)/s);
-  assert.match(styles, /\.back-to-top\s*\{[^}]*box-shadow:\s*0 4px 12px color-mix\(in srgb, var\(--accent\) 12%, transparent\)/s);
+test('prominent accent surfaces use no drop shadows', () => {
+  assert.doesNotMatch(styles, /\.brand-mark\s*\{[^}]*box-shadow/s);
+  assert.match(styles, /\.primary\s*\{/);
+  assert.doesNotMatch(styles, /\.primary\s*\{[^}]*box-shadow/s);
+  assert.doesNotMatch(styles, /\.leaf-float\s*\{[^}]*box-shadow/s);
+  assert.doesNotMatch(styles, /\.back-to-top\s*\{[^}]*box-shadow/s);
+  assert.doesNotMatch(styles, /\.sidebar-tab\.active\s*\{[^}]*box-shadow/s);
 });
 
 test('CodeMirror consumes semantic accent variables', () => {
