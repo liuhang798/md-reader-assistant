@@ -316,7 +316,7 @@ jobs:
             mapfile -t existing_assets < <(gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name')
             for asset in "${existing_assets[@]}"; do
               case "${asset}" in
-                md-reader-assistant-*|MD.*|轻阅 Markdown-*|QuilliteMarkdown-Setup-*)
+                md-reader-assistant-*|MD.*|MD阅读助手-*|MDReaderAssistant-Setup-*|轻阅\ Markdown-*|QuilliteMarkdown-Setup-*)
                   gh release delete-asset "${RELEASE_TAG}" "${asset}" --yes
                   ;;
               esac
