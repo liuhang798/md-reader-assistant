@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Work directly in `D:\mycode\MD阅读助手-Go`.
+- Work directly in `D:\mycode\quillite-markdown`.
 - Never use destructive Git commands or overwrite uncommitted files.
 - Update only `main` from `origin/main` and refuse divergent histories.
 - Do not modify global Git proxy configuration.

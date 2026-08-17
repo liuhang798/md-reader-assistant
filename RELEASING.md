@@ -50,8 +50,8 @@ git push origin main
 创建与 `wails.json` 完全一致的 tag 并推送到 GitHub（`release.yml` 由 push tag 自动触发）：
 
 ```bash
-git tag -a v2.4.3 -m "Quillite Markdown v2.4.3"
-git push origin v2.4.3
+git tag -a v2.4.4 -m "Quillite Markdown v2.4.4"
+git push origin v2.4.4
 ```
 
 The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, and uploads them to the GitHub Release.
@@ -62,7 +62,7 @@ If a platform build fails after the tag and Release have already been created:
 
 1. Fix and push the workflow or source changes to `main`.
 2. Open **Actions → Build and Release → Run workflow**.
-3. Keep the branch set to `main` and enter the existing tag, such as `v2.4.3`.
+3. Keep the branch set to `main` and enter the existing tag, such as `v2.4.4`.
 4. Run the workflow. Successful assets are uploaded to the existing Release and files with the same names are replaced.
 
 The manual tag must exactly match the version in `wails.json`.

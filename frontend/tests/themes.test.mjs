@@ -67,6 +67,7 @@ test('title bar uses a borderless theme-colored open-book mark', () => {
 test('title-bar book mark and product name share the same vertical height', () => {
   assert.match(styles, /\.brand\s*\{[^}]*align-items:\s*center;[^}]*line-height:\s*21px;/s);
   assert.match(styles, /\.brand-mark\s*\{[^}]*width:\s*21px;[^}]*height:\s*21px;[^}]*align-self:\s*center;/s);
+  assert.match(styles, /\.brand-mark\s*\{[^}]*transform:\s*translateY\(2px\);/s);
   assert.match(styles, /data-platform="darwin"[^\n]*\.brand\s*\{[^}]*line-height:\s*19px;/s);
   assert.match(styles, /data-platform="darwin"[^\n]*\.brand-mark\s*\{[^}]*width:\s*19px;[^}]*height:\s*19px;/s);
 });

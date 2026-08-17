@@ -157,7 +157,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   padding: 0 138px 0 20px;
 }
 .brand { display: flex; gap: 9px; align-items: center; font-weight: 680; line-height: 21px; letter-spacing: -.2px; }
-.brand-mark { width: 21px; height: 21px; flex: 0 0 21px; display: grid; place-items: center; align-self: center; color: var(--accent); }
+.brand-mark { width: 21px; height: 21px; flex: 0 0 21px; display: grid; place-items: center; align-self: center; color: var(--accent); transform: translateY(2px); }
 .brand-book-mark { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
 .toolbar { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .window-controls { position: absolute; top: 0; right: 0; height: calc(var(--titlebar-height) - 1px); display: flex; align-items: stretch; }
@@ -255,7 +255,7 @@ body.resizing-panes .sidebar, body.resizing-panes .toc-panel { transition: none;
 .file-list { flex: 1; overflow: auto; padding: 1px 0; min-width: 229px; }
 .empty-list { padding: 30px 10px; color: var(--faint); text-align: center; font-size: 13px; }
 .file-row { position: relative; margin-bottom: 3px; }
-.file-item { width: 100%; border: 0; background: transparent; border-radius: 10px; padding: 9px 38px 9px 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
+.file-item { width: 100%; border: 0; background: transparent; border-radius: 10px; padding: 9px 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
 .file-item:hover { background: color-mix(in srgb, var(--paper) 62%, transparent); }
 .file-item.active { background: var(--paper-strong); box-shadow: inset 0 0 0 1px var(--accent); }
 .file-icon { width: 32px; height: 34px; flex: 0 0 auto; border-radius: 7px; background: var(--accent-soft); color: var(--accent-strong); display: grid; place-items: center; }
@@ -268,17 +268,11 @@ body.resizing-panes .sidebar, body.resizing-panes .toc-panel { transition: none;
 .file-copy strong, .file-copy small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-copy strong { font-size: calc(13px * var(--font-scale)); font-weight: 630; }
 .file-copy small { color: var(--faint); font-size: calc(10.5px * var(--font-scale)); }
-.recent-remove { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: 0; border-radius: 7px; display: grid; place-items: center; color: var(--faint); background: transparent; cursor: pointer; opacity: 0; transition: opacity .15s, color .15s, background .15s; }
-.file-row:hover .recent-remove, .recent-remove:focus-visible { opacity: 1; }
-.recent-remove:hover { color: #b05e55; background: color-mix(in srgb, #b05e55 12%, transparent); }
-.recent-remove svg { width: 15px; height: 15px; }
 .file-row.missing .file-item { background: color-mix(in srgb, var(--faint) 7%, transparent); color: var(--faint); cursor: not-allowed; opacity: .72; }
 .file-row.missing .file-item:hover { background: color-mix(in srgb, var(--faint) 7%, transparent); }
 .file-row.missing .file-icon { background: color-mix(in srgb, var(--faint) 12%, transparent); color: var(--faint); }
 .file-row.missing .file-copy strong { text-decoration: line-through; text-decoration-thickness: 1px; }
 .file-row.missing .file-copy small { color: var(--faint); }
-.file-row.missing .recent-remove { opacity: .62; }
-.file-row.missing:hover .recent-remove, .file-row.missing .recent-remove:focus-visible { opacity: 1; }
 .folder-cta { border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent-soft) 45%, transparent); padding: 12px; border-radius: 11px; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; min-width: 229px; }
 .folder-cta:hover { border-style: solid; background: var(--accent-soft); }
 .cta-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--paper-strong); color: var(--accent-strong); display: grid; place-items: center; }

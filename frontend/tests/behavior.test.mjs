@@ -20,7 +20,14 @@ test('missing recent and favorite documents stay visible but cannot be opened', 
   assert.match(renderer, /recentMissingAria/);
   assert.match(renderer, /refreshLibraryFileStatuses\(\)/);
   assert.match(styles, /\.file-row\.missing \.file-copy strong \{[^}]*text-decoration: line-through/);
-  assert.match(styles, /\.file-row\.missing \.recent-remove \{ opacity: \.62; \}/);
+});
+
+test('library rows use their full width and remove recent records from the context menu only', () => {
+  assert.doesNotMatch(renderer, /class="recent-remove"/);
+  assert.doesNotMatch(renderer, /querySelectorAll\('\.recent-remove'\)/);
+  assert.doesNotMatch(styles, /\.recent-remove/);
+  assert.match(styles, /\.file-item \{[^}]*padding: 9px 10px;/);
+  assert.match(html, /data-recent-action="remove"/);
 });
 
 test('right-clicking any library document opens an action menu', () => {

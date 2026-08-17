@@ -2,6 +2,22 @@
 
 All notable changes to Quillite Markdown are documented here.
 
+## [2.4.4] - 2026-08-17
+
+### 简体中文
+
+- 标题栏书本图标进一步下移微调，与“轻阅 Markdown”文字的视觉基线更加自然。
+- 最近阅读列表移除右侧悬浮垃圾桶图标，释放更多横向空间显示长文档名称。
+- 移除最近阅读记录仍保留在文档右键菜单中，只删除列表记录，不删除用户原文件。
+- 更新本地开发文档中的项目路径，统一使用 `D:\mycode\quillite-markdown`。
+
+### English
+
+- Fine-tuned the title-bar book mark downward for a more natural visual baseline with the “Quillite Markdown” label.
+- Removed the trailing hover trash icon from Recent, giving long document names more horizontal space.
+- Recent records remain removable from the document context menu without deleting the original file.
+- Updated local development documentation to use `D:\mycode\quillite-markdown` consistently.
+
 ## [2.4.3] - 2026-08-14
 
 ### 简体中文
@@ -429,3 +445,4 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.1]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.1
 [2.4.2]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.2
 [2.4.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.3
+[2.4.4]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.4

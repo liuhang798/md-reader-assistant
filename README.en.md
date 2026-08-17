@@ -43,6 +43,12 @@ On Windows, run `quillite-markdown-version-windows-amd64.exe` and follow the set
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
+## What's new in 2.4.4
+
+- Fine-tuned the title-bar book mark downward for a more natural visual baseline with the “Quillite Markdown” label.
+- Removed the trailing hover trash icon from Recent, giving long document names more horizontal space.
+- Recent records can still be removed from the document context menu without deleting the original file.
+
 ## What's new in 2.4.3
 
 - Unified the default brand green at the exact `#159A63`; primary controls are no longer automatically darkened to `#10744A`, keeping buttons, selections, accent text, and application icons on the same green.
