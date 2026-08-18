@@ -6,6 +6,12 @@ All notable changes to Quillite Markdown are documented here.
 
 ### 简体中文
 
+### English
+
+## [2.4.5] - 2026-08-18
+
+### 简体中文
+
 - 更新检查改为优先读取轻阅官网版本库中的版本号、中英文更新日志、SHA-256 和免安装更新地址；官网接口维护或缺少当前平台更新文件时自动回退 GitHub Releases。发布工作流完成 GitHub Release 后，会自动把版本日志和 Windows、macOS、Linux 全部安装包同步到官网，完整上传后才公开。
 - 编辑模式左侧实时预览的正文基准字号由 15px 适度提升至 16px，改善 2K／4K 屏幕及分栏状态下的阅读清晰度；普通阅读页、右侧源码编辑器和现有字号缩放逻辑保持不变。
 - 恢复独立的每日匿名活跃统计：每台设备每天最多上报一次，且不受“参与产品改进计划”开关影响；该开关现在只控制异常错误日志回传。活跃记录仅包含服务器哈希后的随机安装标识、软件版本、系统类型、CPU 架构和服务器解析地域，不上传文档、路径、联系方式或具体操作行为。
@@ -504,3 +510,4 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.2]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.2
 [2.4.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.3
 [2.4.4]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.4
+[2.4.5]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.5

@@ -54,7 +54,7 @@ window.quilliteMarkdown = {
   setLanguage: language => desktopRuntime ? Backend.SetLanguage(language) : resolved(),
   setUsageAnalytics: enabled => desktopRuntime ? Backend.SetUsageAnalytics(enabled) : resolved({ usageAnalytics: enabled }),
   reportErrorLog: (source, message, stack) => desktopRuntime ? Backend.ReportErrorLog(source, message, stack) : resolved(),
-  getFeedbackSystemInfo: () => desktopRuntime ? Backend.GetFeedbackSystemInfo() : resolved({ appVersion: '2.4.4', os: browserPlatform === 'darwin' ? 'macos' : 'windows', systemVersion: navigator.userAgent }),
+  getFeedbackSystemInfo: () => desktopRuntime ? Backend.GetFeedbackSystemInfo() : resolved({ appVersion: '2.4.5', os: browserPlatform === 'darwin' ? 'macos' : 'windows', systemVersion: navigator.userAgent }),
   selectFeedbackImages: () => desktopRuntime ? Backend.SelectFeedbackImages() : resolved([]),
   submitFeedback: input => desktopRuntime ? Backend.SubmitFeedback(input) : resolved(),
   checkForUpdates: force => desktopRuntime
@@ -63,13 +63,13 @@ window.quilliteMarkdown = {
       ? {
           checked: true,
           available: true,
-          currentVersion: '2.4.4',
-          latestVersion: '2.4.4',
-          releaseName: '轻阅 Markdown 2.4.4',
+          currentVersion: '2.4.5',
+          latestVersion: '2.4.5',
+          releaseName: '轻阅 Markdown 2.4.5',
           releaseNotes: '新增阅读模式快捷操作\n优化大文档加载性能\n修复若干已知问题',
           releaseUrl: 'https://github.com/liuhang798/quillite-markdown/releases/latest'
         }
-      : { checked: true, available: false, currentVersion: '2.4.4', latestVersion: '2.4.4' }),
+      : { checked: true, available: false, currentVersion: '2.4.5', latestVersion: '2.4.5' }),
   snoozeUpdates: days => desktopRuntime ? Backend.SnoozeUpdates(days) : resolved(),
   downloadAndApplyUpdate: () => desktopRuntime ? Backend.DownloadAndApplyUpdate() : resolved(),
   onUpdateProgress: callback => desktopRuntime ? EventsOn('update:progress', callback) : () => {},
