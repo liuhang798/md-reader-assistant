@@ -6,7 +6,7 @@ cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/quillite-markdown.git"
 set "BRANCH=main"
-set "COMMIT_MSG=Release v2.4.5: feedback, exports and official update catalog"
+set "COMMIT_MSG=Release v2.4.6: qm.ssssa.cn migration and release refresh"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
 

@@ -8,15 +8,16 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	officialWebsiteBase      = "https://8.133.191.203"
+	officialWebsiteBase      = "https://qm.ssssa.cn"
 	officialLatestReleaseAPI = officialWebsiteBase + "/api/v1/releases/latest"
-	githubLatestReleaseAPI   = "https://api.github.com/repos/liuhang798/quillite-markdown/releases/latest"
+	officialDownloadPage     = officialWebsiteBase + "/#download"
 )
 
 type UpdateInfo struct {
@@ -31,18 +32,16 @@ type UpdateInfo struct {
 	PublishedAt    string `json:"publishedAt"`
 }
 
-type githubRelease struct {
+type updateRelease struct {
 	TagName     string               `json:"tag_name"`
 	Name        string               `json:"name"`
 	Body        string               `json:"body"`
 	HTMLURL     string               `json:"html_url"`
 	PublishedAt string               `json:"published_at"`
-	Draft       bool                 `json:"draft"`
-	Prerelease  bool                 `json:"prerelease"`
-	Assets      []githubReleaseAsset `json:"assets"`
+	Assets      []updateReleaseAsset `json:"assets"`
 }
 
-type githubReleaseAsset struct {
+type updateReleaseAsset struct {
 	Name               string `json:"name"`
 	BrowserDownloadURL string `json:"browser_download_url"`
 	Digest             string `json:"digest"`
@@ -54,7 +53,6 @@ type officialRelease struct {
 	TitleEN     string                 `json:"titleEn"`
 	NotesZH     string                 `json:"notesZh"`
 	NotesEN     string                 `json:"notesEn"`
-	GitHubURL   string                 `json:"githubUrl"`
 	PublishedAt string                 `json:"publishedAt"`
 	Assets      []officialReleaseAsset `json:"assets"`
 }
@@ -65,22 +63,25 @@ type officialReleaseAsset struct {
 	URL      string `json:"url"`
 }
 
-// fetchLatestRelease uses the official release catalog first, then falls back
-// to GitHub so update checks continue to work during website maintenance.
-func (a *App) fetchLatestRelease() (*githubRelease, error) {
-	release, officialErr := a.fetchOfficialLatestRelease()
-	if officialErr == nil {
-		return release, nil
-	}
-	release, githubErr := fetchGitHubLatestRelease()
-	if githubErr == nil {
-		return release, nil
-	}
-	return nil, fmt.Errorf("official release catalog: %v; GitHub fallback: %w", officialErr, githubErr)
+// fetchLatestRelease uses the official website as the only update source.
+// Source code remains on GitHub, but the desktop app never checks or downloads
+// release assets from GitHub.
+func (a *App) fetchLatestRelease() (*updateRelease, error) {
+	return a.fetchOfficialLatestRelease()
 }
 
-func (a *App) fetchOfficialLatestRelease() (*githubRelease, error) {
-	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, officialLatestReleaseAPI, nil)
+func (a *App) fetchOfficialLatestRelease() (*updateRelease, error) {
+	endpoint, err := url.Parse(officialLatestReleaseAPI)
+	if err != nil {
+		return nil, err
+	}
+	query := endpoint.Query()
+	query.Set("source", "app")
+	query.Set("currentVersion", appVersion)
+	query.Set("platform", updatePlatform(runtime.GOOS))
+	query.Set("arch", runtime.GOARCH)
+	endpoint.RawQuery = query.Encode()
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, endpoint.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +102,7 @@ func (a *App) fetchOfficialLatestRelease() (*githubRelease, error) {
 	return a.mapOfficialRelease(item)
 }
 
-func (a *App) mapOfficialRelease(item officialRelease) (*githubRelease, error) {
+func (a *App) mapOfficialRelease(item officialRelease) (*updateRelease, error) {
 	if strings.TrimSpace(item.Version) == "" {
 		return nil, errors.New("official release catalog returned an empty version")
 	}
@@ -115,17 +116,13 @@ func (a *App) mapOfficialRelease(item officialRelease) (*githubRelease, error) {
 	if strings.TrimSpace(notes) == "" {
 		notes = item.NotesEN
 	}
-	releaseURL := strings.TrimSpace(item.GitHubURL)
-	if releaseURL == "" {
-		releaseURL = officialWebsiteBase + "/#download"
-	}
-	mapped := &githubRelease{
+	mapped := &updateRelease{
 		TagName:     "v" + normaliseVersion(item.Version),
 		Name:        strings.TrimSpace(name),
 		Body:        strings.TrimSpace(notes),
-		HTMLURL:     releaseURL,
+		HTMLURL:     officialDownloadPage,
 		PublishedAt: item.PublishedAt,
-		Assets:      make([]githubReleaseAsset, 0, len(item.Assets)),
+		Assets:      make([]updateReleaseAsset, 0, len(item.Assets)),
 	}
 	base, _ := url.Parse(officialWebsiteBase)
 	for _, asset := range item.Assets {
@@ -133,41 +130,33 @@ func (a *App) mapOfficialRelease(item officialRelease) (*githubRelease, error) {
 		if err != nil || assetURL.String() == "" {
 			continue
 		}
-		mapped.Assets = append(mapped.Assets, githubReleaseAsset{
+		resolvedURL := base.ResolveReference(assetURL).String()
+		if !isOfficialWebsiteURL(resolvedURL) {
+			continue
+		}
+		mapped.Assets = append(mapped.Assets, updateReleaseAsset{
 			Name:               filepath.Base(asset.FileName),
-			BrowserDownloadURL: base.ResolveReference(assetURL).String(),
+			BrowserDownloadURL: resolvedURL,
 			Digest:             "sha256:" + strings.TrimPrefix(asset.SHA256, "sha256:"),
 		})
 	}
 	return mapped, nil
 }
 
-func fetchGitHubLatestRelease() (*githubRelease, error) {
-	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, githubLatestReleaseAPI, nil)
-	if err != nil {
-		return nil, err
+func updatePlatform(goos string) string {
+	if goos == "darwin" {
+		return "macos"
 	}
-	request.Header.Set("Accept", "application/vnd.github+json")
-	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("User-Agent", "QuilliteMarkdown/"+appVersion)
+	return goos
+}
 
-	response, err := (&http.Client{Timeout: 8 * time.Second}).Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("check GitHub release: %w", err)
+func isOfficialWebsiteURL(value string) bool {
+	parsed, err := url.Parse(strings.TrimSpace(value))
+	if err != nil || parsed.Scheme != "https" {
+		return false
 	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitHub release check returned %s", response.Status)
-	}
-
-	var release githubRelease
-	if err := json.NewDecoder(response.Body).Decode(&release); err != nil {
-		return nil, fmt.Errorf("decode GitHub release: %w", err)
-	}
-	if release.Draft || release.Prerelease || strings.TrimSpace(release.TagName) == "" {
-		return nil, errors.New("GitHub did not return a stable release")
-	}
-	return &release, nil
+	host := strings.ToLower(parsed.Hostname())
+	return host == "qm.ssssa.cn"
 }
 
 // CheckForUpdates checks the latest stable official release. The frontend calls
@@ -202,8 +191,8 @@ func (a *App) CheckForUpdates(force bool) (UpdateInfo, error) {
 	if result.ReleaseName == "" {
 		result.ReleaseName = "v" + latest
 	}
-	if parsed, parseErr := url.Parse(result.ReleaseURL); parseErr != nil || parsed.Scheme != "https" || !strings.EqualFold(parsed.Host, "github.com") {
-		result.ReleaseURL = "https://github.com/liuhang798/quillite-markdown/releases/latest"
+	if !isOfficialWebsiteURL(result.ReleaseURL) {
+		result.ReleaseURL = officialDownloadPage
 	}
 
 	if _, err := a.updatePreferences(func(latestPrefs *Preferences) {

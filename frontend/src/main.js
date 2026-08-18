@@ -54,7 +54,7 @@ window.quilliteMarkdown = {
   setLanguage: language => desktopRuntime ? Backend.SetLanguage(language) : resolved(),
   setUsageAnalytics: enabled => desktopRuntime ? Backend.SetUsageAnalytics(enabled) : resolved({ usageAnalytics: enabled }),
   reportErrorLog: (source, message, stack) => desktopRuntime ? Backend.ReportErrorLog(source, message, stack) : resolved(),
-  getFeedbackSystemInfo: () => desktopRuntime ? Backend.GetFeedbackSystemInfo() : resolved({ appVersion: '2.4.5', os: browserPlatform === 'darwin' ? 'macos' : 'windows', systemVersion: navigator.userAgent }),
+  getFeedbackSystemInfo: () => desktopRuntime ? Backend.GetFeedbackSystemInfo() : resolved({ appVersion: '2.4.6', os: browserPlatform === 'darwin' ? 'macos' : 'windows', systemVersion: navigator.userAgent }),
   selectFeedbackImages: () => desktopRuntime ? Backend.SelectFeedbackImages() : resolved([]),
   submitFeedback: input => desktopRuntime ? Backend.SubmitFeedback(input) : resolved(),
   checkForUpdates: force => desktopRuntime
@@ -63,13 +63,15 @@ window.quilliteMarkdown = {
       ? {
           checked: true,
           available: true,
-          currentVersion: '2.4.5',
-          latestVersion: '2.4.5',
-          releaseName: '轻阅 Markdown 2.4.5',
-          releaseNotes: '新增阅读模式快捷操作\n优化大文档加载性能\n修复若干已知问题',
-          releaseUrl: 'https://github.com/liuhang798/quillite-markdown/releases/latest'
+          currentVersion: '2.4.4',
+          latestVersion: '2.4.6',
+          releaseName: localStorage.getItem('language') === 'en' ? 'Quillite Markdown 2.4.6' : '轻阅 Markdown 2.4.6',
+          releaseNotes: localStorage.getItem('language') === 'en'
+            ? 'Added feedback and website-backed updates\nAdded Word / PDF export and Save As in the reader\nImproved high-resolution displays, outlines, and editing'
+            : '新增意见反馈与官网版本更新\n新增 Word / PDF 导出与阅读页另存为\n优化高分辨率显示、目录树与编辑体验',
+          releaseUrl: 'https://qm.ssssa.cn/#download'
         }
-      : { checked: true, available: false, currentVersion: '2.4.5', latestVersion: '2.4.5' }),
+      : { checked: true, available: false, currentVersion: '2.4.6', latestVersion: '2.4.6' }),
   snoozeUpdates: days => desktopRuntime ? Backend.SnoozeUpdates(days) : resolved(),
   downloadAndApplyUpdate: () => desktopRuntime ? Backend.DownloadAndApplyUpdate() : resolved(),
   onUpdateProgress: callback => desktopRuntime ? EventsOn('update:progress', callback) : () => {},

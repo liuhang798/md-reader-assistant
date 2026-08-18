@@ -6,7 +6,7 @@
 
 - 项目名称：轻阅 Markdown / Quillite Markdown
 - 仓库：`https://github.com/liuhang798/quillite-markdown`
-- 当前版本：`2.4.5`
+- 当前版本：`2.4.6`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
 - 支持平台：Windows x64、macOS Universal、Linux x64
@@ -43,7 +43,7 @@ frontend/src/main.js（统一桥接层）
   ↓ Wails 生成绑定
 app.go / updates.go（Go 后端）
   ↓
-本地文件系统、Windows/macOS/Linux 系统能力、GitHub Releases API
+本地文件系统、Windows/macOS/Linux 系统能力、轻阅 Markdown 官网服务
 ```
 
 `main.go` 使用 `//go:embed all:frontend/dist` 将前端产物嵌入最终可执行文件。正常构建必须先生成 `frontend/dist`；常规 `wails build` 会按 `wails.json` 自动执行前端安装和构建步骤。
@@ -55,7 +55,7 @@ app.go / updates.go（Go 后端）
 | `main.go` | Wails 应用入口、窗口尺寸、单实例、拖放、macOS 菜单和平台窗口配置 |
 | `app.go` | 文档、文件夹、偏好设置、最近阅读、临时草稿、本地图片和系统集成 |
 | `export_docx.go` | 将前端安全渲染后的文档转换为标准 DOCX（OOXML），处理文字样式、列表、表格、代码、链接和图片 |
-| `updates.go` | GitHub Release 更新检查、版本比较、30 天暂停提醒 |
+| `updates.go` | 官网版本库更新检查、版本比较、30 天暂停提醒 |
 | `app_test.go` | 后端单元测试、版本一致性和关键业务规则回归测试 |
 | `frontend/index.html` | 标题栏、侧栏、阅读页、分栏编辑器、菜单及弹窗结构 |
 | `frontend/src/main.js` | Wails 后端桥接、浏览器预览降级、平台检测 |
@@ -111,8 +111,8 @@ app.go / updates.go（Go 后端）
 - Windows：自绘标题栏、NSIS 安装、桌面快捷方式、Markdown 文件关联。
 - macOS：原生左侧窗口控制按钮、系统菜单和 Command 快捷键。
 - Linux：DEB 与 AppImage。
-- 启动时检查 GitHub 最新稳定 Release。
-- 更新弹窗显示 Markdown 更新说明并打开下载页面。
+- 启动时检查轻阅 Markdown 官网版本库。
+- 更新弹窗显示官网维护的 Markdown 更新说明并打开官网下载页面。
 - 可暂停自动更新提醒 30 天，手动检查不受限制。
 
 ## 6. Go 数据模型
@@ -178,7 +178,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 
 ### 更新
 
-- `CheckForUpdates(force)`：读取 GitHub 最新稳定 Release；`force=true` 跳过暂停提醒限制。
+- `CheckForUpdates(force)`：读取 `qm.ssssa.cn` 官网最新稳定版本；`force=true` 跳过暂停提醒限制。
 - `SnoozeUpdates(days)`：保存暂停提醒时间，限制在 1–365 天。
 
 ## 8. 前端状态与桥接
@@ -232,7 +232,7 @@ WebView 会限制直接访问 `file://` 图片。Markdown 源码仍保存正常�
 
 ### 更新检查
 
-启动约 1.2 秒后调用自动检查。客户端优先读取轻阅官网 `/api/v1/releases/latest`，使用数据库中的中英文日志、SHA-256 和平台更新地址；官网不可用时回退 GitHub 最新非草稿、非预发布 Release。版本高于 `appVersion` 时显示更新弹窗。`CHANGELOG.md` 当前版本段会被发布流程提取为 Release notes，并在 GitHub Release 完成后同步到官网版本库。
+启动约 1.2 秒后调用自动检查。客户端只读取 `https://qm.ssssa.cn/api/v1/releases/latest`，使用数据库中的中英文日志、SHA-256 和平台更新地址，不再访问或回退 GitHub Releases。版本高于 `appVersion` 时显示更新弹窗，“打开下载页面”固定进入 `https://qm.ssssa.cn/#download`。软件中的官网、更新、下载、统计与反馈调用只允许使用 `qm.ssssa.cn`，不得使用根域名或 `www` 子域名。官网仅按版本、平台和来源汇总更新检查及实际下载次数，不接收文档、路径或设备身份。
 
 ## 10. 必须保持的产品规则
 
@@ -250,6 +250,7 @@ WebView 会限制直接访问 `file://` 图片。Markdown 源码仍保存正常�
 10. 升级安装不能生成重复桌面图标或重复卸载项，并且必须自动沿用上次选择的安装目录；兼容旧版时可从卸载项的 `DisplayIcon` 反推目录。安装完成页默认勾选运行应用，但必须允许用户取消。
 11. Windows 安装、升级与卸载向导必须全程使用简体中文；全新安装默认写入中文偏好，旧版本升级必须迁移并保留已有语言与其他设置。macOS/Linux 以偏好文件是否存在判断首次运行。
 12. 版本号、安装包名称、关于窗口、更新检查和 CHANGELOG 必须一致。
+13. Windows 安装程序必须以 `.exe` 直接发布到 GitHub Release 和官网，不再额外打包 ZIP；应用内免安装更新仍使用独立的 `.bin`。
 
 ## 11. 安全边界
 

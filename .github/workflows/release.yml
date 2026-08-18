@@ -138,9 +138,7 @@ jobs:
           Copy-Item -LiteralPath $installer -Destination $target -Force
           $binaryTarget = Join-Path $releaseDir.FullName "quillite-markdown-$env:APP_VERSION-windows-amd64.bin"
           Copy-Item -LiteralPath $binary -Destination $binaryTarget -Force
-          $zipTarget = Join-Path $releaseDir.FullName "quillite-markdown-$env:APP_VERSION-windows-amd64.zip"
-          Compress-Archive -LiteralPath $target -DestinationPath $zipTarget -CompressionLevel Optimal -Force
-          Get-Item -LiteralPath $target, $zipTarget, $binaryTarget | Format-Table FullName, Length
+          Get-Item -LiteralPath $target, $binaryTarget | Format-Table FullName, Length
       - uses: actions/upload-artifact@v4
         with:
           name: quillite-markdown-windows-x64
@@ -338,10 +336,10 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${RELEASE_API_TOKEN}" ]]; then
-            echo "QUILLITE_RELEASE_API_TOKEN is not configured; skipping official website synchronization."
-            exit 0
+            echo "QUILLITE_RELEASE_API_TOKEN is required because the official website is the only update and download channel." >&2
+            exit 1
           fi
-          base_url="${RELEASE_API_BASE_URL:-https://8.133.191.203/api/v1/releases}"
+          base_url="${RELEASE_API_BASE_URL:-https://qm.ssssa.cn/api/v1/releases}"
           base_url="${base_url%/}"
           version="${RELEASE_TAG#v}"
           github_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
@@ -372,7 +370,7 @@ jobs:
               "${base_url}/${version}/assets/${platform}/${kind}"
           }
 
-          upload_asset "$(find release-assets -maxdepth 1 -name '*-windows-amd64.zip' -print -quit)" windows installer
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-windows-amd64.exe' -print -quit)" windows installer
           upload_asset "$(find release-assets -maxdepth 1 -name '*-windows-amd64.bin' -print -quit)" windows update
           upload_asset "$(find release-assets -maxdepth 1 -name '*-macos-universal.dmg' -print -quit)" macos installer
           upload_asset "$(find release-assets -maxdepth 1 -name '*-macos-universal.bin' -print -quit)" macos update

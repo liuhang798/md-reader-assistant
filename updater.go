@@ -33,7 +33,7 @@ func updateAssetNameForPlatform(goos string) string {
 	}
 }
 
-func pickUpdateAsset(assets []githubReleaseAsset, goos string) (*githubReleaseAsset, error) {
+func pickUpdateAsset(assets []updateReleaseAsset, goos string) (*updateReleaseAsset, error) {
 	suffix := updateAssetNameForPlatform(goos)
 	if suffix == "" {
 		return nil, fmt.Errorf("in-app updates are not supported on %s", goos)
@@ -64,15 +64,7 @@ func (a *App) DownloadAndApplyUpdate() error {
 	}
 	asset, err := pickUpdateAsset(release.Assets, runtime.GOOS)
 	if err != nil {
-		githubRelease, githubErr := fetchGitHubLatestRelease()
-		if githubErr != nil {
-			return fmt.Errorf("official release has no compatible update asset: %v; GitHub fallback: %w", err, githubErr)
-		}
-		release = githubRelease
-		asset, err = pickUpdateAsset(release.Assets, runtime.GOOS)
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("official release has no compatible update asset: %w", err)
 	}
 
 	configDir, err := os.UserConfigDir()
@@ -107,13 +99,20 @@ func (a *App) DownloadAndApplyUpdate() error {
 }
 
 func (a *App) downloadFile(url, destination string) error {
+	if !isOfficialWebsiteURL(url) {
+		return errors.New("update download URL is not hosted by the official website")
+	}
+	return a.downloadFileFromURL(url, destination, &http.Client{Timeout: 30 * time.Minute})
+}
+
+func (a *App) downloadFileFromURL(url, destination string, client *http.Client) error {
 	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
 	request.Header.Set("User-Agent", "QuilliteMarkdown/"+appVersion)
 
-	response, err := (&http.Client{Timeout: 30 * time.Minute}).Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		return fmt.Errorf("download update: %w", err)
 	}
@@ -163,7 +162,7 @@ func (a *App) emitProgress(done, total int64) {
 }
 
 // verifyDigest checks the downloaded file against the SHA-256 digest published
-// by GitHub for the release asset ("sha256:<hex>").
+// by the official website release catalog ("sha256:<hex>").
 func verifyDigest(path, digest string) error {
 	digest = strings.TrimSpace(digest)
 	if strings.HasPrefix(digest, "sha256:") {

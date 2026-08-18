@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	appStartupEndpoint = "https://8.133.191.203/api/v1/telemetry/app/startup"
-	appErrorEndpoint   = "https://8.133.191.203/api/v1/telemetry/app/error"
+	appStartupEndpoint = "https://qm.ssssa.cn/api/v1/telemetry/app/startup"
+	appErrorEndpoint   = "https://qm.ssssa.cn/api/v1/telemetry/app/error"
 )
 
 type appStartupEvent struct {

@@ -12,7 +12,7 @@ import (
 )
 
 func TestPickUpdateAsset(t *testing.T) {
-	assets := []githubReleaseAsset{
+	assets := []updateReleaseAsset{
 		{Name: "quillite-markdown-2.3.11-linux-amd64.deb"},
 		{Name: "quillite-markdown-2.3.11-macos-universal.dmg"},
 		{Name: "quillite-markdown-2.3.11-macos-universal.bin"},
@@ -74,7 +74,7 @@ func TestDownloadFileAndProgress(t *testing.T) {
 	app := &App{} // nil ctx: progress events are skipped safely
 	dir := t.TempDir()
 	path := filepath.Join(dir, "downloaded.bin")
-	if err := app.downloadFile(server.URL, path); err != nil {
+	if err := app.downloadFileFromURL(server.URL, path, server.Client()); err != nil {
 		t.Fatalf("download failed: %v", err)
 	}
 	data, err := os.ReadFile(path)
@@ -93,7 +93,14 @@ func TestDownloadFileRejectsBadStatus(t *testing.T) {
 	defer server.Close()
 
 	app := &App{}
-	if err := app.downloadFile(server.URL, filepath.Join(t.TempDir(), "nope.bin")); err == nil {
+	if err := app.downloadFileFromURL(server.URL, filepath.Join(t.TempDir(), "nope.bin"), server.Client()); err == nil {
 		t.Fatal("non-200 response must fail the download")
+	}
+}
+
+func TestDownloadFileRejectsNonOfficialHosts(t *testing.T) {
+	app := &App{}
+	if err := app.downloadFile("https://github.com/liuhang798/quillite-markdown/releases/latest", filepath.Join(t.TempDir(), "update.bin")); err == nil {
+		t.Fatal("GitHub must not be accepted as an update download host")
 	}
 }

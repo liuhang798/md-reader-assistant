@@ -1,29 +1,32 @@
 <div align="center">
   <img src="build/appicon.png" width="96" alt="Quillite Markdown icon">
   <h1>Quillite Markdown</h1>
-  <p><strong>A fast, local-first Markdown reader, viewer and editor — about 7 MB on Windows.</strong></p>
+  <p><strong>A fast, local-first Markdown reader, viewer and editor — about 9 MB on Windows.</strong></p>
   <p>Live preview · Syntax highlighting · Plain local files · Windows, macOS and Linux</p>
   <p><a href="README.md">简体中文</a> · <strong>English</strong></p>
   <p>
     <a href="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml"><img src="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml/badge.svg" alt="Build status"></a>
-    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/quillite-markdown" alt="Latest release"></a>
+    <a href="https://qm.ssssa.cn/#download"><img src="https://img.shields.io/badge/download-official%20website-159A63" alt="Download from the official website"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/quillite-markdown" alt="MIT License"></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-526b58" alt="Windows, macOS and Linux">
   </p>
   <p>
-    <a href="https://liuhang798.github.io/"><strong>Official website</strong></a>
+    <a href="https://qm.ssssa.cn/"><strong>🌐 Official website: qm.ssssa.cn</strong></a>
     ·
-    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><strong>Download latest release</strong></a>
+    <a href="https://qm.ssssa.cn/#download"><strong>Download latest release</strong></a>
     · <a href="#screenshots">Screenshots</a>
     · <a href="#development">Build from source</a>
   </p>
 </div>
 
+> **Official website and downloads: <https://qm.ssssa.cn/>**
+> Updates, installers for all platforms, release notes, and feedback are served only from this hostname, without relying on the apex or `www` domains.
+
 ![Quillite Markdown split-view Markdown editor with live preview and syntax highlighting](screenshots/en/03-split-editor.png)
 
 ## Why Quillite Markdown?
 
-- **Lightweight by design:** the Windows installer is only about **7 MB**, built with Go and Wails instead of Electron.
+- **Lightweight by design:** the Windows installer is about **9 MB**, built with Go and Wails instead of Electron.
 - **Local-first and private:** open and edit ordinary Markdown files on your computer—no account, proprietary vault or cloud lock-in.
 - **Reading and editing together:** switch from a focused Markdown reader to split-view editing with live preview and syntax highlighting; the preview uses a clearer split-pane text size and continues to follow global text scaling.
 - **Practical desktop integration:** recent files, document favorites, resource explorer, autosave, native dialogs, file associations and update notifications.
@@ -43,19 +46,24 @@ Feedback is a separate, explicit user action and is not controlled by the produc
 
 | Platform | Package | Download |
 |---|---|---|
-| Windows x64 | Step-by-step installer (`.exe`) | [Latest release](https://github.com/liuhang798/quillite-markdown/releases/latest) |
-| macOS | Universal Intel + Apple Silicon (`.dmg`) | [Latest release](https://github.com/liuhang798/quillite-markdown/releases/latest) |
-| Linux x64 | Debian package + portable AppImage | [Latest release](https://github.com/liuhang798/quillite-markdown/releases/latest) |
+| Windows x64 | Step-by-step installer (`.exe`) | [Official download](https://qm.ssssa.cn/#download) |
+| macOS | Universal Intel + Apple Silicon (`.dmg`) | [Official download](https://qm.ssssa.cn/#download) |
+| Linux x64 | Debian package + portable AppImage | [Official download](https://qm.ssssa.cn/#download) |
 
 On Windows, run `quillite-markdown-version-windows-amd64.exe` and follow the setup wizard. The installer can create a desktop shortcut, register Markdown file associations, automatically reuse the previous installation directory during an upgrade, and launch the app after setup. The Windows install, upgrade, and uninstall flow is presented entirely in Simplified Chinese. A fresh installation starts the app in Chinese, while the app interface can still be switched to English afterward.
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
+## What's new in 2.4.6
+
+- Moved the official website, updates, downloads, telemetry, and feedback to the single hostname `qm.ssssa.cn`, with no dependency on the apex or `www` domains.
+- Restored direct EXE delivery for the Windows installer on the website and GitHub Release; installer-free Windows/macOS updates continue to use dedicated BIN assets.
+- Added aggregate update-check and actual-download metrics by release, platform, and source without uploading documents, paths, or device identity.
+
 ## What's new in 2.4.5
 
 - Added website-backed feedback for feature suggestions and functional issues, with optional contact details and screenshots plus automatic app/system version information.
 - Added Word/PDF export, reader Save As, Save Copy & Edit for read-only documents, and refinements for high-resolution displays, outline trees, notifications, and source navigation.
-- Update checks now prefer the official release catalog with GitHub fallback, while release automation synchronizes localized notes and all platform packages after successful builds.
 
 ## What's new in 2.4.4
 
@@ -139,7 +147,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 - Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.
 - Single-instance file opening and unsaved-change protection.
 - A new split reading/editing brand icon with transparent rounded corners and no white square canvas. In-app Logos follow the selected accent while native system icons stay green; the About screen includes the author email and a direct repository link.
-- Automatic checks prefer the official website release catalog and fall back to the latest stable GitHub Release, with localized notes, one-click downloads, manual checks, and a 30-day reminder pause.
+- Automatic checks use only the official website release catalog, with localized notes, official-host downloads, manual checks, and a 30-day reminder pause.
 
 ## Markdown format support
 
@@ -158,13 +166,11 @@ Preview is based on CommonMark/GFM. Highlight uses `==text==`; footnotes use `[^
 |---|---|
 | ![Home](screenshots/en/01-home.png) | ![Reader](screenshots/en/02-reader.png) |
 
-![About screen](screenshots/en/04-about.png)
-
-![Update available](screenshots/en/05-update-available.png)
+![Split editing with live preview](screenshots/en/03-split-editor.png)
 
 ## Go + Wails v2
 
-Version 2.0 and later replace Electron with Go and Wails while retaining the existing HTML/CSS interface and CodeMirror editor. The current Windows installer is about **7 MB**, compared with about 90 MB for the previous Electron build.
+Version 2.0 and later replace Electron with Go and Wails while retaining the existing HTML/CSS interface and CodeMirror editor. The current Windows installer is about **9 MB**, compared with about 90 MB for the previous Electron build.
 
 - Backend: Go 1.23+
 - Desktop framework: Wails 2.13
@@ -177,7 +183,7 @@ Version 2.0 and later replace Electron with Go and Wails while retaining the exi
 
 - `main.go`: Wails startup and window configuration.
 - `app.go`: documents, folders, recent files, preferences, and desktop integration.
-- `updates.go`: official release-catalog checks, GitHub fallback, and version comparison.
+- `updates.go`: official-only release-catalog checks, platform package mapping, and version comparison.
 - `frontend/`: Markdown reader, CodeMirror editor, and bilingual interface.
 - `build/`: application icons and platform build configuration.
 - `packaging/`: Linux desktop integration and package metadata.
@@ -231,12 +237,12 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a version tag to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml`, publish all packages to GitHub Releases, and—when the official release token is configured—synchronize the notes and packages to the website catalog. The app checks the official catalog first and falls back to GitHub. On macOS and Windows it can download, verify, apply, and restart in-app.
+Push a version tag to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml`, keep the GitHub source release record, and require the localized notes and all packages to be synchronized to the official website catalog. The app checks and downloads only from the official website. On macOS and Windows it can download, verify, apply, and restart in-app.
 
 ## Project documentation
 
-- [Official website](https://liuhang798.github.io/)
-- [Official website source](https://github.com/liuhang798/liuhang798.github.io)
+- [Official website](https://qm.ssssa.cn/)
+- [Official website source](https://github.com/liuhang798/quillite-markdown-website)
 - [Changelog](CHANGELOG.md)
 - [AI project technical guide](AGENTS.md)
 - [Contributing](CONTRIBUTING.md)

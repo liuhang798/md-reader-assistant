@@ -1,29 +1,32 @@
 <div align="center">
   <img src="build/appicon.png" width="96" alt="轻阅 Markdown 图标">
   <h1>轻阅 Markdown</h1>
-  <p><strong>快速、本地优先的 Markdown 阅读器、查看器和编辑器——Windows 安装包仅约 7 MB。</strong></p>
+  <p><strong>快速、本地优先的 Markdown 阅读器、查看器和编辑器——Windows 安装包约 9 MB。</strong></p>
   <p>实时预览 · 语法高亮 · 本地文件 · Windows、macOS、Linux</p>
   <p><strong>简体中文</strong> · <a href="README.en.md">English</a></p>
   <p>
     <a href="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml"><img src="https://github.com/liuhang798/quillite-markdown/actions/workflows/release.yml/badge.svg" alt="构建状态"></a>
-    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><img src="https://img.shields.io/github/v/release/liuhang798/quillite-markdown" alt="最新版本"></a>
+    <a href="https://qm.ssssa.cn/#download"><img src="https://img.shields.io/badge/下载-官网版本库-159A63" alt="从官网下载最新版本"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/liuhang798/quillite-markdown" alt="MIT 许可证"></a>
     <img src="https://img.shields.io/badge/平台-Windows%20%7C%20macOS%20%7C%20Linux-526b58" alt="支持 Windows、macOS 和 Linux">
   </p>
   <p>
-    <a href="https://liuhang798.github.io/"><strong>访问官网</strong></a>
+    <a href="https://qm.ssssa.cn/"><strong>🌐 唯一官方网站：qm.ssssa.cn</strong></a>
     ·
-    <a href="https://github.com/liuhang798/quillite-markdown/releases/latest"><strong>下载最新版本</strong></a>
+    <a href="https://qm.ssssa.cn/#download"><strong>下载最新版本</strong></a>
     · <a href="#项目截图">查看截图</a>
     · <a href="#本地开发">从源码构建</a>
   </p>
 </div>
 
-![轻阅 Markdown左右分栏 Markdown 编辑、实时预览和语法高亮界面](screenshots/03-split-editor.png)
+> **官方网站与官方下载：<https://qm.ssssa.cn/>**
+> 软件更新、三平台安装包、版本日志与意见反馈均由该站提供，不使用其他根域名或 `www` 域名。
+
+![轻阅 Markdown 左右分栏 Markdown 编辑、实时预览和语法高亮界面](screenshots/03-split-editor.png)
 
 ## 为什么选择轻阅 Markdown？
 
-- **真正轻量：**使用 Go + Wails 构建，不依赖 Electron，Windows 安装包仅约 **7 MB**。
+- **真正轻量：**使用 Go + Wails 构建，不依赖 Electron，Windows 安装包约 **9 MB**。
 - **本地优先：**直接读取和保存电脑中的普通 Markdown 文件，无需账号、专用仓库或云端绑定。
 - **阅读编辑一体：**既有专注的 Markdown 阅读模式，也有左侧实时预览、右侧语法高亮的分栏编辑模式；实时预览采用适合分栏阅读的清晰字号，并继续跟随全局字号缩放。
 - **完整桌面体验：**最近阅读、文档收藏、资源浏览器、自动保存、原生文件窗口、文件关联和更新提醒一应俱全。
@@ -43,19 +46,24 @@
 
 | 平台 | 安装包 | 下载 |
 |---|---|---|
-| Windows x64 | 分步安装程序（`.exe`） | [下载最新版本](https://github.com/liuhang798/quillite-markdown/releases/latest) |
-| macOS | Intel + Apple Silicon 通用版（`.dmg`） | [下载最新版本](https://github.com/liuhang798/quillite-markdown/releases/latest) |
-| Linux x64 | Debian 安装包 + 便携 AppImage | [下载最新版本](https://github.com/liuhang798/quillite-markdown/releases/latest) |
+| Windows x64 | 分步安装程序（`.exe`） | [前往官网下载](https://qm.ssssa.cn/#download) |
+| macOS | Intel + Apple Silicon 通用版（`.dmg`） | [前往官网下载](https://qm.ssssa.cn/#download) |
+| Linux x64 | Debian 安装包 + 便携 AppImage | [前往官网下载](https://qm.ssssa.cn/#download) |
 
 Windows 用户运行 `quillite-markdown-版本-windows-amd64.exe`，按安装向导操作即可；安装程序支持创建桌面快捷方式、Markdown 文件关联、升级时沿用上次安装目录，并在安装完成后直接启动软件。Windows 的安装、升级与卸载流程统一使用简体中文；全新安装默认以简体中文启动软件，进入软件后仍可切换 English 界面。
 
 macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时手动切换；临时选择会保持到系统下一次切换白天或黑夜模式，随后自动恢复跟随。系统模式变化时界面与原生标题栏同步切换；使用在轻薄标题栏中垂直居中的系统原生窗口控制按钮与应用菜单，半屏平铺和窗口缩放时按钮位置保持稳定。进入全屏后 Logo 和软件名称会自动向左对齐，退出后立即恢复窗口按钮安全间距且不会短暂重叠。支持标准 Command 快捷键：`Command + W` 关闭窗口并留在后台，`Command + Q` 真正退出应用。全屏关闭时会先退出全屏再隐藏到后台；编辑器和资源浏览器采用延迟初始化，减少冷启动等待。
 
+## 2.4.6 更新亮点
+
+- 官网、更新、下载、统计和反馈统一迁移到唯一域名 `qm.ssssa.cn`，不再依赖根域名或 `www` 子域名。
+- Windows 安装程序恢复为官网与 GitHub Release 的 EXE 直链；Windows/macOS 免安装更新继续使用独立 BIN 文件。
+- 官网按版本、平台和来源汇总更新检查与实际下载次数，不上传文档、路径或设备身份。
+
 ## 2.4.5 更新亮点
 
 - 新增官网意见反馈入口，可提交功能建议或功能异常、可选联系方式和问题截图，软件及系统版本会自动带入。
 - 新增 Word／PDF 导出、阅读页“另存为”、只读文档“另存为副本并编辑”，并完善高分辨率显示、目录树、通知与编辑定位体验。
-- 更新检查优先读取官网版本库，官网不可用时自动回退 GitHub；发布流程会在跨平台构建完成后自动同步中英文日志和安装包。
 
 ## 2.4.4 更新亮点
 
@@ -139,7 +147,7 @@ macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时�
 - 原生打开/保存窗口，关联 `.md`、`.markdown`、`.mdown`、`.mkd` 文件。
 - 单实例打开文件和未保存修改保护。
 - 全新分栏阅读/编辑品牌图标，采用透明圆角边缘、无白色方底；应用内 Logo 会跟随主题颜色，系统图标保持默认绿色。“关于”页面包含作者邮箱和可直达的开源仓库。
-- 启动时优先检查轻阅官网版本库，官网维护时自动回退 GitHub Releases；发现新版本后可查看更新说明，选择“下载并更新”在应用内直接完成升级（带进度条，自动重启），或打开下载页面手动安装，也可 30 天内不再自动提醒；设置菜单仍支持手动检查。
+- 启动时只检查 `qm.ssssa.cn` 官网版本库；发现新版本后可查看官网维护的中英文更新说明，选择“下载并更新”从官网直接完成升级（带进度条，自动重启），或打开 `https://qm.ssssa.cn/#download` 手动安装，也可 30 天内不再自动提醒；设置菜单仍支持手动检查。
 - macOS 与 Windows 支持应用内自动更新：新版本由应用自行下载并替换，不会反复触发系统授权提示；macOS 首次安装的 Gatekeeper 提示仍可能因未签名出现。
 
 ## Markdown 格式支持
@@ -159,13 +167,11 @@ macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时�
 |---|---|
 | ![首页](screenshots/01-home.png) | ![阅读界面](screenshots/02-reader.png) |
 
-![关于页面](screenshots/04-about.png)
-
-![发现新版本](screenshots/05-update-available.png)
+![分栏编辑与实时预览](screenshots/03-split-editor.png)
 
 ## Go + Wails 2.0
 
-2.0 版本开始使用 Go 和 Wails 替换 Electron，同时保留现有 HTML/CSS 界面和 CodeMirror 编辑器。当前 Windows 安装包约为 **7 MB**，原 Electron 安装包约为 90 MB。
+2.0 版本开始使用 Go 和 Wails 替换 Electron，同时保留现有 HTML/CSS 界面和 CodeMirror 编辑器。当前 Windows 安装包约为 **9 MB**，原 Electron 安装包约为 90 MB。
 
 - 后端：Go 1.23+
 - 桌面框架：Wails 2.13
@@ -178,7 +184,7 @@ macOS 版本会自动跟随电脑的白天/黑夜外观，也允许用户临时�
 
 - `main.go`：Wails 应用启动与窗口配置。
 - `app.go`：文档、文件夹、最近阅读、偏好设置及桌面系统能力。
-- `updates.go`：官网版本库优先、GitHub Releases 回退的更新检查与版本比较。
+- `updates.go`：官网唯一版本库的更新检查、平台安装包映射与版本比较。
 - `frontend/`：Markdown 阅读器、CodeMirror 编辑器和双语界面。
 - `build/`：应用图标及各平台构建配置。
 - `packaging/`：Linux 桌面集成与软件包元数据。
@@ -226,12 +232,12 @@ bash scripts/build-macos.sh darwin/universal
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-推送版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包、发布到 GitHub Releases，并在配置官网发布令牌后同步版本日志和安装包到官网版本库。客户端优先根据官网最新稳定版本提醒更新，接口不可用时回退 GitHub。
+推送版本标签后，`.github/workflows/release.yml` 会自动构建三个系统的安装包、保留 GitHub 源码发布记录，并强制把版本日志与安装包同步到官网版本库。客户端只根据官网最新稳定版本提醒和下载更新；缺少官网令牌或同步失败时，发布任务会失败。
 
 ## 项目文档
 
-- [项目官网](https://liuhang798.github.io/)
-- [官网源代码](https://github.com/liuhang798/liuhang798.github.io)
+- [项目官网](https://qm.ssssa.cn/)
+- [官网源代码](https://github.com/liuhang798/quillite-markdown-website)
 - [更新记录](CHANGELOG.md)
 - [AI 项目技术指南](AGENTS.md)
 - [贡献指南](CONTRIBUTING.md)

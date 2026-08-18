@@ -9,7 +9,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	goruntime "runtime"
 	"strings"
@@ -18,7 +17,7 @@ import (
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-var feedbackEndpoint = "https://8.133.191.203/api/v1/feedback"
+var feedbackEndpoint = "https://qm.ssssa.cn/api/v1/feedback"
 
 const (
 	maxFeedbackImages    = 5
@@ -183,11 +182,11 @@ func detailedSystemVersion() string {
 	var value string
 	switch goruntime.GOOS {
 	case "windows":
-		if output, err := exec.Command("cmd", "/C", "ver").CombinedOutput(); err == nil {
+		if output, err := feedbackSystemCommand("cmd", "/C", "ver").CombinedOutput(); err == nil {
 			value = string(output)
 		}
 	case "darwin":
-		if output, err := exec.Command("sw_vers", "-productVersion").CombinedOutput(); err == nil {
+		if output, err := feedbackSystemCommand("sw_vers", "-productVersion").CombinedOutput(); err == nil {
 			value = "macOS " + string(output)
 		}
 	case "linux":

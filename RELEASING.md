@@ -12,7 +12,7 @@ Keep the version synchronized in:
 
 Update `CHANGELOG.md` and both README files for user-visible changes.
 
-Every release must have a matching `## [version]` section in `CHANGELOG.md`. The release workflow automatically uses that section for both the GitHub Release page and the in-app update dialog.
+Every release must have a matching `## [version]` section in `CHANGELOG.md`. The release workflow uses that section for the GitHub source-code release and synchronizes it to the official website, which is the only update and binary-download channel used by the app.
 
 ## 2. Verify locally
 
@@ -50,17 +50,17 @@ git push origin main
 创建与 `wails.json` 完全一致的 tag 并推送到 GitHub（`release.yml` 由 push tag 自动触发）：
 
 ```bash
-git tag -a v2.4.5 -m "Quillite Markdown v2.4.5"
-git push origin v2.4.5
+git tag -a v2.4.6 -m "Quillite Markdown v2.4.6"
+git push origin v2.4.6
 ```
 
-The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, uploads them to GitHub Release, then synchronizes the version and all platform assets to the official website.
+The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, uploads them to GitHub Release, then synchronizes the version and all platform assets to the official website. The Windows installer is published directly as an `.exe`; it is not wrapped in a ZIP.
 
 首次启用官网同步时，在官网服务器运行最新版部署脚本并保存其输出的发布令牌，然后到仓库 **Settings → Secrets and variables → Actions** 新建 Secret：
 
 - `QUILLITE_RELEASE_API_TOKEN`：服务器生成的 64 位十六进制令牌。
 
-接口地址默认是 `https://8.133.191.203/api/v1/releases`。只有迁移服务器时才需要在 Actions Variables 中配置 `QUILLITE_RELEASE_API_BASE_URL`。工作流会先写入草稿、上传六类文件，再公开版本；缺少令牌时仍正常发布 GitHub Release，但会明确跳过官网同步。
+接口地址默认是 `https://qm.ssssa.cn/api/v1/releases`。只有迁移服务器时才需要在 Actions Variables 中配置 `QUILLITE_RELEASE_API_BASE_URL`。软件端只允许使用 `qm.ssssa.cn`，不要配置根域名或 `www` 子域名。工作流会先写入草稿、上传六类文件，再公开版本；官网是软件唯一的更新与下载通道，因此缺少令牌或官网同步失败时，整个发布任务会失败，不能形成半发布状态。
 
 ### Rebuild an existing Release
 
@@ -68,7 +68,7 @@ If a platform build fails after the tag and Release have already been created:
 
 1. Fix and push the workflow or source changes to `main`.
 2. Open **Actions → Build and Release → Run workflow**.
-3. Keep the branch set to `main` and enter the existing tag, such as `v2.4.5`.
+3. Keep the branch set to `main` and enter the existing tag, such as `v2.4.6`.
 4. Run the workflow. Successful assets are uploaded to the existing Release and files with the same names are replaced.
 
 The manual tag must exactly match the version in `wails.json`.
@@ -76,6 +76,7 @@ The manual tag must exactly match the version in `wails.json`.
 ## 4. Verify the release
 
 - Confirm all platform assets are present.
+- Confirm `https://qm.ssssa.cn/#download` displays the new version and all official platform download links.
 - Install the Windows package and check the desktop icon and Markdown file association.
 - Mount the macOS DMG, confirm it contains exactly one `轻阅 Markdown.app`, and verify Spotlight shows `轻阅 Markdown` rather than the internal project name.
 - Verify that the in-app update checker opens the published Release page.

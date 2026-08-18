@@ -4,9 +4,19 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+## [2.4.6] - 2026-08-18
+
 ### 简体中文
 
+- Windows 安装程序恢复为 EXE 直链下载，GitHub Release 与官网版本库不再额外生成或分发 ZIP 包；应用内免安装更新继续使用独立 BIN。
+- 软件内所有官网入口与接口统一使用 `https://qm.ssssa.cn`：客户端只读取 `https://qm.ssssa.cn/api/v1/releases/latest`，不再访问根域名、`www` 子域名或回退 GitHub Releases；更新弹窗的下载按钮固定跳转二级域名的“下载”模块，免安装更新文件也只接受该域名。
+- 官网按版本、平台与来源汇总更新检查和实际安装包下载次数，用于版本发布效果统计；不上传文档内容、文件名、文件路径或设备身份。
+
 ### English
+
+- Restored direct downloads of the Windows EXE installer. GitHub Releases and the official website no longer generate or distribute an extra ZIP, while installer-free in-app updates continue to use the separate BIN asset.
+- Standardized every in-app website link and API on `https://qm.ssssa.cn`. The app reads only `https://qm.ssssa.cn/api/v1/releases/latest`, never uses the apex or `www` domains, never falls back to GitHub Releases, opens the subdomain's Download section, and accepts in-app update files only from that host.
+- Added aggregate update-check and actual package-download counts by release, platform, and source without uploading document content, file names, file paths, or device identity.
 
 ## [2.4.5] - 2026-08-18
 
@@ -511,3 +521,4 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.3
 [2.4.4]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.4
 [2.4.5]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.5
+[2.4.6]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.6

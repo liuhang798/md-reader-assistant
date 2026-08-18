@@ -160,6 +160,9 @@ test('the update dialog offers in-app download and apply with progress', () => {
   assert.match(renderer, /state\.dirty && state\.currentFile\?\.path\) \{\s*await saveDocument\(false, \{ auto: true, silent: true \}\)/);
   assert.match(renderer, /setTimeout\(\(\) => window\.quilliteMarkdown\.closeWindow\(\), 500\)/);
   assert.match(styles, /\.update-progress-bar \{ height: 100%; width: 0; border-radius: 4px; background: var\(--accent-strong\);/);
+  assert.match(renderer, /openExternal\('https:\/\/qm\.ssssa\.cn\/#download'\)/);
+  assert.match(mainSource, /releaseUrl: 'https:\/\/qm\.ssssa\.cn\/#download'/);
+  assert.doesNotMatch(mainSource, /github\.com\/liuhang798\/quillite-markdown\/releases/);
 });
 
 test('Word and PDF export are available from the document menu', () => {
@@ -324,4 +327,12 @@ test('product improvement checkbox controls error logs without disabling anonymo
   assert.match(html, /data-i18n="usageAnalyticsDescription">此开关仅控制异常回传[^<]*每天最多提交一次匿名活跃记录/);
   assert.match(renderer, /usageAnalyticsDisabled: '已关闭异常自动回传'/);
   assert.match(renderer, /One anonymous daily-active event is submitted at most once per day regardless of this setting/);
+});
+
+test('the About dialog exposes the official website in both languages', () => {
+  assert.match(html, /href="https:\/\/qm\.ssssa\.cn" data-external="https:\/\/qm\.ssssa\.cn"/);
+  assert.match(html, /data-i18n="officialWebsite">官方网站<\/small><strong>qm\.ssssa\.cn<\/strong>/);
+  assert.match(renderer, /officialWebsite: '官方网站'/);
+  assert.match(renderer, /officialWebsite: 'Official website'/);
+  assert.doesNotMatch(html, /https:\/\/(?:www\.)?ssssa\.cn/);
 });
