@@ -4,6 +4,18 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+## [2.4.7] - 2026-08-18
+
+### 简体中文
+
+- 设置菜单中的“检查更新”移除右侧 `GitHub` 字样，使界面更简洁，并准确体现软件更新与安装包下载均由轻阅官网 `qm.ssssa.cn` 提供。
+- 保持官网版本库、应用内免安装更新、三平台安装包与下载统计流程不变。
+
+### English
+
+- Removed the `GitHub` suffix from Check for Updates for a cleaner menu that accurately reflects the official `qm.ssssa.cn` update and download channel.
+- Kept the official release catalog, installer-free in-app updates, cross-platform packages, and download metrics unchanged.
+
 ## [2.4.6] - 2026-08-18
 
 ### 简体中文
@@ -521,4 +533,5 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.3
 [2.4.4]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.4
 [2.4.5]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.5
+[2.4.7]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.7
 [2.4.6]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.6
