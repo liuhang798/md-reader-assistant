@@ -54,6 +54,9 @@ window.quilliteMarkdown = {
   setLanguage: language => desktopRuntime ? Backend.SetLanguage(language) : resolved(),
   setUsageAnalytics: enabled => desktopRuntime ? Backend.SetUsageAnalytics(enabled) : resolved({ usageAnalytics: enabled }),
   reportErrorLog: (source, message, stack) => desktopRuntime ? Backend.ReportErrorLog(source, message, stack) : resolved(),
+  getFeedbackSystemInfo: () => desktopRuntime ? Backend.GetFeedbackSystemInfo() : resolved({ appVersion: '2.4.4', os: browserPlatform === 'darwin' ? 'macos' : 'windows', systemVersion: navigator.userAgent }),
+  selectFeedbackImages: () => desktopRuntime ? Backend.SelectFeedbackImages() : resolved([]),
+  submitFeedback: input => desktopRuntime ? Backend.SubmitFeedback(input) : resolved(),
   checkForUpdates: force => desktopRuntime
     ? Backend.CheckForUpdates(force)
     : resolved(mockUpdate

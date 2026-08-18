@@ -13,7 +13,19 @@ import (
 	"time"
 )
 
-const appErrorEndpoint = "https://8.133.191.203/api/v1/telemetry/app/error"
+const (
+	appStartupEndpoint = "https://8.133.191.203/api/v1/telemetry/app/startup"
+	appErrorEndpoint   = "https://8.133.191.203/api/v1/telemetry/app/error"
+)
+
+type appStartupEvent struct {
+	EventID   string `json:"eventId"`
+	SentAt    string `json:"sentAt"`
+	InstallID string `json:"installId"`
+	Version   string `json:"version"`
+	OS        string `json:"os"`
+	Arch      string `json:"arch"`
+}
 
 type appErrorEvent struct {
 	EventID    string `json:"eventId"`
@@ -33,6 +45,89 @@ func newTelemetryEventID() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(random), nil
+}
+
+// scheduleDailyActiveReport submits one anonymous active-device event per UTC day.
+// It is intentionally independent of the optional error-reporting preference: the
+// checkbox controls exception logs only. Network failures remain silent and are
+// retried only when the user launches the application again.
+func (a *App) scheduleDailyActiveReport() {
+	go func() {
+		defer func() { _ = recover() }()
+		a.reportDailyActive(time.Now().UTC(), func(installID string) bool {
+			return sendAppStartup(appStartupEndpoint, installID, &http.Client{Timeout: 4 * time.Second})
+		})
+	}()
+}
+
+func (a *App) reportDailyActive(now time.Time, sender func(string) bool) bool {
+	if sender == nil {
+		return false
+	}
+	today := now.UTC().Format("2006-01-02")
+	prefs, err := a.readPreferences()
+	if err != nil || prefs.LastActiveReport == today {
+		return false
+	}
+	installID := strings.TrimSpace(prefs.AnonymousInstallID)
+	if len(installID) < 16 {
+		installID, err = newTelemetryEventID()
+		if err != nil {
+			return false
+		}
+		if _, err = a.updatePreferences(func(current *Preferences) {
+			current.AnonymousInstallID = installID
+		}); err != nil {
+			return false
+		}
+	}
+	if !sender(installID) {
+		return false
+	}
+	_, err = a.updatePreferences(func(current *Preferences) {
+		current.LastActiveReport = today
+	})
+	return err == nil
+}
+
+func sendAppStartup(endpoint, installID string, client *http.Client) bool {
+	if strings.TrimSpace(endpoint) == "" || len(strings.TrimSpace(installID)) < 16 || client == nil {
+		return false
+	}
+	eventID, err := newTelemetryEventID()
+	if err != nil {
+		return false
+	}
+	operatingSystem := telemetryOperatingSystem()
+	if operatingSystem == "" {
+		return false
+	}
+	architecture := goruntime.GOARCH
+	if architecture != "amd64" && architecture != "arm64" && architecture != "x86_64" && architecture != "aarch64" {
+		return false
+	}
+	payload, err := json.Marshal(appStartupEvent{
+		EventID:   eventID,
+		SentAt:    time.Now().UTC().Format(time.RFC3339),
+		InstallID: strings.TrimSpace(installID),
+		Version:   appVersion,
+		OS:        operatingSystem,
+		Arch:      architecture,
+	})
+	if err != nil {
+		return false
+	}
+	request, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return false
+	}
+	request.Header.Set("Content-Type", "application/json")
+	response, err := client.Do(request)
+	if err != nil {
+		return false
+	}
+	response.Body.Close()
+	return response.StatusCode >= 200 && response.StatusCode < 300
 }
 
 // ReportErrorLog 只安排一个可选的后台任务并立即返回。偏好读取、文本清理和
@@ -75,11 +170,8 @@ func sendAppErrorLog(endpoint, errorLog string, client *http.Client) bool {
 	if err != nil {
 		return false
 	}
-	operatingSystem := goruntime.GOOS
-	if operatingSystem == "darwin" {
-		operatingSystem = "macos"
-	}
-	if operatingSystem != "windows" && operatingSystem != "macos" && operatingSystem != "linux" {
+	operatingSystem := telemetryOperatingSystem()
+	if operatingSystem == "" {
 		return false
 	}
 	payload, err := json.Marshal(appErrorEvent{
@@ -103,6 +195,17 @@ func sendAppErrorLog(endpoint, errorLog string, client *http.Client) bool {
 	}
 	response.Body.Close()
 	return response.StatusCode >= 200 && response.StatusCode < 300
+}
+
+func telemetryOperatingSystem() string {
+	operatingSystem := goruntime.GOOS
+	if operatingSystem == "darwin" {
+		operatingSystem = "macos"
+	}
+	if operatingSystem != "windows" && operatingSystem != "macos" && operatingSystem != "linux" {
+		return ""
+	}
+	return operatingSystem
 }
 
 func buildSanitizedErrorLog(source, message, stack string) string {

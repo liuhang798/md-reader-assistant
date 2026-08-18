@@ -64,7 +64,15 @@ func (a *App) DownloadAndApplyUpdate() error {
 	}
 	asset, err := pickUpdateAsset(release.Assets, runtime.GOOS)
 	if err != nil {
-		return err
+		githubRelease, githubErr := fetchGitHubLatestRelease()
+		if githubErr != nil {
+			return fmt.Errorf("official release has no compatible update asset: %v; GitHub fallback: %w", err, githubErr)
+		}
+		release = githubRelease
+		asset, err = pickUpdateAsset(release.Assets, runtime.GOOS)
+		if err != nil {
+			return err
+		}
 	}
 
 	configDir, err := os.UserConfigDir()

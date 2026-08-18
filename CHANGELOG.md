@@ -6,10 +6,26 @@ All notable changes to Quillite Markdown are documented here.
 
 ### 简体中文
 
+- 更新检查改为优先读取轻阅官网版本库中的版本号、中英文更新日志、SHA-256 和免安装更新地址；官网接口维护或缺少当前平台更新文件时自动回退 GitHub Releases。发布工作流完成 GitHub Release 后，会自动把版本日志和 Windows、macOS、Linux 全部安装包同步到官网，完整上传后才公开。
+- 编辑模式左侧实时预览的正文基准字号由 15px 适度提升至 16px，改善 2K／4K 屏幕及分栏状态下的阅读清晰度；普通阅读页、右侧源码编辑器和现有字号缩放逻辑保持不变。
+- 恢复独立的每日匿名活跃统计：每台设备每天最多上报一次，且不受“参与产品改进计划”开关影响；该开关现在只控制异常错误日志回传。活跃记录仅包含服务器哈希后的随机安装标识、软件版本、系统类型、CPU 架构和服务器解析地域，不上传文档、路径、联系方式或具体操作行为。
+- 更多菜单新增“意见反馈”：可选择“功能建议”或“功能异常”，填写反馈说明，并按需附上邮箱、手机和最多 5 张问题截图；软件版本与系统版本自动带入，提交前明确说明发送范围，不会上传当前 Markdown 文档。
+- 意见反馈通过轻阅官网接口提交，后台支持筛选、查看受保护的反馈图片、标记已解决、重新打开和删除；删除反馈时服务器会同步永久删除该反馈的全部图片数据。
+- 阅读页顶部新增“另存为”快捷操作，可直接将当前文档保存为新文件并自动打开；文档区域变窄时该操作会与导出、打印一起收进“更多”菜单，原文件保持不变。
+- 无写入权限的文档点击“编辑”时改为显示明确的权限说明弹窗，列出聊天软件只读缓存、目录只读／账号权限不足、文件被其他程序占用等常见原因；弹窗新增“另存为副本并编辑”按钮，保存成功后自动打开副本并进入编辑模式，原文件保持不变。
+- 阅读页顶部新增“导出 Word”和“导出 PDF”快捷操作；空间充足时与“定位文件”“打印”并列显示，文档区域变窄时导出与打印自动收进“更多”菜单，避免挤压文件路径。
 - 新增 Word 与 PDF 导出：Word 由 Go 在本地生成标准 `.docx`，保留标题、段落、列表、引用、表格、代码、链接、文字样式和已加载图片；PDF 使用 Windows WebView2／macOS 系统打印引擎，在系统面板中选择“Microsoft Print to PDF”或“存储为 PDF”，尽量保持阅读预览的排版效果。
 - 优化 Word 导出版式：统一中英文字体和段落节奏，标题不再被正文行距覆盖；列表改用 Word 原生多级编号并自动重新起始；表格采用固定列宽、单元格留白和重复表头，引用与代码块样式更加稳定。
-- “关于轻阅 Markdown”新增“参与产品改进计划”选项。启用后仅在软件发生异常时后台静默提交清理本地路径后的错误日志、服务器解析的地域、系统类型和软件版本；不再上报启动次数、安装标识、详细系统版本、架构或使用行为，断网和接口异常不会提示或影响功能。
+- PDF 导出增加确认教程：调用系统打印前先展示三步操作说明，并根据 Windows／macOS 显示对应的打印界面示意图，确认后才打开系统打印窗口。
+- 编辑模式的实时预览支持右键定位：鼠标悬停时显示对应源码行提示，右键后将目标源码行置于编辑器顶部，并以主题色短暂标记目标段落；定位成功后不再弹出提示。
+- 全面升级应用提示：成功、信息、警告和错误采用独立图标与颜色；正常提示延长至约 3 秒、警告约 5 秒、错误约 8 秒，均可手动关闭，鼠标悬停时暂停消失。
+- “关于轻阅 Markdown”的“参与产品改进计划”选项仅控制异常错误日志回传；断网和接口异常不会提示或影响功能。
 - “回到顶部”按钮现在跟随右侧目录的左边界定位；拖动调整目录宽度时会自动留在正文右下角，不再落入目录面板内部。
+- “回到顶部”按钮与正文滚动条保持固定安全间距；全宽阅读、目录宽度调整和窗口缩放时均不会再与滚动条重叠。
+- “文档宽度”改为与字号预设一致的两列按钮组，选中项使用主题色边框与浅色背景，菜单更紧凑统一。
+- 提升英文设置菜单的可读性：菜单适当加宽，操作文字、辅助信息和分组标题字号同步增大，减少长英文换行。
+- 字号设置改为连续拖动滑杆，实时显示当前比例并标出默认 100% 位置；设置区同时说明放大、缩小和恢复默认的 Ctrl/Cmd 快捷键，自动适配显示器仍可一键启用。
+- 优化字号快捷键说明排版：放大、缩小和恢复默认分别使用三个等宽小卡片，按键组合采用主题色标签，说明文字独立置于下方；按键与说明字号同步增大，中英文均保持清晰对齐。
 - 本页目录升级为可折叠层级树：有子标题的节点显示展开箭头，可单独折叠或展开；点击标题仍会定位正文，折叠状态按文档保存，下次打开继续保持。
 - 最近阅读列表将文档名下方的通用“最近打开”改为文件所在目录，长路径保持单行省略，鼠标悬停可查看完整目录，便于区分微信缓存、下载目录和同名文档。
 - 改进微信、企业微信等聊天软件缓存附件的编辑体验：进入编辑页前先检测原文件是否可写；文件只读、被占用或权限不足时保持在阅读页并明确提示无编辑权限。最近阅读、收藏和资源浏览器的文档右键菜单新增“另存为”，可直接建立可编辑副本；保存阶段仍保留自动兜底，不删除原附件，也不要求管理员权限。
@@ -19,10 +35,26 @@ All notable changes to Quillite Markdown are documented here.
 
 ### English
 
+- Update checks now prefer the Quillite website release catalog for version numbers, localized notes, SHA-256 digests, and in-app update URLs, while falling back to GitHub Releases during maintenance or when a platform update asset is missing. After publishing a GitHub Release, the workflow synchronizes all Windows, macOS, and Linux packages to the official website and publishes the catalog entry only after every upload succeeds.
+- Increased the split editor's live-preview base text size from 15px to 16px for clearer reading on 2K/4K displays and in narrower panes, without changing the reader, source editor, or existing text-scale controls.
+- Restored independent anonymous daily-active measurement. Each device reports at most once per day regardless of the product-improvement setting, which now controls error logs only. Active events contain a server-hashed random install identifier, app version, coarse OS type, CPU architecture, and server-resolved region, without documents, paths, contact details, or individual actions.
+- Added Feedback to the More menu. Users can choose Feature suggestion or Functional issue, enter a description, and optionally attach email, phone, and up to five screenshots. The app and system versions are filled automatically, and the dialog clearly explains what is sent while never uploading the current Markdown document.
+- Feedback is submitted to the Quillite website API. The protected admin console can filter entries, view authenticated images, mark items resolved, reopen them, or delete them. Deleting an entry permanently removes all of its server-side images as well.
+- Added a Save As shortcut to the reader header so the current document can be copied and opened as a new file directly. It moves into the More menu with export and print actions in narrower layouts, leaving the original unchanged.
+- Replaced the brief warning for non-writable documents with a clear permission dialog covering read-only chat-app caches, restricted folders, and files locked by another application. A new Save Copy & Edit action opens Save As and automatically enters editing on the writable copy while leaving the original untouched.
+- Added quick Export Word and Export PDF actions to the reader header. They appear beside Show File and Print when space permits, while export and print actions move into a More menu in narrower document areas so the file path remains readable.
 - Added Word and PDF export. Word files are generated locally in Go as standard `.docx` packages with headings, paragraphs, lists, quotes, tables, code, links, text styling, and loaded images. PDF export uses the Windows WebView2 or macOS system print engine so the output closely follows the reading preview.
 - Refined the Word export layout with explicit bilingual typography and paragraph rhythm, native restartable multilevel lists, fixed table geometry with cell padding and repeatable headers, and more stable quote and code-block styling.
-- Added a “Join the product improvement program” option in About Quillite Markdown. When enabled, only sanitized software error logs, server-resolved region, coarse OS type, and app version are submitted silently. Startup counts, install IDs, detailed OS versions, architecture, and usage behavior are no longer reported; offline or server failures remain silent and never affect app features.
+- Added a confirmation tutorial before PDF export, including a three-step guide and platform-specific Windows/macOS print-window illustrations; system printing now starts only after confirmation.
+- Added right-click source navigation to the live preview. Hovering shows the mapped source line, while right-clicking scrolls and focuses the corresponding line in the editor with brief accent-colored feedback.
+- Redesigned all in-app notifications with distinct success, information, warning, and error treatments. Normal notices remain for about 3 seconds, warnings for about 5 seconds, and errors for about 8 seconds; every notice is dismissible and pauses while hovered.
+- The “Join the product improvement program” option in About Quillite Markdown now controls sanitized error-log reporting only; offline or server failures remain silent and never affect app features.
 - The back-to-top button now follows the document side of the outline divider, staying at the lower-right corner of the reading area as the outline width is resized.
+- The back-to-top button now keeps a fixed safe gap from the document scrollbar, including in full-width reading, after outline resizing, and while the window is resized.
+- Document width presets now use the same compact button-group treatment as text-size presets, with an accent border and soft background for the selected width.
+- Improved English settings readability with a wider menu and larger action, helper, and section-label text, reducing unnecessary wrapping of longer labels.
+- Replaced text-size rows and preset buttons with a continuous slider that shows the current percentage and marks the default 100% position. The panel now documents the Ctrl/Cmd shortcuts for larger, smaller, and default text while retaining automatic display fitting.
+- Refined the text-size shortcut legend into three equal compact cards, with larger accent-colored keycaps above larger, separately aligned action labels in both languages.
 - Upgraded the document outline to a collapsible hierarchy. Nodes with child headings expose expand controls, heading links still navigate the document, and folding state is remembered separately for each file.
 - Recent now shows each document's source directory instead of the generic “Recently opened” subtitle. Long paths remain on one ellipsized line, with the full directory available on hover, making cache files, downloads, and duplicate names easier to distinguish.
 - Improved editing for attachments opened from WeChat, WeCom, and other application caches. The app now checks write access before entering the editor; read-only, locked, or restricted files stay in the reader with a clear permission message. A new Save As action in the document context menu creates a writable copy directly from Recent, Favorites, or Explorer. Save-time fallback remains as a second safeguard, without deleting or elevating the original attachment.

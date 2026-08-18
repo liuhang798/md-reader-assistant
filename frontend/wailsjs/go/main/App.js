@@ -26,6 +26,10 @@ export function ExportDOCX(arg1, arg2, arg3) {
   return window['go']['main']['App']['ExportDOCX'](arg1, arg2, arg3);
 }
 
+export function GetFeedbackSystemInfo() {
+  return window['go']['main']['App']['GetFeedbackSystemInfo']();
+}
+
 export function GetInitialFile() {
   return window['go']['main']['App']['GetInitialFile']();
 }
@@ -102,6 +106,10 @@ export function SaveFile(arg1, arg2) {
   return window['go']['main']['App']['SaveFile'](arg1, arg2);
 }
 
+export function SelectFeedbackImages() {
+  return window['go']['main']['App']['SelectFeedbackImages']();
+}
+
 export function SelectImage(arg1) {
   return window['go']['main']['App']['SelectImage'](arg1);
 }
@@ -128,4 +136,8 @@ export function ShowInFolder(arg1) {
 
 export function SnoozeUpdates(arg1) {
   return window['go']['main']['App']['SnoozeUpdates'](arg1);
+}
+
+export function SubmitFeedback(arg1) {
+  return window['go']['main']['App']['SubmitFeedback'](arg1);
 }

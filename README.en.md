@@ -25,7 +25,7 @@
 
 - **Lightweight by design:** the Windows installer is only about **7 MB**, built with Go and Wails instead of Electron.
 - **Local-first and private:** open and edit ordinary Markdown files on your computer—no account, proprietary vault or cloud lock-in.
-- **Reading and editing together:** switch from a focused Markdown reader to split-view editing with live preview and syntax highlighting.
+- **Reading and editing together:** switch from a focused Markdown reader to split-view editing with live preview and syntax highlighting; the preview uses a clearer split-pane text size and continues to follow global text scaling.
 - **Practical desktop integration:** recent files, document favorites, resource explorer, autosave, native dialogs, file associations and update notifications.
 - **Cross-platform and open source:** one MIT-licensed Markdown desktop app for Windows, macOS and Linux.
 
@@ -33,7 +33,11 @@ It is a good fit for reading long Markdown documents, editing README files, main
 
 ## Product improvement program
 
-About Quillite Markdown includes a “Join the product improvement program” checkbox. When enabled, only sanitized software error logs, server-resolved country/region/city, coarse Windows/macOS/Linux type, and app version are submitted silently after an error. IP addresses, install IDs, detailed OS versions, architecture, usage behavior, Markdown content, file names, and file paths are never uploaded. Offline, intranet, timeout, and server failures are ignored silently and never affect app features. Unchecking the option stops error reports.
+About Quillite Markdown includes a “Join the product improvement program” checkbox that controls error logs only. When enabled, sanitized software error logs, server-resolved country/region/city, coarse Windows/macOS/Linux type, and app version are submitted silently after an error. Unchecking it stops error reports.
+
+Daily-active measurement is independent of this checkbox. Each device submits at most one anonymous active event per day containing a locally generated random install identifier, app version, coarse OS type, CPU architecture, and server-resolved country/region/city. The server stores only an irreversible hash of the identifier and never stores the source IP. Markdown content, file names, file paths, contact details, and individual actions are never uploaded. Offline, intranet, timeout, and server failures remain silent and never affect app features.
+
+Feedback is a separate, explicit user action and is not controlled by the product-improvement switch. Users can choose a feature suggestion or functional issue and optionally provide email, phone, and screenshots. The app and system versions are included, but the current Markdown document is never uploaded. Deleting a feedback entry in the server admin console permanently deletes all of its images as well.
 
 ## Download
 
@@ -115,6 +119,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 - `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls to the selected result; the polished find-and-replace panel follows the selected Chinese or English interface language.
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Export Word and PDF documents: Go generates standard DOCX files locally, while PDF export uses the Windows WebView2 or macOS system print panel to preserve the preview styling for headings, tables, code blocks, and images.
+- Built-in feedback for feature suggestions and functional issues, with optional contact details, up to five screenshots, and automatic app/system version information. Administrators can review, resolve, or delete feedback together with all attached images.
 - A collapsible hierarchical outline with clickable navigation, active section tracking and per-document folding memory, plus search, print and back-to-top.
 - Recent documents update immediately and show their source directory below the filename, with the full path available on hover for distinguishing duplicate names. Right-click a record for Edit, Save As, Favorite, Show in Folder and Remove. Save As creates a writable copy directly from a WeChat cache, read-only source, or ordinary document. Deleted, moved or temporarily unavailable files remain removable from the menu.
 - Favorite documents from Recent or Explorer and manage them in a dedicated persistent Favorites view with Open, Edit, Show in Folder, and Remove from Favorites actions.
@@ -128,7 +133,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 - Native file open/save dialogs and `.md`, `.markdown`, `.mdown`, `.mkd` associations.
 - Single-instance file opening and unsaved-change protection.
 - A new split reading/editing brand icon with transparent rounded corners and no white square canvas. In-app Logos follow the selected accent while native system icons stay green; the About screen includes the author email and a direct repository link.
-- Automatic checks for the latest stable GitHub Release, with release notes, one-click access to downloads, manual checks, and a 30-day reminder pause.
+- Automatic checks prefer the official website release catalog and fall back to the latest stable GitHub Release, with localized notes, one-click downloads, manual checks, and a 30-day reminder pause.
 
 ## Markdown format support
 
@@ -166,7 +171,7 @@ Version 2.0 and later replace Electron with Go and Wails while retaining the exi
 
 - `main.go`: Wails startup and window configuration.
 - `app.go`: documents, folders, recent files, preferences, and desktop integration.
-- `updates.go`: GitHub Releases checks and version comparison.
+- `updates.go`: official release-catalog checks, GitHub fallback, and version comparison.
 - `frontend/`: Markdown reader, CodeMirror editor, and bilingual interface.
 - `build/`: application icons and platform build configuration.
 - `packaging/`: Linux desktop integration and package metadata.
@@ -220,7 +225,7 @@ Build the Windows installer:
 wails build -clean -platform windows/amd64 -nsis -installscope user -webview2 embed -trimpath
 ```
 
-Push a tag such as `v2.3.5` to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml` and publish all packages to GitHub Releases. The app checks the repository's latest stable Release when notifying users about updates. On macOS and Windows the update dialog can also download and apply the new version in-app with a progress bar, then restart automatically.
+Push a version tag to run the Windows, macOS and Linux workflow in `.github/workflows/release.yml`, publish all packages to GitHub Releases, and—when the official release token is configured—synchronize the notes and packages to the website catalog. The app checks the official catalog first and falls back to GitHub. On macOS and Windows it can download, verify, apply, and restart in-app.
 
 ## Project documentation
 

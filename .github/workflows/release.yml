@@ -138,7 +138,9 @@ jobs:
           Copy-Item -LiteralPath $installer -Destination $target -Force
           $binaryTarget = Join-Path $releaseDir.FullName "quillite-markdown-$env:APP_VERSION-windows-amd64.bin"
           Copy-Item -LiteralPath $binary -Destination $binaryTarget -Force
-          Get-Item -LiteralPath $target, $binaryTarget | Format-Table FullName, Length
+          $zipTarget = Join-Path $releaseDir.FullName "quillite-markdown-$env:APP_VERSION-windows-amd64.zip"
+          Compress-Archive -LiteralPath $target -DestinationPath $zipTarget -CompressionLevel Optimal -Force
+          Get-Item -LiteralPath $target, $zipTarget, $binaryTarget | Format-Table FullName, Length
       - uses: actions/upload-artifact@v4
         with:
           name: quillite-markdown-windows-x64
@@ -303,6 +305,10 @@ jobs:
           if [[ ! -s release-notes.md ]]; then
             printf 'quillite-markdown %s\n\nSee the repository changelog for details.\n' "${version}" > release-notes.md
           fi
+          awk '/^### 简体中文/ { capture = 1; next } /^### English/ { capture = 0 } capture { print }' release-notes.md > release-notes-zh.md
+          awk '/^### English/ { capture = 1; next } capture { print }' release-notes.md > release-notes-en.md
+          [[ -s release-notes-zh.md ]] || cp release-notes.md release-notes-zh.md
+          [[ -s release-notes-en.md ]] || cp release-notes.md release-notes-en.md
       - name: Publish release assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -324,3 +330,57 @@ jobs:
           else
             gh release create "${RELEASE_TAG}" release-assets/* --notes-file release-notes.md --title "quillite-markdown ${version}"
           fi
+      - name: Sync official website release catalog
+        env:
+          RELEASE_API_TOKEN: ${{ secrets.QUILLITE_RELEASE_API_TOKEN }}
+          RELEASE_API_BASE_URL: ${{ vars.QUILLITE_RELEASE_API_BASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${RELEASE_API_TOKEN}" ]]; then
+            echo "QUILLITE_RELEASE_API_TOKEN is not configured; skipping official website synchronization."
+            exit 0
+          fi
+          base_url="${RELEASE_API_BASE_URL:-https://8.133.191.203/api/v1/releases}"
+          base_url="${base_url%/}"
+          version="${RELEASE_TAG#v}"
+          github_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
+          jq -n \
+            --arg version "${version}" \
+            --arg titleZh "轻阅 Markdown ${version}" \
+            --arg titleEn "Quillite Markdown ${version}" \
+            --rawfile notesZh release-notes-zh.md \
+            --rawfile notesEn release-notes-en.md \
+            --arg githubUrl "${github_url}" \
+            '{version:$version,titleZh:$titleZh,titleEn:$titleEn,notesZh:$notesZh,notesEn:$notesEn,githubUrl:$githubUrl,published:false}' > official-release.json
+          curl --fail-with-body --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer ${RELEASE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data-binary @official-release.json \
+            "${base_url}/publish"
+
+          upload_asset() {
+            local file="$1" platform="$2" kind="$3"
+            [[ -f "${file}" ]] || { echo "Required release asset is missing: ${file}" >&2; exit 1; }
+            echo "Uploading $(basename "${file}") to official website (${platform}/${kind})..."
+            curl --fail-with-body --retry 3 --retry-all-errors \
+              -X PUT \
+              -H "Authorization: Bearer ${RELEASE_API_TOKEN}" \
+              -H "Content-Type: application/octet-stream" \
+              -H "X-File-Name: $(basename "${file}")" \
+              --data-binary "@${file}" \
+              "${base_url}/${version}/assets/${platform}/${kind}"
+          }
+
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-windows-amd64.zip' -print -quit)" windows installer
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-windows-amd64.bin' -print -quit)" windows update
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-macos-universal.dmg' -print -quit)" macos installer
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-macos-universal.bin' -print -quit)" macos update
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-linux-amd64.deb' -print -quit)" linux deb
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-linux-x86_64.AppImage' -print -quit)" linux appimage
+          jq '.published = true' official-release.json > official-release-published.json
+          curl --fail-with-body --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer ${RELEASE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data-binary @official-release-published.json \
+            "${base_url}/publish"

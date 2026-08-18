@@ -14,6 +14,8 @@ export function DownloadAndApplyUpdate():Promise<void>;
 
 export function ExportDOCX(arg1:string,arg2:string,arg3:string):Promise<string>;
 
+export function GetFeedbackSystemInfo():Promise<main.FeedbackSystemInfo>;
+
 export function GetInitialFile():Promise<main.Document>;
 
 export function GetPreferences():Promise<main.Preferences>;
@@ -52,6 +54,8 @@ export function SaveAs(arg1:string,arg2:string):Promise<main.Document>;
 
 export function SaveFile(arg1:string,arg2:string):Promise<main.Document>;
 
+export function SelectFeedbackImages():Promise<Array<main.FeedbackImageSelection>>;
+
 export function SelectImage(arg1:string):Promise<string>;
 
 export function SetDirty(arg1:boolean):Promise<void>;
@@ -65,3 +69,5 @@ export function SetUsageAnalytics(arg1:boolean):Promise<main.Preferences>;
 export function ShowInFolder(arg1:string):Promise<void>;
 
 export function SnoozeUpdates(arg1:number):Promise<void>;
+
+export function SubmitFeedback(arg1:main.FeedbackSubmission):Promise<void>;

@@ -76,6 +76,8 @@ type Preferences struct {
 	LastUpdateCheck      string             `json:"lastUpdateCheck,omitempty"`
 	SuppressUpdateUntil  string             `json:"suppressUpdateUntil,omitempty"`
 	UsageAnalytics       bool               `json:"usageAnalytics"`
+	AnonymousInstallID   string             `json:"anonymousInstallId,omitempty"`
+	LastActiveReport     string             `json:"lastActiveReport,omitempty"`
 }
 
 type App struct {
@@ -105,6 +107,7 @@ func (a *App) startup(ctx context.Context) {
 	prefs = a.migrateLegacyBundledDraftReferences(goruntime.GOOS, home, prefs)
 	a.language = normaliseLanguage(prefs.Language)
 	a.restoreDrafts(prefs.DraftFiles)
+	a.scheduleDailyActiveReport()
 }
 
 func (a *App) beforeClose(ctx context.Context) bool {

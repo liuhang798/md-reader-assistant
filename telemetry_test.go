@@ -42,6 +42,68 @@ func TestSendAppErrorLogContainsOnlyApprovedSoftwareFields(t *testing.T) {
 	}
 }
 
+func TestSendDailyActiveContainsOnlyApprovedAnonymousFields(t *testing.T) {
+	received := make(chan map[string]any, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var event map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+			t.Fatal(err)
+		}
+		received <- event
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer server.Close()
+
+	if !sendAppStartup(server.URL, "anonymous-install-00000001", server.Client()) {
+		t.Fatal("每日匿名活跃记录发送失败")
+	}
+	event := <-received
+	for _, field := range []string{"eventId", "sentAt", "installId", "version", "os", "arch"} {
+		value, ok := event[field].(string)
+		if !ok || strings.TrimSpace(value) == "" {
+			t.Fatalf("缺少字段 %s：%+v", field, event)
+		}
+	}
+	if len(event) != 6 {
+		t.Fatalf("每日活跃记录包含无关字段：%+v", event)
+	}
+}
+
+func TestDailyActiveIgnoresErrorReportingOptOutAndRunsOncePerDay(t *testing.T) {
+	app := NewApp()
+	app.preferencesOverride = filepath.Join(t.TempDir(), "preferences.json")
+	if _, err := app.SetUsageAnalytics(false); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 8, 18, 12, 0, 0, 0, time.UTC)
+	calls := 0
+	var installID string
+	sender := func(value string) bool {
+		calls++
+		installID = value
+		return true
+	}
+	if !app.reportDailyActive(now, sender) {
+		t.Fatal("关闭错误回传后，每日活跃仍应正常上报")
+	}
+	if calls != 1 || len(installID) < 16 {
+		t.Fatalf("每日活跃调用或匿名标识异常：calls=%d id=%q", calls, installID)
+	}
+	if app.reportDailyActive(now.Add(4*time.Hour), sender) || calls != 1 {
+		t.Fatal("同一 UTC 日期不应重复上报每日活跃")
+	}
+	prefs, err := app.readPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prefs.UsageAnalytics || prefs.AnonymousInstallID != installID || prefs.LastActiveReport != "2026-08-18" {
+		t.Fatalf("每日活跃不应改变错误回传开关，且应保存去重状态：%+v", prefs)
+	}
+	if !app.reportDailyActive(now.Add(24*time.Hour), sender) || calls != 2 {
+		t.Fatal("下一 UTC 日期应再次上报一次活跃")
+	}
+}
+
 func TestImprovementProgramPersistsOptOut(t *testing.T) {
 	app := NewApp()
 	app.preferencesOverride = filepath.Join(t.TempDir(), "preferences.json")

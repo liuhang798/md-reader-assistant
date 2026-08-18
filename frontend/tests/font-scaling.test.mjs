@@ -40,12 +40,23 @@ test('legacy custom sizes remain manual while untouched 100 percent migrates to 
   );
 });
 
-test('the More menu offers automatic mode and compact 100 to 200 percent presets', () => {
+test('the More menu offers a draggable scale with a marked default and documented shortcuts', () => {
   assert.match(html, /data-font-scale="auto"/);
-  for (const scale of ['1', '1.25', '1.5', '1.75', '2']) assert.match(html, new RegExp(`data-font-scale="${scale}"`));
+  assert.match(html, /id="fontScaleSlider" type="range" min="82" max="200" step="1" value="100"/);
+  assert.match(html, /class="font-scale-default-marker"[^>]*>[\s\S]*data-i18n="fontScaleDefault"/);
+  assert.match(html, /data-i18n-html="fontScaleShortcuts"/);
   assert.match(renderer, /function enableAutomaticFontScale\(silent = false\)/);
+  assert.match(renderer, /els\.fontScaleSlider\.addEventListener\('input',[\s\S]*setFontScale\(Number\(event\.target\.value\) \/ 100, true\)/);
+  assert.match(renderer, /els\.fontScaleSlider\.addEventListener\('change',[\s\S]*setFontScale\(Number\(event\.target\.value\) \/ 100\)/);
+  assert.match(renderer, /--font-scale-progress/);
   assert.match(renderer, /window\.addEventListener\('resize', scheduleAutomaticFontScaleRefresh\)/);
-  assert.match(styles, /\.font-scale-preset-grid \{[^}]*grid-template-columns: repeat\(3,/);
+  assert.match(styles, /\.font-scale-slider-wrap input::-webkit-slider-runnable-track/);
+  assert.match(styles, /\.font-scale-default-marker \{[^}]*left: 15\.25%;/);
+  assert.match(renderer, /fontScaleShortcuts: '<span class="font-scale-shortcut"><kbd>Ctrl \+<\/kbd><em>放大<\/em>/);
+  assert.match(renderer, /fontScaleShortcuts: '<span class="font-scale-shortcut"><kbd>Ctrl \+<\/kbd><em>Larger<\/em>/);
+  assert.match(styles, /\.font-scale-shortcuts \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
+  assert.match(styles, /\.font-scale-shortcut kbd \{[^}]*background: var\(--accent-soft\);[^}]*color: var\(--accent-strong\);[^}]*font-size: 10px;/);
+  assert.match(styles, /\.font-scale-shortcut em \{[^}]*font-size: 10\.5px;/);
 });
 
 test('CodeMirror source text and gutters inherit the shared font scale', () => {

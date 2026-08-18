@@ -133,9 +133,21 @@
       <div id="documentView" class="document-view hidden">
         <div class="document-meta">
           <div class="breadcrumb" id="breadcrumb"></div>
-          <div class="document-actions">
+          <div id="documentActions" class="document-actions">
             <button id="revealButton" class="text-button" data-i18n="revealFile" data-i18n-title="revealFileTitle" title="在资源管理器中显示">定位文件</button>
-            <button id="printButton" class="text-button" data-i18n="print" data-i18n-title="printTitle" title="打印文档">打印</button>
+            <button id="documentSaveAsButton" class="text-button document-action-collapsible" data-document-action="save-as" data-i18n="saveAs">另存为</button>
+            <button id="documentExportWordButton" class="text-button document-action-collapsible" data-document-action="export-word" data-i18n="exportWord">导出 Word</button>
+            <button id="documentExportPDFButton" class="text-button document-action-collapsible" data-document-action="export-pdf" data-i18n="exportPDF">导出 PDF</button>
+            <button id="printButton" class="text-button document-action-collapsible" data-document-action="print" data-i18n="print" data-i18n-title="printTitle" title="打印文档">打印</button>
+            <div class="document-actions-more">
+              <button id="documentActionsMoreButton" class="text-button document-actions-more-button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="documentActionsMenu" data-i18n="moreDocumentActions">更多</button>
+              <div id="documentActionsMenu" class="document-actions-menu hidden" role="menu" data-i18n-aria-label="moreDocumentActions" aria-label="更多文档操作">
+                <button type="button" role="menuitem" data-document-action="save-as"><span data-i18n="saveAs">另存为</span><small data-i18n="markdownDocument">Markdown 文档</small></button>
+                <button type="button" role="menuitem" data-document-action="export-word"><span data-i18n="exportWord">导出 Word</span><small>.docx</small></button>
+                <button type="button" role="menuitem" data-document-action="export-pdf"><span data-i18n="exportPDF">导出 PDF</span><small data-i18n="systemPrint">系统打印</small></button>
+                <button type="button" role="menuitem" data-document-action="print"><span data-i18n="printDocument">打印文档</span><small>Ctrl P</small></button>
+              </div>
+            </div>
           </div>
         </div>
         <article id="markdownContent" class="markdown-body"></article>
@@ -155,6 +167,10 @@
           </div>
           <div class="editor-preview-scroll">
             <article id="editorPreviewContent" class="markdown-body editor-preview-content"></article>
+            <div id="previewLocateHint" class="preview-locate-hint hidden" role="status" aria-live="polite">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 18.2 14l-6.4 1.1-3.4 5.4L4 3.5Z"/><path d="m14.8 15.3 4.1 4.1"/></svg>
+              <span data-i18n="previewLocateHint">右键定位到右侧编辑器</span>
+            </div>
           </div>
         </section>
         <div id="editorResizer" class="pane-resizer editor-resizer" role="separator" tabindex="0" aria-orientation="vertical" data-i18n-title="resizeEditor" data-i18n-aria-label="resizeEditor" title="拖动调整预览宽度" aria-label="拖动调整预览宽度"></div>
@@ -256,31 +272,33 @@
     <hr>
     <button data-action="default-app"><span class="menu-label" data-i18n="defaultApp">设为默认 MD 应用</span> <span data-i18n="windowsSettings">Windows 设置</span></button>
     <hr>
-    <button data-action="zoom-in"><span class="menu-label" data-i18n="zoomIn">放大文字</span> <span>Ctrl +</span></button>
-    <button data-action="zoom-out"><span class="menu-label" data-i18n="zoomOut">缩小文字</span> <span>Ctrl −</span></button>
-    <button data-action="zoom-reset"><span class="menu-label" data-i18n="zoomReset">恢复字号</span> <span>Ctrl 0</span></button>
-    <div class="font-scale-presets" role="group" data-i18n-aria-label="textSizePresets" aria-label="文字大小预设">
-      <button type="button" class="font-scale-auto" role="menuitemradio" data-font-scale="auto" aria-checked="false"><span class="menu-label" data-i18n="fontScaleAuto">自动适配显示器</span><span id="fontScaleAutoValue">100%</span></button>
-      <div class="font-scale-preset-grid">
-        <button type="button" role="menuitemradio" data-font-scale="1" aria-checked="false">100%</button>
-        <button type="button" role="menuitemradio" data-font-scale="1.25" aria-checked="false">125%</button>
-        <button type="button" role="menuitemradio" data-font-scale="1.5" aria-checked="false">150%</button>
-        <button type="button" role="menuitemradio" data-font-scale="1.75" aria-checked="false">175%</button>
-        <button type="button" role="menuitemradio" data-font-scale="2" aria-checked="false">200%</button>
+    <div class="font-scale-control" role="group" data-i18n-aria-label="textSizePresets" aria-label="文字大小调节">
+      <div class="font-scale-heading">
+        <span data-i18n="textSizeControl">文字大小</span>
+        <output id="fontScaleValue" for="fontScaleSlider">100%</output>
       </div>
+      <div class="font-scale-slider-wrap">
+        <input id="fontScaleSlider" type="range" min="82" max="200" step="1" value="100" data-i18n-aria-label="textSizeControl" aria-label="文字大小">
+        <span class="font-scale-default-marker" aria-hidden="true"><i></i><span data-i18n="fontScaleDefault">默认 100%</span></span>
+      </div>
+      <div class="font-scale-shortcuts" data-i18n-html="fontScaleShortcuts"><span class="font-scale-shortcut"><kbd>Ctrl +</kbd><em>放大</em></span><span class="font-scale-shortcut"><kbd>Ctrl −</kbd><em>缩小</em></span><span class="font-scale-shortcut"><kbd>Ctrl 0</kbd><em>默认</em></span></div>
+      <button type="button" class="font-scale-auto" role="menuitemradio" data-font-scale="auto" aria-checked="false"><span class="menu-label" data-i18n="fontScaleAuto">自动适配显示器</span><span id="fontScaleAutoValue">100%</span></button>
     </div>
     <hr>
     <div class="popover-label" data-i18n="docWidth">文档宽度</div>
-    <button type="button" class="language-option width-option" role="menuitemradio" data-doc-width="narrow" aria-checked="false"><span data-i18n="widthNarrow">窄</span> <span class="language-check">✓</span></button>
-    <button type="button" class="language-option width-option" role="menuitemradio" data-doc-width="medium" aria-checked="false"><span data-i18n="widthMedium">中</span> <span class="language-check">✓</span></button>
-    <button type="button" class="language-option width-option" role="menuitemradio" data-doc-width="wide" aria-checked="false"><span data-i18n="widthWide">宽</span> <span class="language-check">✓</span></button>
-    <button type="button" class="language-option width-option" role="menuitemradio" data-doc-width="full" aria-checked="false"><span data-i18n="widthFull">全宽</span> <span class="language-check">✓</span></button>
+    <div class="doc-width-preset-grid" role="group" data-i18n-aria-label="docWidth" aria-label="文档宽度">
+      <button type="button" class="width-option" role="menuitemradio" data-doc-width="narrow" aria-checked="false" data-i18n="widthNarrow">窄</button>
+      <button type="button" class="width-option" role="menuitemradio" data-doc-width="medium" aria-checked="false" data-i18n="widthMedium">中</button>
+      <button type="button" class="width-option" role="menuitemradio" data-doc-width="wide" aria-checked="false" data-i18n="widthWide">宽</button>
+      <button type="button" class="width-option" role="menuitemradio" data-doc-width="full" aria-checked="false" data-i18n="widthFull">全宽</button>
+    </div>
     <hr>
     <div class="popover-label" data-i18n="exportDocument">导出文档</div>
     <button data-action="export-word"><span class="menu-label" data-i18n="exportWord">导出 Word</span> <span>.docx</span></button>
     <button data-action="export-pdf"><span class="menu-label" data-i18n="exportPDF">导出 PDF</span> <span data-i18n="systemPrint">系统打印</span></button>
     <button data-action="print"><span class="menu-label" data-i18n="printDocument">打印文档</span> <span>Ctrl P</span></button>
     <hr>
+    <button data-action="feedback"><span class="menu-label" data-i18n="feedback">意见反馈</span> <span data-i18n="feedbackShortHint">建议与异常</span></button>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span> <span>GitHub</span></button>
     <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.4.4</span></button>
   </div>
@@ -381,12 +399,44 @@
       </div>
       <label class="usage-analytics-setting" for="usageAnalyticsToggle">
         <input id="usageAnalyticsToggle" type="checkbox" checked>
-        <span><strong data-i18n="usageAnalytics">参与产品改进计划</strong><small data-i18n="usageAnalyticsDescription">启用后，仅在软件发生异常时静默提交错误日志、地域、系统类型和软件版本，帮助我们定位并修复问题。不会上传文档内容、文件名、文件路径或其他使用数据。</small></span>
+        <span><strong data-i18n="usageAnalytics">参与产品改进计划</strong><small data-i18n="usageAnalyticsDescription">此开关仅控制异常回传。勾选后，软件发生异常时会静默提交已清理的错误日志。无论是否勾选，每天最多提交一次匿名活跃记录；不会上传文档内容、文件名、文件路径或联系方式。</small></span>
       </label>
       <div class="about-footer">
         <span data-i18n="aboutLicense">基于 MIT 许可证开源</span>
         <button id="aboutDone" class="large-button primary" type="button" data-i18n="done">完成</button>
       </div>
+    </section>
+  </div>
+
+  <div id="feedbackDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+    <section class="feedback-dialog">
+      <button id="closeFeedback" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <span class="eyebrow" data-i18n="feedbackLabel">帮助我们改进</span>
+      <h2 id="feedbackTitle" data-i18n="feedbackTitle">意见反馈</h2>
+      <p class="feedback-intro" data-i18n="feedbackIntro">告诉我们你的建议或遇到的问题。邮箱和手机均为选填，仅用于需要进一步确认时联系你。</p>
+      <form id="feedbackForm" novalidate>
+        <fieldset class="feedback-category">
+          <legend data-i18n="feedbackType">反馈类型</legend>
+          <label><input type="radio" name="feedbackCategory" value="feature" checked><span><strong data-i18n="feedbackFeature">功能建议</strong><small data-i18n="feedbackFeatureHint">希望新增或优化的功能</small></span></label>
+          <label><input type="radio" name="feedbackCategory" value="bug"><span><strong data-i18n="feedbackBug">功能异常</strong><small data-i18n="feedbackBugHint">功能无法使用或结果不正确</small></span></label>
+        </fieldset>
+        <label class="feedback-field"><span><span data-i18n="feedbackDescription">反馈说明</span><b>*</b></span><textarea id="feedbackMessage" maxlength="4000" minlength="5" required data-i18n-placeholder="feedbackDescriptionPlaceholder" placeholder="请描述期望效果、操作步骤或异常现象"></textarea><small id="feedbackMessageCount">0 / 4000</small></label>
+        <div class="feedback-contact-grid">
+          <label class="feedback-field"><span data-i18n="feedbackEmail">联系邮箱（选填）</span><input id="feedbackEmail" type="email" maxlength="160" autocomplete="email" placeholder="name@example.com"></label>
+          <label class="feedback-field"><span data-i18n="feedbackPhone">手机号码（选填）</span><input id="feedbackPhone" type="tel" maxlength="40" inputmode="tel" autocomplete="tel" data-i18n-placeholder="feedbackPhonePlaceholder" placeholder="用于必要时联系"></label>
+        </div>
+        <div class="feedback-images">
+          <div><strong data-i18n="feedbackImages">上传图片（选填）</strong><small data-i18n="feedbackImagesHint">最多 5 张，支持 PNG、JPG、WebP；每张不超过 5 MB</small></div>
+          <button id="selectFeedbackImages" class="large-button secondary" type="button" data-i18n="selectImages">选择图片</button>
+        </div>
+        <div id="feedbackImageList" class="feedback-image-list"></div>
+        <div class="feedback-system-info"><span><small data-i18n="softwareVersion">软件版本</small><strong id="feedbackAppVersion">2.4.4</strong></span><span><small data-i18n="systemVersion">系统版本</small><strong id="feedbackSystemVersion">—</strong></span></div>
+        <p class="feedback-privacy" data-i18n="feedbackPrivacy">提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；不会上传当前文档。</p>
+        <p id="feedbackMessageStatus" class="feedback-status" role="status"></p>
+        <div class="feedback-actions"><button id="cancelFeedback" class="large-button secondary" type="button" data-i18n="cancel">取消</button><button id="submitFeedback" class="large-button primary" type="submit" data-i18n="submitFeedback">提交反馈</button></div>
+      </form>
     </section>
   </div>
 
@@ -421,6 +471,80 @@
         <button id="updateSnooze" class="large-button secondary" type="button" data-i18n="snooze30Days">30 天内不再提醒</button>
         <button id="applyUpdate" class="large-button primary" type="button" data-i18n="downloadAndUpdate">下载并更新</button>
         <button id="openUpdatePage" class="large-button secondary" type="button" data-i18n="openDownloadPage">打开下载页面</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="editPermissionDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="editPermissionTitle" aria-describedby="editPermissionDescription">
+    <section class="edit-permission-dialog">
+      <div class="edit-permission-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3 3.5 6.5v5.8c0 4.6 3.3 7.6 8.5 9.2 5.2-1.6 8.5-4.6 8.5-9.2V6.5L12 3Z"/><path d="M9 12.5h6M12 9.5v6"/></svg>
+      </div>
+      <div class="edit-permission-heading">
+        <span class="eyebrow" data-i18n="editPermissionLabel">编辑权限</span>
+        <h2 id="editPermissionTitle" data-i18n="editPermissionTitle">当前文件无法直接编辑</h2>
+        <p id="editPermissionDescription" data-i18n="editPermissionDescription">轻阅无法获得这个文件的写入权限。原文件不会被修改或删除。</p>
+      </div>
+      <div class="edit-permission-file"><span data-i18n="currentDocument">当前文档</span><strong id="editPermissionFileName"></strong></div>
+      <div class="edit-permission-reasons">
+        <strong data-i18n="possibleReasons">可能原因</strong>
+        <ul>
+          <li data-i18n="permissionReasonCache">文件来自微信、企业微信等应用的只读缓存目录</li>
+          <li data-i18n="permissionReasonReadOnly">文件或所在目录被设置为只读，当前账号没有写入权限</li>
+          <li data-i18n="permissionReasonLocked">文件正被其他程序占用或锁定</li>
+        </ul>
+      </div>
+      <p class="edit-permission-guide" data-i18n="editPermissionGuide">建议另存为一个可编辑副本。保存成功后，轻阅会自动打开副本并进入编辑模式。</p>
+      <div class="edit-permission-actions">
+        <button id="cancelEditPermission" class="large-button secondary" type="button" data-i18n="cancel">取消</button>
+        <button id="saveCopyAndEdit" class="large-button primary" type="button" data-i18n="saveCopyAndEdit">另存为副本并编辑</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="pdfTutorialDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="pdfTutorialTitle">
+    <section class="pdf-tutorial-dialog">
+      <button id="closePDFTutorial" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <span class="eyebrow" data-i18n="pdfTutorialLabel">PDF 导出指南</span>
+      <h2 id="pdfTutorialTitle" data-i18n="pdfTutorialTitle">使用系统打印保存 PDF</h2>
+      <p class="pdf-tutorial-intro" data-i18n="pdfTutorialIntro">为了尽量保持 Markdown 预览中的表格、代码块和图片样式，轻阅将打开系统打印窗口。请按下面步骤保存为 PDF。</p>
+
+      <div class="pdf-tutorial-steps">
+        <article><span>1</span><div><strong data-i18n="pdfTutorialStep1Title">打开系统打印</strong><p data-i18n="pdfTutorialStep1Text">点击下方继续按钮，等待打印窗口出现。</p></div></article>
+        <article><span>2</span><div><strong data-i18n="pdfTutorialStep2Title">选择 PDF 选项</strong><p data-i18n="pdfTutorialStep2Text">Windows 选择“Microsoft Print to PDF”；macOS 选择“存储为 PDF”。</p></div></article>
+        <article><span>3</span><div><strong data-i18n="pdfTutorialStep3Title">选择位置并保存</strong><p data-i18n="pdfTutorialStep3Text">确认打印后，输入文件名并选择保存目录。</p></div></article>
+      </div>
+
+      <div class="pdf-print-example pdf-tutorial-windows" aria-label="Windows PDF print example">
+        <div class="pdf-example-titlebar"><span data-i18n="pdfWindowsPrintTitle">打印</span><i></i><i></i><i></i></div>
+        <div class="pdf-example-body">
+          <div class="pdf-page-preview"><div></div><span></span><span></span><span></span><span></span></div>
+          <div class="pdf-print-settings">
+            <small data-i18n="pdfPrinterLabel">打印机</small>
+            <div class="pdf-printer-choice"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg><strong>Microsoft Print to PDF</strong><span>✓</span></div>
+            <div class="pdf-setting-row"><span data-i18n="pdfPagesLabel">页面</span><b data-i18n="pdfAllPages">全部</b></div>
+            <button type="button" tabindex="-1" data-i18n="pdfPrintButton">打印</button>
+          </div>
+        </div>
+        <div class="pdf-example-callout"><span>2</span><strong data-i18n="pdfWindowsCallout">在“打印机”中选择 Microsoft Print to PDF</strong></div>
+      </div>
+
+      <div class="pdf-print-example pdf-tutorial-macos" aria-label="macOS PDF print example">
+        <div class="pdf-mac-titlebar"><span></span><span></span><span></span><strong data-i18n="pdfMacPrintTitle">打印</strong></div>
+        <div class="pdf-mac-body">
+          <div class="pdf-page-preview"><div></div><span></span><span></span><span></span><span></span></div>
+          <div class="pdf-mac-settings"><span data-i18n="pdfPrinterLabel">打印机</span><b data-i18n="pdfSelectedPrinter">已选择的打印机</b><span data-i18n="pdfPresetsLabel">预设</span><b data-i18n="pdfDefaultPreset">默认设置</b></div>
+        </div>
+        <div class="pdf-mac-footer"><div class="pdf-mac-pdf-choice"><strong>PDF</strong><span>⌄</span><em data-i18n="pdfSaveAsPDF">存储为 PDF…</em></div><button type="button" tabindex="-1" data-i18n="pdfPrintButton">打印</button></div>
+        <div class="pdf-example-callout"><span>2</span><strong data-i18n="pdfMacCallout">打开左下角 PDF 菜单并选择“存储为 PDF”</strong></div>
+      </div>
+
+      <div class="pdf-tutorial-note"><svg viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 8v5M12 17h.01"/></svg><span data-i18n="pdfTutorialNote">打印窗口由操作系统提供，实际界面可能因系统版本略有不同。</span></div>
+      <div class="pdf-tutorial-actions">
+        <button id="cancelPDFTutorial" class="large-button secondary" type="button" data-i18n="cancel">取消</button>
+        <button id="confirmPDFTutorial" class="large-button primary" type="button" data-i18n="pdfContinueToPrint">继续并打开打印窗口</button>
       </div>
     </section>
   </div>
@@ -464,7 +588,17 @@
     </section>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="toast hidden" data-kind="info" role="status" aria-live="polite">
+    <span class="toast-icon" aria-hidden="true">
+      <svg class="toast-icon-success" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>
+      <svg class="toast-icon-info" viewBox="0 0 24 24"><path d="M12 11v6M12 7h.01"/></svg>
+      <svg class="toast-icon-warning" viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"/></svg>
+      <svg class="toast-icon-error" viewBox="0 0 24 24"><path d="m8 8 8 8M16 8l-8 8"/></svg>
+    </span>
+    <span class="toast-copy"><strong id="toastTitle">提示</strong><span id="toastMessage"></span></span>
+    <button id="closeToast" type="button" data-i18n-title="dismissNotification" data-i18n-aria-label="dismissNotification" title="关闭提示" aria-label="关闭提示"><svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg></button>
+    <span class="toast-progress" aria-hidden="true"><i id="toastProgressBar"></i></span>
+  </div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

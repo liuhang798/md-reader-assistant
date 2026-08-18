@@ -19,6 +19,7 @@ let Compartment;
 let EditorState;
 let EditorView;
 let keymap;
+let scrollPastEnd;
 let undo;
 let undoDepth;
 let closeSearchPanel;
@@ -67,6 +68,8 @@ const state = {
   savedContent: '',
   updateInfo: null,
   usageAnalytics: true,
+  feedbackImages: [],
+  feedbackSystemInfo: null,
   saving: false,
   saveAsRequired: false,
   saveWarningShown: false
@@ -89,28 +92,29 @@ const translations = {
   'zh-CN': {
     appName: '轻阅 Markdown', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
-    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '临时切换白天/黑夜模式；系统下次切换时恢复自动跟随', temporaryColorModeChanged: '已临时切换为{mode}模式；系统下次切换时恢复自动跟随', lightModeName: '白天', darkModeName: '黑夜', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭',
+    accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '临时切换白天/黑夜模式；系统下次切换时恢复自动跟随', temporaryColorModeChanged: '已临时切换为{mode}模式；系统下次切换时恢复自动跟随', lightModeName: '白天', darkModeName: '黑夜', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭', toastSuccess: '操作完成', toastInfo: '提示', toastWarning: '请注意', toastError: '操作失败', dismissNotification: '关闭提示',
     library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', favoriteDocuments: '收藏文档', resourceExplorer: '资源浏览器', recentTab: '最近', favoritesTab: '收藏', explorerTab: '资源', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
     openFolder: '打开文件夹', quickOpenHint: '快速打开，也可以将文件拖到这里', revealFile: '定位文件', revealFileTitle: '在资源管理器中显示',
-    print: '打印', printTitle: '打印文档', readingEnd: '阅读结束', livePreview: '实时预览', readingEffect: '阅读效果', markdownEditorLabel: 'MARKDOWN 编辑器',
+    print: '打印', printTitle: '打印文档', moreDocumentActions: '更多', readingEnd: '阅读结束', livePreview: '实时预览', readingEffect: '阅读效果', previewLocateHint: '右键定位到右侧编辑器 · 第 {line} 行', markdownEditorLabel: 'MARKDOWN 编辑器',
     untitledDocument: '未命名文档', saved: '已保存', unsaved: '尚未保存', autoSaved: '已自动保存', saveAs: '另存为', exitEdit: '退出编辑', markdownEditorAria: 'Markdown 编辑器',
     codeLang: '选择编程语言', codeNoLang: '无语言（纯文本）',
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', expandTocSection: '展开“{title}”', collapseTocSection: '折叠“{title}”', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
-    zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', textSizePresets: '文字大小预设', fontScaleAuto: '自动适配显示器', autoFontScaleEnabled: '已自动适配显示器：{percent}%', exportDocument: '导出文档', exportWord: '导出 Word', exportPDF: '导出 PDF', systemPrint: '系统打印', wordExported: 'Word 文档已导出', wordExportFailed: 'Word 导出失败', pdfExportHint: '请在系统打印窗口中选择“Microsoft Print to PDF”或“存储为 PDF”', exportNoDocument: '请先打开一个文档', printDocument: '打印文档', copy: '复制', copied: '已复制',
+    zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', textSizePresets: '文字大小调节', textSizeControl: '文字大小', fontScaleDefault: '默认 100%', fontScaleShortcuts: '<span class="font-scale-shortcut"><kbd>Ctrl +</kbd><em>放大</em></span><span class="font-scale-shortcut"><kbd>Ctrl −</kbd><em>缩小</em></span><span class="font-scale-shortcut"><kbd>Ctrl 0</kbd><em>默认</em></span>', fontScaleAuto: '自动适配显示器', autoFontScaleEnabled: '已自动适配显示器：{percent}%', exportDocument: '导出文档', exportWord: '导出 Word', exportPDF: '导出 PDF', systemPrint: '系统打印', wordExported: 'Word 文档已导出', wordExportFailed: 'Word 导出失败', pdfExportHint: '请在系统打印窗口中选择“Microsoft Print to PDF”或“存储为 PDF”', pdfTutorialLabel: 'PDF 导出指南', pdfTutorialTitle: '使用系统打印保存 PDF', pdfTutorialIntro: '为了尽量保持 Markdown 预览中的表格、代码块和图片样式，轻阅将打开系统打印窗口。请按下面步骤保存为 PDF。', pdfTutorialStep1Title: '打开系统打印', pdfTutorialStep1Text: '点击下方继续按钮，等待打印窗口出现。', pdfTutorialStep2Title: '选择 PDF 选项', pdfTutorialStep2Text: 'Windows 选择“Microsoft Print to PDF”；macOS 选择“存储为 PDF”。', pdfTutorialStep3Title: '选择位置并保存', pdfTutorialStep3Text: '确认打印后，输入文件名并选择保存目录。', pdfWindowsPrintTitle: '打印', pdfPrinterLabel: '打印机', pdfPagesLabel: '页面', pdfAllPages: '全部', pdfPrintButton: '打印', pdfWindowsCallout: '在“打印机”中选择 Microsoft Print to PDF', pdfMacPrintTitle: '打印', pdfSelectedPrinter: '已选择的打印机', pdfPresetsLabel: '预设', pdfDefaultPreset: '默认设置', pdfSaveAsPDF: '存储为 PDF…', pdfMacCallout: '打开左下角 PDF 菜单并选择“存储为 PDF”', pdfTutorialNote: '打印窗口由操作系统提供，实际界面可能因系统版本略有不同。', pdfContinueToPrint: '继续并打开打印窗口', exportNoDocument: '请先打开一个文档', printDocument: '打印文档', copy: '复制', copied: '已复制',
     docWidth: '文档宽度', widthNarrow: '窄', widthMedium: '中', widthWide: '宽', widthFull: '全宽', docWidthChanged: '文档宽度：{level}',
     bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', favorited: '已收藏', favoriteDocument: '收藏文档', unfavoriteDocument: '取消收藏', favoriteAdded: '已收藏文档', favoriteRemoved: '已取消收藏，原文件未删除', recentContextHint: '右键打开文档操作菜单', recentContextMenuTitle: '文档操作', recentEdit: '编辑', recentSaveAs: '另存为', recentReveal: '打开所在文件夹', recentRemove: '移除', recentRevealFailed: '无法打开文件所在目录', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyFavorites: '还没有收藏文档', emptyExplorer: '请先打开一个文件夹',
     markdownDocument: 'Markdown 文档',
     discardConfirm: '当前文档有尚未保存的更改。\n\n确定要放弃更改并继续吗？', previewError: '暂时无法渲染当前内容',
     readingTime: '约 {minutes} 分钟 · {words} 字', renderFailed: 'Markdown 渲染失败', openFailed: '无法打开这个文件',
-    editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限', saveAsRequired: '需要另存为', editPermissionDenied: '当前文件无编辑权限，可能是微信缓存只读或正被其他程序占用。请点击保存，另存为可编辑副本后再编辑', saveAsRequiredHint: '原文件可能来自微信缓存、处于只读状态或正被其他程序占用，请另存为后继续编辑', saveAsFallback: '原文件无法直接写入，已为你打开“另存为”',
+    editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限', saveAsRequired: '需要另存为', editPermissionDenied: '当前文件无编辑权限，可能是微信缓存只读或正被其他程序占用。请另存为可编辑副本后再编辑', editPermissionLabel: '编辑权限', editPermissionTitle: '当前文件无法直接编辑', editPermissionDescription: '轻阅无法获得这个文件的写入权限。原文件不会被修改或删除。', currentDocument: '当前文档', possibleReasons: '可能原因', permissionReasonCache: '文件来自微信、企业微信等应用的只读缓存目录', permissionReasonReadOnly: '文件或所在目录被设置为只读，当前账号没有写入权限', permissionReasonLocked: '文件正被其他程序占用或锁定', editPermissionGuide: '建议另存为一个可编辑副本。保存成功后，轻阅会自动打开副本并进入编辑模式。', saveCopyAndEdit: '另存为副本并编辑', saveAsRequiredHint: '原文件可能来自微信缓存、处于只读状态或正被其他程序占用，请另存为后继续编辑', saveAsFallback: '原文件无法直接写入，已为你打开“另存为”',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
     aboutVersion: '版本 2.4.4', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
-    usageAnalytics: '参与产品改进计划', usageAnalyticsDescription: '启用后，仅在软件发生异常时静默提交错误日志、地域、系统类型和软件版本，帮助我们定位并修复问题。不会上传文档内容、文件名、文件路径或其他使用数据。', usageAnalyticsEnabled: '已参与产品改进计划', usageAnalyticsDisabled: '已退出产品改进计划', usageAnalyticsSaveFailed: '无法保存产品改进计划设置',
+    usageAnalytics: '参与产品改进计划', usageAnalyticsDescription: '此开关仅控制异常回传。勾选后，软件发生异常时会静默提交已清理的错误日志。无论是否勾选，每天最多提交一次匿名活跃记录；不会上传文档内容、文件名、文件路径或联系方式。', usageAnalyticsEnabled: '已参与产品改进计划', usageAnalyticsDisabled: '已关闭异常自动回传', usageAnalyticsSaveFailed: '无法保存产品改进计划设置',
+    feedback: '意见反馈', feedbackShortHint: '建议与异常', feedbackLabel: '帮助我们改进', feedbackTitle: '意见反馈', feedbackIntro: '告诉我们你的建议或遇到的问题。邮箱和手机均为选填，仅用于需要进一步确认时联系你。', feedbackType: '反馈类型', feedbackFeature: '功能建议', feedbackFeatureHint: '希望新增或优化的功能', feedbackBug: '功能异常', feedbackBugHint: '功能无法使用或结果不正确', feedbackDescription: '反馈说明', feedbackDescriptionPlaceholder: '请描述期望效果、操作步骤或异常现象', feedbackEmail: '联系邮箱（选填）', feedbackPhone: '手机号码（选填）', feedbackPhonePlaceholder: '用于必要时联系', feedbackImages: '上传图片（选填）', feedbackImagesHint: '最多 5 张，支持 PNG、JPG、WebP；每张不超过 5 MB', selectImages: '选择图片', removeImage: '移除图片', softwareVersion: '软件版本', systemVersion: '系统版本', feedbackPrivacy: '提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；不会上传当前文档。', submitFeedback: '提交反馈', feedbackSubmitting: '正在提交反馈…', feedbackSubmitted: '感谢反馈，我们会认真查看', feedbackSubmitFailed: '反馈提交失败', feedbackImageSelectFailed: '无法选择反馈图片', feedbackNeedDescription: '请至少填写 5 个字的反馈说明',
     checkForUpdates: '检查更新', checkingForUpdates: '正在检查更新…', updateAvailableLabel: '软件更新', updateAvailable: '发现新版本',
     currentVersion: '当前版本', latestVersion: '最新版本', releaseNotes: '更新说明', noReleaseNotes: '此版本暂无更新说明。',
     remindLater: '稍后提醒', snooze30Days: '30 天内不再提醒', updateSnoozed: '未来 30 天不再自动提醒更新', openDownloadPage: '打开下载页面', alreadyLatest: '当前已是最新版本', updateCheckFailed: '检查更新失败，请稍后重试',
@@ -124,28 +128,29 @@ const translations = {
   en: {
     appName: 'Quillite Markdown', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
-    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Temporarily switch light/dark mode; automatic following resumes at the next system appearance change', temporaryColorModeChanged: 'Temporarily switched to {mode} mode; automatic following resumes at the next system appearance change', lightModeName: 'light', darkModeName: 'dark', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close',
+    accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Temporarily switch light/dark mode; automatic following resumes at the next system appearance change', temporaryColorModeChanged: 'Temporarily switched to {mode} mode; automatic following resumes at the next system appearance change', lightModeName: 'light', darkModeName: 'dark', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close', toastSuccess: 'Completed', toastInfo: 'Notice', toastWarning: 'Attention', toastError: 'Something went wrong', dismissNotification: 'Dismiss notification',
     library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', favoriteDocuments: 'Favorites', resourceExplorer: 'Explorer', recentTab: 'Recent', favoritesTab: 'Favorites', explorerTab: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
     openFolder: 'Open Folder', quickOpenHint: 'Quick open, or drop a file here', revealFile: 'Show File', revealFileTitle: 'Show in File Explorer',
-    print: 'Print', printTitle: 'Print document', readingEnd: 'End of document', livePreview: 'LIVE PREVIEW', readingEffect: 'Rendered document', markdownEditorLabel: 'MARKDOWN EDITOR',
+    print: 'Print', printTitle: 'Print document', moreDocumentActions: 'More', readingEnd: 'End of document', livePreview: 'LIVE PREVIEW', readingEffect: 'Rendered document', previewLocateHint: 'Right-click to locate in the editor · Line {line}', markdownEditorLabel: 'MARKDOWN EDITOR',
     untitledDocument: 'Untitled document', saved: 'Saved', unsaved: 'Unsaved', autoSaved: 'Autosaved', saveAs: 'Save As', exitEdit: 'Exit editing', markdownEditorAria: 'Markdown editor',
     codeLang: 'Select a language', codeNoLang: 'No language (plain text)',
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', expandTocSection: 'Expand “{title}”', collapseTocSection: 'Collapse “{title}”', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
-    zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', textSizePresets: 'Text size presets', fontScaleAuto: 'Fit to display automatically', autoFontScaleEnabled: 'Display-adapted text size: {percent}%', exportDocument: 'Export document', exportWord: 'Export Word', exportPDF: 'Export PDF', systemPrint: 'System print', wordExported: 'Word document exported', wordExportFailed: 'Word export failed', pdfExportHint: 'Choose “Microsoft Print to PDF” or “Save as PDF” in the system print dialog', exportNoDocument: 'Open a document first', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
+    zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', textSizePresets: 'Text size control', textSizeControl: 'Text size', fontScaleDefault: 'Default 100%', fontScaleShortcuts: '<span class="font-scale-shortcut"><kbd>Ctrl +</kbd><em>Larger</em></span><span class="font-scale-shortcut"><kbd>Ctrl −</kbd><em>Smaller</em></span><span class="font-scale-shortcut"><kbd>Ctrl 0</kbd><em>Default</em></span>', fontScaleAuto: 'Fit to display automatically', autoFontScaleEnabled: 'Display-adapted text size: {percent}%', exportDocument: 'Export document', exportWord: 'Export Word', exportPDF: 'Export PDF', systemPrint: 'System print', wordExported: 'Word document exported', wordExportFailed: 'Word export failed', pdfExportHint: 'Choose “Microsoft Print to PDF” or “Save as PDF” in the system print dialog', pdfTutorialLabel: 'PDF EXPORT GUIDE', pdfTutorialTitle: 'Save a PDF with system printing', pdfTutorialIntro: 'To preserve the tables, code blocks, images, and overall Markdown preview styling, Quillite opens the system print window. Follow these steps to save a PDF.', pdfTutorialStep1Title: 'Open system printing', pdfTutorialStep1Text: 'Select Continue below and wait for the print window to appear.', pdfTutorialStep2Title: 'Choose the PDF option', pdfTutorialStep2Text: 'On Windows choose “Microsoft Print to PDF”; on macOS choose “Save as PDF”.', pdfTutorialStep3Title: 'Choose a location and save', pdfTutorialStep3Text: 'Confirm printing, enter a file name, and choose the destination folder.', pdfWindowsPrintTitle: 'Print', pdfPrinterLabel: 'Printer', pdfPagesLabel: 'Pages', pdfAllPages: 'All', pdfPrintButton: 'Print', pdfWindowsCallout: 'Choose Microsoft Print to PDF under Printer', pdfMacPrintTitle: 'Print', pdfSelectedPrinter: 'Selected printer', pdfPresetsLabel: 'Presets', pdfDefaultPreset: 'Default Settings', pdfSaveAsPDF: 'Save as PDF…', pdfMacCallout: 'Open the PDF menu at bottom left and choose “Save as PDF”', pdfTutorialNote: 'The print window is provided by your operating system, so its appearance may vary slightly by system version.', pdfContinueToPrint: 'Continue to print window', exportNoDocument: 'Open a document first', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
     docWidth: 'Document width', widthNarrow: 'Narrow', widthMedium: 'Medium', widthWide: 'Wide', widthFull: 'Full width', docWidthChanged: 'Document width: {level}',
     bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', favorited: 'Favorited', favoriteDocument: 'Add to Favorites', unfavoriteDocument: 'Remove from Favorites', favoriteAdded: 'Document added to Favorites', favoriteRemoved: 'Removed from Favorites. The original file was not deleted.', recentContextHint: 'Right-click for document actions', recentContextMenuTitle: 'Document actions', recentEdit: 'Edit', recentSaveAs: 'Save As', recentReveal: 'Show in Folder', recentRemove: 'Remove', recentRevealFailed: 'Unable to show the file in its folder', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyFavorites: 'No favorite documents', emptyExplorer: 'Open a folder to browse files',
     markdownDocument: 'Markdown document',
     discardConfirm: 'This document has unsaved changes.\n\nDiscard the changes and continue?', previewError: 'The current content cannot be rendered',
     readingTime: 'About {minutes} min · {words} words', renderFailed: 'Markdown rendering failed', openFailed: 'Unable to open this file',
-    editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.', saveAsRequired: 'Save As required', editPermissionDenied: 'This file cannot be edited because it may be a read-only app cache or locked by another program. Click Save, save a writable copy, then edit it.', saveAsRequiredHint: 'The source may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', saveAsFallback: 'The source cannot be written. Save As has been opened for you.',
+    editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.', saveAsRequired: 'Save As required', editPermissionDenied: 'This file cannot be edited because it may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', editPermissionLabel: 'EDIT PERMISSION', editPermissionTitle: 'This file cannot be edited directly', editPermissionDescription: 'Quillite cannot obtain write access to this file. The original will not be changed or deleted.', currentDocument: 'Current document', possibleReasons: 'Possible reasons', permissionReasonCache: 'The file comes from a read-only WeChat, WeCom, or other application cache', permissionReasonReadOnly: 'The file or its folder is read-only, or your account lacks write permission', permissionReasonLocked: 'Another program currently has the file open or locked', editPermissionGuide: 'Save a writable copy instead. Quillite will open the copy and enter editing mode automatically after it is saved.', saveCopyAndEdit: 'Save Copy & Edit', saveAsRequiredHint: 'The source may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', saveAsFallback: 'The source cannot be written. Save As has been opened for you.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
     aboutVersion: 'Version 2.4.4', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
-    usageAnalytics: 'Join the product improvement program', usageAnalyticsDescription: 'When enabled, only software error logs, region, operating system type, and app version are submitted silently to help us diagnose and fix problems. Document content, file names, file paths, and other usage data are never uploaded.', usageAnalyticsEnabled: 'Product improvement program enabled', usageAnalyticsDisabled: 'Product improvement program disabled', usageAnalyticsSaveFailed: 'Unable to save the product improvement setting',
+    usageAnalytics: 'Join the product improvement program', usageAnalyticsDescription: 'This switch controls error reporting only. When enabled, sanitized error logs are submitted silently after failures. One anonymous daily-active event is submitted at most once per day regardless of this setting; document content, file names, paths, and contact details are never uploaded.', usageAnalyticsEnabled: 'Product improvement program enabled', usageAnalyticsDisabled: 'Automatic error reporting disabled', usageAnalyticsSaveFailed: 'Unable to save the product improvement setting',
+    feedback: 'Feedback', feedbackShortHint: 'Ideas & issues', feedbackLabel: 'HELP US IMPROVE', feedbackTitle: 'Send Feedback', feedbackIntro: 'Tell us what you would like improved or what went wrong. Email and phone are optional and used only if we need to follow up.', feedbackType: 'Feedback type', feedbackFeature: 'Feature suggestion', feedbackFeatureHint: 'A new feature or an improvement', feedbackBug: 'Functional issue', feedbackBugHint: 'Something does not work as expected', feedbackDescription: 'Description', feedbackDescriptionPlaceholder: 'Describe the expected result, steps, or issue', feedbackEmail: 'Email (optional)', feedbackPhone: 'Phone (optional)', feedbackPhonePlaceholder: 'Only for necessary follow-up', feedbackImages: 'Images (optional)', feedbackImagesHint: 'Up to 5 PNG, JPG, or WebP images; 5 MB each', selectImages: 'Choose images', removeImage: 'Remove image', softwareVersion: 'App version', systemVersion: 'System version', feedbackPrivacy: 'Submitting sends this feedback, optional contact details, selected images, and version information to the Quillite website server. Your current document is never uploaded.', submitFeedback: 'Submit feedback', feedbackSubmitting: 'Submitting feedback…', feedbackSubmitted: 'Thank you. We will review your feedback.', feedbackSubmitFailed: 'Unable to submit feedback', feedbackImageSelectFailed: 'Unable to choose feedback images', feedbackNeedDescription: 'Enter at least 5 characters',
     checkForUpdates: 'Check for updates', checkingForUpdates: 'Checking for updates…', updateAvailableLabel: 'SOFTWARE UPDATE', updateAvailable: 'A new version is available',
     currentVersion: 'Current version', latestVersion: 'Latest version', releaseNotes: 'What’s new', noReleaseNotes: 'No release notes are available for this version.',
     remindLater: 'Remind me later', snooze30Days: 'Don’t remind me for 30 days', updateSnoozed: 'Automatic update reminders paused for 30 days', openDownloadPage: 'Open download page', alreadyLatest: 'You’re using the latest version', updateCheckFailed: 'Unable to check for updates. Try again later.',
@@ -218,22 +223,22 @@ function setLanguage(language, silent = false, persist = true) {
     renderFileList();
   }
   setDirty(state.dirty);
-  if (!silent) showToast(t('languageChanged'));
+  if (!silent) showToast(t('languageChanged'), 'success');
   return persistence;
 }
 
 const els = {
   welcome: $('#welcome'), documentView: $('#documentView'), content: $('#markdownContent'),
   fileList: $('#fileList'), libraryName: $('#libraryName'), tocPanel: $('#tocPanel'), toc: $('#toc'),
-  breadcrumb: $('#breadcrumb'), readingTime: $('#readingTime'), progressBar: $('#progressBar'),
+  breadcrumb: $('#breadcrumb'), documentActions: $('#documentActions'), documentActionsMenu: $('#documentActionsMenu'), documentActionsMoreButton: $('#documentActionsMoreButton'), readingTime: $('#readingTime'), progressBar: $('#progressBar'),
   appShell: $('.app-shell'), sidebar: $('#sidebar'), expandSidebar: $('#expandSidebar'), sidebarResizer: $('#sidebarResizer'), tocResizer: $('#tocResizer'), searchBar: $('#searchBar'),
   editorResizer: $('#editorResizer'),
   searchInput: $('#searchInput'), searchCount: $('#searchCount'), dropOverlay: $('#dropOverlay'),
-  moreMenu: $('#moreMenu'), accentMenu: $('#accentMenu'), recentContextMenu: $('#recentContextMenu'), toast: $('#toast'), editorView: $('#editorView'),
+  moreMenu: $('#moreMenu'), accentMenu: $('#accentMenu'), recentContextMenu: $('#recentContextMenu'), toast: $('#toast'), editorView: $('#editorView'), fontScaleSlider: $('#fontScaleSlider'), fontScaleValue: $('#fontScaleValue'),
   editor: $('#markdownEditor'), editorPreview: $('#editorPreviewContent'), editorFileName: $('#editorFileName'), editorSaveState: $('#editorSaveState'),
-  editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'),
+  editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'), previewLocateHint: $('#previewLocateHint'),
   exitEditButton: $('#exitEditButton'), codeLangMenu: $('#codeLangMenu'), textColorMenu: $('#textColorMenu'),
-  saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), updateDialog: $('#updateDialog'), usageAnalyticsToggle: $('#usageAnalyticsToggle'),
+  saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), feedbackDialog: $('#feedbackDialog'), feedbackForm: $('#feedbackForm'), feedbackImageList: $('#feedbackImageList'), updateDialog: $('#updateDialog'), editPermissionDialog: $('#editPermissionDialog'), editPermissionFileName: $('#editPermissionFileName'), pdfTutorialDialog: $('#pdfTutorialDialog'), usageAnalyticsToggle: $('#usageAnalyticsToggle'),
   recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'),
   editorUndoButton: $('#editorUndoButton')
 };
@@ -302,6 +307,7 @@ function loadEditorDependencies() {
     EditorState = stateModule.EditorState;
     EditorView = viewModule.EditorView;
     keymap = viewModule.keymap;
+    scrollPastEnd = viewModule.scrollPastEnd;
     undo = commandsModule.undo;
     undoDepth = commandsModule.undoDepth;
     closeSearchPanel = searchModule.closeSearchPanel;
@@ -478,12 +484,12 @@ function copyFormatFromSelection() {
   if (!codeEditor || !state.editing) return false;
   const selection = codeEditor.state.selection.main;
   if (selection.from === selection.to) {
-    showToast(t('formatNeedSelection'));
+    showToast(t('formatNeedSelection'), 'warning');
     return false;
   }
   const format = analyzeFormat(selection.from, selection.to);
   if (!format.inline.length && !format.block) {
-    showToast(t('formatNeedSelection'));
+    showToast(t('formatNeedSelection'), 'warning');
     return false;
   }
   copiedFormat = format;
@@ -493,7 +499,7 @@ function copyFormatFromSelection() {
     button.classList.add('active');
     button.setAttribute('aria-pressed', 'true');
   }
-  showToast(t('formatCopied'));
+  showToast(t('formatCopied'), 'success');
   return true;
 }
 
@@ -540,7 +546,7 @@ function applyCopiedFormat() {
   }
   if (selectionChanged) {
     codeEditor.focus();
-    showToast(t('formatApplied'));
+    showToast(t('formatApplied'), 'success');
   }
   clearCopiedFormat();
   return selectionChanged;
@@ -919,7 +925,7 @@ async function insertLocalImage() {
   } catch (error) {
     reportSilentError(error, 'image.select');
     console.error(error);
-    showToast(t('imageSelectFailed'));
+    showToast(t('imageSelectFailed'), 'error');
   }
 }
 
@@ -927,7 +933,7 @@ function insertImageFromUrl() {
   if (!state.currentFile) return;
   const url = els.imageUrl.value.trim();
   if (!/^https?:\/\/\S+$/i.test(url)) {
-    showToast(t('imageUrlInvalid'));
+    showToast(t('imageUrlInvalid'), 'warning');
     els.imageUrl.focus();
     return;
   }
@@ -1017,6 +1023,7 @@ async function initializeCodeEditor() {
     editorTheme,
     saveKeymap,
     EditorView.lineWrapping,
+    scrollPastEnd(),
     EditorView.updateListener.of(update => {
       if (update.docChanged && !suppressEditorChanges && state.currentFile) {
         state.currentFile.content = update.state.doc.toString();
@@ -1048,11 +1055,29 @@ function slugify(text, index) {
   return `${text.toLowerCase().replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'section'}-${index}`;
 }
 
-function showToast(message) {
-  els.toast.textContent = message;
+function hideToast() {
+  clearTimeout(showToast.timer);
+  els.toast.classList.add('hidden');
+}
+
+function showToast(message, kind = 'info', duration) {
+  const normalizedKind = ['success', 'info', 'warning', 'error'].includes(kind) ? kind : 'info';
+  const durations = { success: 3200, info: 3600, warning: 5600, error: 8000 };
+  const visibleFor = Number.isFinite(duration) ? Math.max(1600, duration) : durations[normalizedKind];
+  $('#toastTitle').textContent = t(`toast${normalizedKind.charAt(0).toUpperCase()}${normalizedKind.slice(1)}`);
+  $('#toastMessage').textContent = String(message || '');
+  els.toast.dataset.kind = normalizedKind;
+  els.toast.setAttribute('role', normalizedKind === 'error' || normalizedKind === 'warning' ? 'alert' : 'status');
+  els.toast.setAttribute('aria-live', normalizedKind === 'error' || normalizedKind === 'warning' ? 'assertive' : 'polite');
+  els.toast.style.setProperty('--toast-duration', `${visibleFor}ms`);
+  const progress = $('#toastProgressBar');
+  progress.style.animation = 'none';
+  void progress.offsetWidth;
+  progress.style.animation = '';
   els.toast.classList.remove('hidden');
   clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => els.toast.classList.add('hidden'), 1800);
+  showToast.timer = setTimeout(hideToast, visibleFor);
+  showToast.resumeDelay = Math.min(1800, Math.max(1200, Math.round(visibleFor * .3)));
 }
 
 function updateAccentSelection() {
@@ -1203,8 +1228,15 @@ function toggleAccentMenu() {
 
 function syncFontScaleOptions() {
   const automaticScale = recommendedFontScale(currentDisplay());
+  const percent = Math.round(state.fontScale * 100);
   const automaticValue = $('#fontScaleAutoValue');
   if (automaticValue) automaticValue.textContent = `${Math.round(automaticScale * 100)}%`;
+  if (els.fontScaleSlider) {
+    els.fontScaleSlider.value = String(percent);
+    els.fontScaleSlider.style.setProperty('--font-scale-progress', `${Math.max(0, Math.min(100, (percent - 82) / 118 * 100))}%`);
+    els.fontScaleSlider.setAttribute('aria-valuetext', `${percent}%`);
+  }
+  if (els.fontScaleValue) els.fontScaleValue.textContent = `${percent}%`;
   document.querySelectorAll('#moreMenu button[data-font-scale]').forEach(button => {
     const automatic = button.dataset.fontScale === 'auto';
     const active = automatic
@@ -1313,7 +1345,7 @@ async function removeRecentRecord(filePath) {
   state.recentFiles = state.recentFiles.filter(file => !sameDocumentPath(file.path, filePath));
   if (state.sidebarMode === 'recent') state.files = [...state.recentFiles];
   renderFileList();
-  showToast(t('recentRemoved'));
+  showToast(t('recentRemoved'), 'success');
 }
 
 async function setFavoriteRecord(filePath, shouldFavorite) {
@@ -1321,7 +1353,7 @@ async function setFavoriteRecord(filePath, shouldFavorite) {
   else await window.quilliteMarkdown.removeFavorite(filePath);
   applyLibraryPreferences(await window.quilliteMarkdown.getPreferences());
   renderFileList();
-  showToast(t(shouldFavorite ? 'favoriteAdded' : 'favoriteRemoved'));
+  showToast(t(shouldFavorite ? 'favoriteAdded' : 'favoriteRemoved'), 'success');
 }
 
 function updateLibraryHeading() {
@@ -1369,7 +1401,7 @@ async function refreshExplorer() {
   } catch (error) {
     reportSilentError(error, 'folder.refresh');
     console.error(error);
-    showToast(t('folderOpenFailed'));
+    showToast(t('folderOpenFailed'), 'error');
   }
 }
 
@@ -1442,7 +1474,7 @@ async function revealFileInFolder(filePath) {
     await window.quilliteMarkdown.showInFolder(filePath);
   } catch (error) {
     console.warn('Unable to show file in folder', error);
-    showToast(t('recentRevealFailed'));
+    showToast(t('recentRevealFailed'), 'error');
   }
 }
 
@@ -1453,7 +1485,7 @@ async function editRecentDocument(filePath) {
     await toggleEditor(true);
   } catch (error) {
     reportSilentError(error, 'document.open-recent');
-    showToast(t('openFailed'));
+    showToast(t('openFailed'), 'error');
     console.error(error);
   }
 }
@@ -1646,7 +1678,7 @@ function renderCurrentDocument() {
     renderFileList();
   } catch (error) {
     reportSilentError(error, 'preview.render-document');
-    showToast(t('renderFailed'));
+    showToast(t('renderFailed'), 'error');
     console.error(error);
   }
 }
@@ -1685,7 +1717,7 @@ async function newFile() {
   } catch (error) {
     reportSilentError(error, 'document.create');
     console.error(error);
-    showToast(t('newFileFailed'));
+    showToast(t('newFileFailed'), 'error');
   }
 }
 
@@ -1695,12 +1727,12 @@ async function loadFile(filePath) {
     displayDocument(await window.quilliteMarkdown.readFile(filePath));
   } catch (error) {
     reportSilentError(error, 'document.open');
-    showToast(t('openFailed'));
+    showToast(t('openFailed'), 'error');
     console.error(error);
   }
 }
 
-async function saveLibraryDocumentAs(filePath) {
+async function saveLibraryDocumentAs(filePath, { editAfterSave = false } = {}) {
   const current = state.currentFile;
   const isCurrent = current && sameDocumentPath(current.path, filePath);
   if (!isCurrent && !maybeDiscardChanges()) return;
@@ -1721,11 +1753,14 @@ async function saveLibraryDocumentAs(filePath) {
       if (state.sidebarMode === 'favorites') state.files = [...state.favoriteFiles];
       renderFileList();
     }
-    showToast(t('saveAsDone'));
+    showToast(t('saveAsDone'), 'success');
+    if (editAfterSave) await toggleEditor(true);
+    return true;
   } catch (error) {
     reportSilentError(error, 'document.save-as');
     console.error(error);
-    showToast(t('saveFailed'));
+    showToast(t('saveFailed'), 'error');
+    return false;
   }
 }
 
@@ -1792,6 +1827,79 @@ function scrollPreviewToCursor(force = false) {
   scroller.scrollTo({ top, behavior: 'smooth' });
 }
 
+function previewBlockAtPointer(event) {
+  const direct = event.target instanceof Element ? event.target.closest('[data-line]') : null;
+  if (direct && els.editorPreview.contains(direct)) return direct;
+  let nearest = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const block of els.editorPreview.children) {
+    if (!block.dataset.line) continue;
+    const rect = block.getBoundingClientRect();
+    const distance = event.clientY < rect.top
+      ? rect.top - event.clientY
+      : event.clientY > rect.bottom ? event.clientY - rect.bottom : 0;
+    if (distance < nearestDistance) {
+      nearest = block;
+      nearestDistance = distance;
+    }
+  }
+  return nearest;
+}
+
+function hidePreviewLocateHint() {
+  els.previewLocateHint.classList.add('hidden');
+}
+
+function showPreviewLocateHint(event) {
+  if (!state.editing || !codeEditor) return hidePreviewLocateHint();
+  const block = previewBlockAtPointer(event);
+  const line = Number(block?.dataset.line);
+  if (!Number.isFinite(line)) return hidePreviewLocateHint();
+  els.previewLocateHint.querySelector('span').textContent = t('previewLocateHint', { line });
+  els.previewLocateHint.style.left = `${Math.max(8, Math.min(event.clientX + 16, window.innerWidth - 260))}px`;
+  els.previewLocateHint.style.top = `${Math.max(8, Math.min(event.clientY + 18, window.innerHeight - 50))}px`;
+  els.previewLocateHint.classList.remove('hidden');
+}
+
+function locateEditorFromPreview(event) {
+  if (!state.editing || !codeEditor) return;
+  const block = previewBlockAtPointer(event);
+  const sourceLine = Number(block?.dataset.line);
+  if (!Number.isFinite(sourceLine)) return;
+  event.preventDefault();
+  hidePreviewLocateHint();
+  const lineNumber = Math.max(1, Math.min(sourceLine, codeEditor.state.doc.lines));
+  const line = codeEditor.state.doc.line(lineNumber);
+  codeEditor.dispatch({
+    selection: { anchor: line.from },
+    effects: EditorView.scrollIntoView(line.from, { y: 'start', yMargin: 12 })
+  });
+  codeEditor.focus();
+  block.classList.remove('preview-locate-target');
+  requestAnimationFrame(() => block.classList.add('preview-locate-target'));
+  clearTimeout(locateEditorFromPreview.timer);
+  locateEditorFromPreview.timer = setTimeout(() => block.classList.remove('preview-locate-target'), 850);
+}
+
+function openEditPermissionDialog() {
+  els.editPermissionFileName.textContent = state.currentFile?.name || '';
+  els.editPermissionFileName.title = state.currentFile?.path || '';
+  els.editPermissionDialog.classList.remove('hidden');
+  requestAnimationFrame(() => $('#saveCopyAndEdit').focus());
+}
+
+function closeEditPermissionDialog(restoreFocus = true) {
+  els.editPermissionDialog.classList.add('hidden');
+  if (restoreFocus) els.editButton.focus();
+}
+
+async function savePermissionCopyAndEdit() {
+  const filePath = state.currentFile?.path;
+  if (!filePath) return closeEditPermissionDialog();
+  closeEditPermissionDialog(false);
+  await saveLibraryDocumentAs(filePath, { editAfterSave: true });
+}
+
 async function toggleEditor(forceEditing) {
   if (!state.currentFile) return;
   const nextEditing = typeof forceEditing === 'boolean' ? forceEditing : !state.editing;
@@ -1806,7 +1914,7 @@ async function toggleEditor(forceEditing) {
     if (!canEdit) {
       state.saveAsRequired = true;
       els.editorSaveState.textContent = t('saveAsRequired');
-      showToast(t('editPermissionDenied'));
+      openEditPermissionDialog();
       return;
     }
     try {
@@ -1814,7 +1922,7 @@ async function toggleEditor(forceEditing) {
     } catch (error) {
       reportSilentError(error, 'editor.initialize');
       console.error('Unable to load the Markdown editor:', error);
-      showToast(t('previewError'));
+      showToast(t('previewError'), 'error');
       return;
     }
     if (!state.currentFile) return;
@@ -1886,7 +1994,7 @@ async function saveDocument(saveAs = false, options = {}) {
       clearTimeout(saveDocument.statusTimer);
       saveDocument.statusTimer = setTimeout(() => { if (!state.dirty) els.editorSaveState.textContent = t('saved'); }, 1800);
     } else if (!options.silent) {
-      showToast(t(saveAs ? 'saveAsDone' : 'saveDone'));
+      showToast(t(saveAs ? 'saveAsDone' : 'saveDone'), 'success');
     }
   } catch (error) {
     reportSilentError(error, 'document.save');
@@ -1896,14 +2004,14 @@ async function saveDocument(saveAs = false, options = {}) {
       if (options.auto) {
         if (!state.saveWarningShown) {
           state.saveWarningShown = true;
-          showToast(t('saveAsRequiredHint'));
+          showToast(t('saveAsRequiredHint'), 'warning');
         }
       } else {
         fallbackToSaveAs = true;
-        showToast(t('saveAsFallback'));
+        showToast(t('saveAsFallback'), 'warning');
       }
     } else if (!options.auto) {
-      showToast(t('saveFailed'));
+      showToast(t('saveFailed'), 'error');
     }
     console.error(error);
   } finally {
@@ -1942,7 +2050,7 @@ function cleanRenderedHTMLForExport(container) {
 
 async function exportWordDocument() {
   if (!state.currentFile) {
-    showToast(t('exportNoDocument'));
+    showToast(t('exportNoDocument'), 'warning');
     return;
   }
   const container = exportPreviewContainer();
@@ -1953,23 +2061,56 @@ async function exportWordDocument() {
       state.currentFile.name,
       cleanRenderedHTMLForExport(container)
     );
-    if (output) showToast(t('wordExported'));
+    if (output) showToast(t('wordExported'), 'success');
   } catch (error) {
     reportSilentError(error, 'document.export-word');
     console.error(error);
-    showToast(t('wordExportFailed'));
+    showToast(t('wordExportFailed'), 'error');
   }
 }
 
-async function exportPDFDocument() {
-  if (!state.currentFile) {
-    showToast(t('exportNoDocument'));
-    return;
-  }
+function openPDFTutorial() {
+  els.pdfTutorialDialog.classList.remove('hidden');
+  document.body.classList.add('dialog-open');
+  requestAnimationFrame(() => $('#confirmPDFTutorial').focus());
+}
+
+function closePDFTutorial(restoreFocus = true) {
+  if (els.pdfTutorialDialog.classList.contains('hidden')) return;
+  els.pdfTutorialDialog.classList.add('hidden');
+  document.body.classList.remove('dialog-open');
+  if (restoreFocus) $('#moreButton').focus();
+}
+
+async function confirmPDFExport() {
+  closePDFTutorial(false);
   if (state.editing) toggleEditor(false);
-  showToast(t('pdfExportHint'));
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   window.quilliteMarkdown.print();
+}
+
+function exportPDFDocument() {
+  if (!state.currentFile) {
+    showToast(t('exportNoDocument'), 'warning');
+    return;
+  }
+  openPDFTutorial();
+}
+
+function closeDocumentActionsMenu() {
+  els.documentActionsMenu.classList.add('hidden');
+  els.documentActionsMoreButton.setAttribute('aria-expanded', 'false');
+}
+
+function runDocumentHeaderAction(action) {
+  closeDocumentActionsMenu();
+  if (action === 'save-as' && state.currentFile?.path) saveLibraryDocumentAs(state.currentFile.path);
+  if (action === 'export-word') exportWordDocument();
+  if (action === 'export-pdf') exportPDFDocument();
+  if (action === 'print') {
+    if (state.editing) toggleEditor(false);
+    window.quilliteMarkdown.print();
+  }
 }
 
 function bindDocumentActions(container = els.content) {
@@ -2008,7 +2149,7 @@ async function openFolder() {
     try {
       displayDocument(await window.quilliteMarkdown.readFile(folder.files[0].path));
     } catch {
-      showToast(t('folderOpenFailed'));
+      showToast(t('folderOpenFailed'), 'error');
     }
   }
 }
@@ -2241,6 +2382,96 @@ function closeAbout() {
   $('#moreButton').focus();
 }
 
+function renderFeedbackImages() {
+  els.feedbackImageList.replaceChildren();
+  state.feedbackImages.forEach((image, index) => {
+    const item = document.createElement('div');
+    item.className = 'feedback-image-item';
+    const details = document.createElement('span');
+    const name = document.createElement('strong');
+    const size = document.createElement('small');
+    name.textContent = image.name;
+    size.textContent = `${Math.max(1, Math.round(Number(image.size || 0) / 1024))} KB`;
+    details.append(name, size);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.dataset.feedbackImageIndex = String(index);
+    remove.title = t('removeImage');
+    remove.setAttribute('aria-label', `${t('removeImage')} ${image.name}`);
+    remove.textContent = '×';
+    item.append(details, remove);
+    els.feedbackImageList.append(item);
+  });
+}
+
+async function openFeedback() {
+  state.feedbackImages = [];
+  renderFeedbackImages();
+  els.feedbackForm.reset();
+  els.feedbackForm.elements.feedbackCategory.value = 'feature';
+  $('#feedbackMessageCount').textContent = '0 / 4000';
+  $('#feedbackMessageStatus').textContent = '';
+  els.feedbackDialog.classList.remove('hidden');
+  document.body.classList.add('dialog-open');
+  try {
+    state.feedbackSystemInfo = await window.quilliteMarkdown.getFeedbackSystemInfo();
+  } catch {
+    state.feedbackSystemInfo = { appVersion: '2.4.4', os: 'windows', systemVersion: '—' };
+  }
+  $('#feedbackAppVersion').textContent = state.feedbackSystemInfo?.appVersion || '2.4.4';
+  $('#feedbackSystemVersion').textContent = state.feedbackSystemInfo?.systemVersion || '—';
+  requestAnimationFrame(() => $('#feedbackMessage').focus());
+}
+
+function closeFeedback() {
+  if (els.feedbackDialog.classList.contains('hidden')) return;
+  els.feedbackDialog.classList.add('hidden');
+  document.body.classList.remove('dialog-open');
+  state.feedbackImages = [];
+  $('#moreButton').focus();
+}
+
+async function chooseFeedbackImages() {
+  try {
+    const selected = await window.quilliteMarkdown.selectFeedbackImages();
+    if (!selected?.length) return;
+    const byPath = new Map(state.feedbackImages.map(image => [image.path, image]));
+    selected.forEach(image => byPath.set(image.path, image));
+    state.feedbackImages = [...byPath.values()].slice(0, 5);
+    renderFeedbackImages();
+  } catch (error) {
+    showToast(error?.message || t('feedbackImageSelectFailed'), 'error');
+  }
+}
+
+async function submitFeedbackForm(event) {
+  event.preventDefault();
+  const message = $('#feedbackMessage').value.trim();
+  if (message.length < 5) {
+    $('#feedbackMessageStatus').textContent = t('feedbackNeedDescription');
+    $('#feedbackMessage').focus();
+    return;
+  }
+  const submit = $('#submitFeedback');
+  submit.disabled = true;
+  $('#feedbackMessageStatus').textContent = t('feedbackSubmitting');
+  try {
+    await window.quilliteMarkdown.submitFeedback({
+      category: els.feedbackForm.elements.feedbackCategory.value,
+      message,
+      email: $('#feedbackEmail').value.trim(),
+      phone: $('#feedbackPhone').value.trim(),
+      imagePaths: state.feedbackImages.map(image => image.path)
+    });
+    closeFeedback();
+    showToast(t('feedbackSubmitted'), 'success', 6200);
+  } catch (error) {
+    $('#feedbackMessageStatus').textContent = error?.message || t('feedbackSubmitFailed');
+  } finally {
+    submit.disabled = false;
+  }
+}
+
 function openUpdateDialog(info) {
   state.updateInfo = info;
   $('#currentVersion').textContent = info.currentVersion || '2.4.4';
@@ -2276,10 +2507,10 @@ async function checkForUpdates(manual = false) {
   try {
     const info = await window.quilliteMarkdown.checkForUpdates(manual);
     if (info?.available) openUpdateDialog(info);
-    else if (manual && info?.checked) showToast(t('alreadyLatest'));
+    else if (manual && info?.checked) showToast(t('alreadyLatest'), 'success');
   } catch (error) {
     console.warn('Update check failed:', error);
-    if (manual) showToast(t('updateCheckFailed'));
+    if (manual) showToast(t('updateCheckFailed'), 'error');
   }
 }
 
@@ -2304,13 +2535,13 @@ async function completeFirstRunLanguage(language) {
     await setLanguage(language, true, true);
     els.firstRunLanguageDialog.classList.add('hidden');
     document.body.classList.remove('dialog-open');
-    showToast(t('languageChanged'));
+    showToast(t('languageChanged'), 'success');
     scheduleAutomaticUpdateCheck();
   } catch (error) {
     reportSilentError(error, 'language.first-run');
     console.warn('Unable to save first-run language:', error);
     buttons.forEach(button => { button.disabled = false; });
-    showToast(t('languageSaveFailed'));
+    showToast(t('languageSaveFailed'), 'error');
   }
 }
 
@@ -2318,7 +2549,7 @@ async function snoozeUpdates() {
   try {
     await window.quilliteMarkdown.snoozeUpdates(30);
     closeUpdate();
-    showToast(t('updateSnoozed'));
+    showToast(t('updateSnoozed'), 'success');
   } catch (error) {
     console.warn('Unable to save update reminder preference:', error);
   }
@@ -2338,7 +2569,7 @@ async function startDownloadAndUpdate() {
     await saveDocument(false, { auto: true, silent: true });
   }
   if (state.dirty) {
-    showToast(t('updateBlockedByUnsavedChanges'));
+    showToast(t('updateBlockedByUnsavedChanges'), 'warning');
     return;
   }
   applyingUpdate = true;
@@ -2362,7 +2593,7 @@ async function startDownloadAndUpdate() {
     $('#openUpdatePage').disabled = false;
     $('#updateLater').disabled = false;
     $('#updateSnooze').disabled = false;
-    showToast(t('updateFailed'));
+    showToast(t('updateFailed'), 'error');
   }
 }
 
@@ -2393,6 +2624,12 @@ async function initialize() {
 }
 
 $('#newFileButton').addEventListener('click', newFile);
+$('#closeToast').addEventListener('click', hideToast);
+els.toast.addEventListener('mouseenter', () => clearTimeout(showToast.timer));
+els.toast.addEventListener('mouseleave', () => {
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(hideToast, showToast.resumeDelay || 1200);
+});
 ['#openFileButton', '#welcomeOpenFile'].forEach(id => $(id).addEventListener('click', openFile));
 ['#openFolderButton', '#welcomeOpenFolder', '#folderCta'].forEach(id => $(id).addEventListener('click', openFolder));
 $('#accentButton').addEventListener('click', event => {
@@ -2437,9 +2674,18 @@ els.searchInput.addEventListener('keydown', event => {
   if (event.key === 'Escape') closeSearch();
 });
 $('#revealButton').addEventListener('click', () => state.currentFile && revealFileInFolder(state.currentFile.path));
-$('#printButton').addEventListener('click', () => {
-  if (state.editing) toggleEditor(false);
-  window.quilliteMarkdown.print();
+els.documentActions.addEventListener('click', event => {
+  const moreButton = event.target.closest('#documentActionsMoreButton');
+  if (moreButton) {
+    event.stopPropagation();
+    const opening = els.documentActionsMenu.classList.contains('hidden');
+    els.documentActionsMenu.classList.toggle('hidden', !opening);
+    els.documentActionsMoreButton.setAttribute('aria-expanded', String(opening));
+    if (opening) requestAnimationFrame(() => els.documentActionsMenu.querySelector('button')?.focus());
+    return;
+  }
+  const actionButton = event.target.closest('[data-document-action]');
+  if (actionButton) runDocumentHeaderAction(actionButton.dataset.documentAction);
 });
 $('#moreButton').addEventListener('click', event => {
   event.stopPropagation();
@@ -2457,6 +2703,20 @@ $('.titlebar').addEventListener('dblclick', event => {
 });
 $('#closeAbout').addEventListener('click', closeAbout);
 $('#aboutDone').addEventListener('click', closeAbout);
+$('#closeFeedback').addEventListener('click', closeFeedback);
+$('#cancelFeedback').addEventListener('click', closeFeedback);
+$('#selectFeedbackImages').addEventListener('click', chooseFeedbackImages);
+$('#feedbackMessage').addEventListener('input', event => { $('#feedbackMessageCount').textContent = `${event.target.value.length} / 4000`; });
+els.feedbackForm.addEventListener('submit', submitFeedbackForm);
+els.feedbackImageList.addEventListener('click', event => {
+  const button = event.target.closest('[data-feedback-image-index]');
+  if (!button) return;
+  state.feedbackImages.splice(Number(button.dataset.feedbackImageIndex), 1);
+  renderFeedbackImages();
+});
+els.feedbackDialog.addEventListener('click', event => {
+  if (event.target === els.feedbackDialog) closeFeedback();
+});
 els.usageAnalyticsToggle.addEventListener('change', async () => {
   const enabled = els.usageAnalyticsToggle.checked;
   els.usageAnalyticsToggle.disabled = true;
@@ -2464,7 +2724,7 @@ els.usageAnalyticsToggle.addEventListener('change', async () => {
     const prefs = await window.quilliteMarkdown.setUsageAnalytics(enabled);
     state.usageAnalytics = prefs?.usageAnalytics !== false;
     els.usageAnalyticsToggle.checked = state.usageAnalytics;
-    showToast(t(state.usageAnalytics ? 'usageAnalyticsEnabled' : 'usageAnalyticsDisabled'));
+    showToast(t(state.usageAnalytics ? 'usageAnalyticsEnabled' : 'usageAnalyticsDisabled'), 'success');
   } catch (error) {
     els.usageAnalyticsToggle.checked = state.usageAnalytics;
   } finally {
@@ -2495,6 +2755,17 @@ $('#openUpdatePage').addEventListener('click', () => {
 });
 els.updateDialog.addEventListener('click', event => {
   if (event.target === els.updateDialog) closeUpdate();
+});
+$('#cancelEditPermission').addEventListener('click', () => closeEditPermissionDialog());
+$('#saveCopyAndEdit').addEventListener('click', savePermissionCopyAndEdit);
+els.editPermissionDialog.addEventListener('click', event => {
+  if (event.target === els.editPermissionDialog) closeEditPermissionDialog();
+});
+$('#closePDFTutorial').addEventListener('click', () => closePDFTutorial());
+$('#cancelPDFTutorial').addEventListener('click', () => closePDFTutorial());
+$('#confirmPDFTutorial').addEventListener('click', confirmPDFExport);
+els.pdfTutorialDialog.addEventListener('click', event => {
+  if (event.target === els.pdfTutorialDialog) closePDFTutorial();
 });
 $('#closeTableDialog').addEventListener('click', closeTableDialog);
 $('#cancelTable').addEventListener('click', closeTableDialog);
@@ -2570,6 +2841,7 @@ $('#editorFormatBar').addEventListener('click', event => {
 });
 els.moreMenu.addEventListener('click', event => {
   const button = event.target.closest('button');
+  if (!button) return;
   const action = button?.dataset.action;
   const language = button?.dataset.language;
   if (language) setLanguage(language);
@@ -2581,7 +2853,7 @@ els.moreMenu.addEventListener('click', event => {
   if (button?.dataset.docWidth) setDocumentWidth(button.dataset.docWidth);
   if (action === 'default-app') {
     window.quilliteMarkdown.openDefaultApps();
-    showToast(t('defaultAppHint'));
+    showToast(t('defaultAppHint'), 'info', 5200);
   }
   if (action === 'print') {
     if (state.editing) toggleEditor(false);
@@ -2589,10 +2861,13 @@ els.moreMenu.addEventListener('click', event => {
   }
   if (action === 'export-word') exportWordDocument();
   if (action === 'export-pdf') exportPDFDocument();
+  if (action === 'feedback') openFeedback();
   if (action === 'check-update') checkForUpdates(true);
   if (action === 'about') openAbout();
   els.moreMenu.classList.add('hidden');
 });
+els.fontScaleSlider.addEventListener('input', event => setFontScale(Number(event.target.value) / 100, true));
+els.fontScaleSlider.addEventListener('change', event => setFontScale(Number(event.target.value) / 100));
 els.recentContextMenu.addEventListener('click', async event => {
   event.stopPropagation();
   const button = event.target.closest('[data-recent-action]');
@@ -2610,6 +2885,7 @@ els.recentContextMenu.addEventListener('click', async event => {
 document.addEventListener('click', () => {
   els.moreMenu.classList.add('hidden');
   els.codeLangMenu.classList.add('hidden');
+  closeDocumentActionsMenu();
   closeTextColorMenu();
   closeAccentMenu();
   closeRecentContextMenu();
@@ -2620,6 +2896,10 @@ window.addEventListener('resize', scheduleAutomaticFontScaleRefresh);
 $('.reader-pane').addEventListener('scroll', updateActiveToc, { passive: true });
 $('.reader-pane').addEventListener('wheel', handlePreviewWheelZoom, { passive: false });
 $('.editor-preview-scroll').addEventListener('wheel', handlePreviewWheelZoom, { passive: false });
+$('.editor-preview-scroll').addEventListener('pointermove', showPreviewLocateHint, { passive: true });
+$('.editor-preview-scroll').addEventListener('pointerleave', hidePreviewLocateHint);
+$('.editor-preview-scroll').addEventListener('scroll', hidePreviewLocateHint, { passive: true });
+els.editorPreview.addEventListener('contextmenu', locateEditorFromPreview);
 
 document.addEventListener('keydown', event => {
   const primaryModifier = event.ctrlKey || event.metaKey;
@@ -2638,9 +2918,13 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Escape' && !els.textColorMenu.classList.contains('hidden')) { closeTextColorMenu(); focusCodeEditor(); }
   else if (event.key === 'Escape' && !els.codeLangMenu.classList.contains('hidden')) { els.codeLangMenu.classList.add('hidden'); focusCodeEditor(); }
   else if (event.key === 'Escape' && !els.accentMenu.classList.contains('hidden')) { closeAccentMenu(); $('#accentButton').focus(); }
+  else if (event.key === 'Escape' && !els.documentActionsMenu.classList.contains('hidden')) { closeDocumentActionsMenu(); els.documentActionsMoreButton.focus(); }
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
   else if (event.key === 'Escape' && !els.imageDialog.classList.contains('hidden')) closeImageDialog();
+  else if (event.key === 'Escape' && !els.editPermissionDialog.classList.contains('hidden')) closeEditPermissionDialog();
+  else if (event.key === 'Escape' && !els.pdfTutorialDialog.classList.contains('hidden')) closePDFTutorial();
   else if (event.key === 'Escape' && !els.updateDialog.classList.contains('hidden')) closeUpdate();
+  else if (event.key === 'Escape' && !els.feedbackDialog.classList.contains('hidden')) closeFeedback();
   else if (event.key === 'Escape' && !els.aboutDialog.classList.contains('hidden')) closeAbout();
   else if (event.key === 'Escape' && !els.searchBar.classList.contains('hidden')) closeSearch();
 });
@@ -2658,7 +2942,7 @@ document.addEventListener('drop', async event => {
   const filePath = window.quilliteMarkdown.pathForFile(file);
   if (!filePath) return;
   if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
-  else showToast(t('dropUnsupported'));
+  else showToast(t('dropUnsupported'), 'warning');
 });
 
 window.quilliteMarkdown.onFileDrop(paths => {
@@ -2667,7 +2951,7 @@ window.quilliteMarkdown.onFileDrop(paths => {
   const filePath = paths[0];
   if (!filePath) return;
   if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
-  else showToast(t('dropUnsupported'));
+  else showToast(t('dropUnsupported'), 'warning');
 });
 
 initializeFormatToolbarOverflow();
