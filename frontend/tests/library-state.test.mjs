@@ -5,6 +5,7 @@ import {
   DEFAULT_RECENT_LIMIT,
   directoryFromDocumentPath,
   filesFromPreferencePaths,
+  isMissingDocumentError,
   normalizeSidebarMode,
   normalizePinnedRecentPaths,
   partitionRecentFiles,
@@ -55,6 +56,14 @@ test('sameDocumentPath compares Windows separators and casing safely', () => {
   assert.equal(sameDocumentPath('C:\\Docs\\Guide.md', 'c:/docs/guide.md'), true);
   assert.equal(sameDocumentPath('C:\\Docs\\Guide.md', 'C:\\Docs\\Other.md'), false);
   assert.equal(sameDocumentPath('', ''), false);
+});
+
+test('missing document errors are recognized as an expected library state', () => {
+  assert.equal(isMissingDocumentError(new Error('open /Users/demo/Downloads/note.md: no such file or directory')), true);
+  assert.equal(isMissingDocumentError('The system cannot find the file specified.'), true);
+  assert.equal(isMissingDocumentError('系统找不到指定的文件。'), true);
+  assert.equal(isMissingDocumentError('permission denied'), false);
+  assert.equal(isMissingDocumentError('unexpected renderer failure'), false);
 });
 
 test('normalizePinnedRecentPaths keeps an ordered, deduplicated subset using recent path casing', () => {

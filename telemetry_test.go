@@ -158,6 +158,30 @@ func TestErrorReportingNeverBlocksAndHonoursOptOut(t *testing.T) {
 	}
 }
 
+func TestMissingRecentDocumentIsNotReportedAsSoftwareError(t *testing.T) {
+	app := NewApp()
+	app.preferencesOverride = filepath.Join(t.TempDir(), "preferences.json")
+	if _, err := app.SetUsageAnalytics(true); err != nil {
+		t.Fatal(err)
+	}
+	called := make(chan struct{}, 1)
+	app.reportErrorLogInBackground(
+		"document.open-recent",
+		"open /Users/demo/Downloads/note.md: no such file or directory",
+		"",
+		func(string) { called <- struct{}{} },
+	)
+	select {
+	case <-called:
+		t.Fatal("已移动或删除的最近文档不应作为软件异常上报")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	if isExpectedMissingDocumentError("document.save", "no such file or directory") {
+		t.Fatal("保存等真正异常不应被缺失文档过滤器忽略")
+	}
+}
+
 func TestErrorLogRemovesLocalPaths(t *testing.T) {
 	log := buildSanitizedErrorLog("open", `failed at C:\Users\someone\secret\document.md and private-notes.md`, `/home/someone/private/document.md:12`)
 	if strings.Contains(log, "document.md") || strings.Contains(log, "private-notes.md") || strings.Contains(log, "someone") {

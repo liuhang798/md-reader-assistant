@@ -4,6 +4,16 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+### 简体中文
+
+- 修复 macOS／Windows 最近文档被移动、删除或聊天软件清理缓存后，打开与自动刷新会重复产生错误日志的问题。文件缺失现在会立即刷新为不可用状态、保留当前预览并仅提示一次，不再作为软件异常回传；权限、保存和渲染等真实错误仍会正常上报。
+- 意见反馈新增服务端 IP 与城市记录：提交前会明确告知采集范围，服务器通过离线地域库解析国家／省份／城市，并仅在登录后的后台反馈详情中展示；当前文档与文件路径仍不会上传。
+
+### English
+
+- Fixed repeated error reports when a recent document was moved, deleted, or removed by chat-app cache cleanup on macOS or Windows. Missing files now refresh to an unavailable state immediately, preserve the current preview with a single notice, and are excluded from software-error telemetry while genuine permission, save, and rendering failures remain reportable.
+- Feedback now records the request IP and server-resolved country, province, and city. The submission disclosure states this collection clearly, the information is shown only in authenticated admin feedback details, and the current document and file paths remain excluded.
+
 ## [2.4.8] - 2026-08-19
 
 ### 简体中文
@@ -11,12 +21,16 @@ All notable changes to Quillite Markdown are documented here.
 - 右侧“本页目录”现在按显示器物理短边连续适配字号和默认宽度：1080p、2K、4K 的一级／二级目录在全局 100% 字号下分别约为 13px、15px、17px；超宽屏、竖屏和跨显示器切换不会再误用固定档位，用户手动调整的目录宽度仍优先保留。
 - 最近阅读新增多文档持久置顶：置顶文档独立于 10 条普通最近记录，可从右键菜单置顶或取消置顶，并通过悬停拖柄或键盘方向键调整顺序；缺失文件仍可取消置顶或移除，收藏与置顶互不影响。
 - 修复最近阅读已满时草稿另存可能先淘汰普通记录、再删除草稿而最终只剩 9 条的问题；草稿路径、置顶、收藏和最近记录现在会在一次偏好更新中迁移并去重。
+- 修复微信、聊天软件缓存或外部目录中的文档被移动/删除后，软件仍反复尝试刷新并把“文件不存在”误报为程序异常的问题；最近阅读会及时标记文件不可用，当前预览保留最后一次内容且只提示一次。
+- 意见反馈现在明确说明服务器会记录反馈请求 IP 并通过离线地域库解析国家、省份和城市；这些信息仅显示在登录后的管理员反馈详情中，旧反馈保持兼容且不会上传当前文档。
 
 ### English
 
 - The right-side document outline now adapts its typography and default width continuously from the display's physical short edge. At 100% global text size, primary outline entries are approximately 13px on 1080p, 15px on 2K, and 17px on 4K displays, while ultrawide, portrait, and cross-display layouts avoid fixed-resolution misclassification and preserve user-resized widths.
 - Recent now supports multiple persistent pins. Pinned documents stay above up to ten ordinary recent entries, can be pinned or unpinned from the context menu, and can be reordered with a hover handle or keyboard arrows. Missing pinned files can still be unpinned or removed, and pinning stays independent from Favorites.
 - Fixed draft Save As at full Recent capacity potentially evicting an ordinary entry before deleting the draft and leaving only nine entries. Draft paths, pins, favorites, and recent records now migrate and deduplicate in one preferences update.
+- Fixed moved, deleted, or expired chat-cache documents being refreshed repeatedly and misreported as software failures. Recent now marks unavailable files promptly, while an already open preview preserves its last content and shows only one warning.
+- Feedback now clearly discloses that the server records the request IP and resolves country, province, and city with its offline region database. This information is available only in authenticated administrator feedback details; existing feedback remains compatible and the current document is never uploaded.
 
 ## [2.4.7] - 2026-08-18
 

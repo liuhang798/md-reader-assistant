@@ -16,6 +16,15 @@ export function sameDocumentPath(left, right) {
   return Boolean(leftPath && rightPath && leftPath === rightPath);
 }
 
+// A document can legitimately disappear after it was added to Recent (for
+// example, a chat-app cache was cleaned or the file was moved in Finder). This
+// is a library-state change, not an application failure that should be sent to
+// error telemetry.
+export function isMissingDocumentError(error) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return /(?:no such file or directory|not a directory|file does not exist|cannot find the file specified|cannot find the path specified|the system cannot find the (?:file|path) specified|path does not exist|系统找不到指定的文件|系统找不到指定的路径|找不到指定的文件|文件不存在)/i.test(message);
+}
+
 function pathFromRecentEntry(entry) {
   return typeof entry === 'string' ? entry : entry?.path;
 }

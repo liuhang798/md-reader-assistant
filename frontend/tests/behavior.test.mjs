@@ -28,6 +28,13 @@ test('missing recent and favorite documents stay visible but cannot be opened', 
   assert.match(styles, /\.file-row\.missing \.file-copy strong \{[^}]*text-decoration: line-through/);
 });
 
+test('documents removed outside the app become unavailable without software-error reporting loops', () => {
+  assert.match(renderer, /import \{[^}]*isMissingDocumentError[^}]*\} from '\.\/library-state\.js'/);
+  assert.match(renderer, /async function loadFile\(filePath\)[\s\S]*if \(isMissingDocumentError\(error\)\) \{[\s\S]*await refreshLibraryFileStatuses\(\);[\s\S]*return;[\s\S]*reportSilentError\(error, 'document\.open'\)/);
+  assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*if \(isMissingDocumentError\(error\)\) \{[\s\S]*await refreshLibraryFileStatuses\(\);[\s\S]*return;[\s\S]*reportSilentError\(error, 'document\.open-recent'\)/);
+  assert.match(renderer, /missingCurrentFilePath = requestedPath;[\s\S]*await refreshLibraryFileStatuses\(\);[\s\S]*if \(firstMissingNotice\) showToast\(t\('currentDocumentMissing'\), 'warning'\);[\s\S]*return;[\s\S]*reportSilentError\(error, 'document\.refresh'\)/);
+});
+
 test('library rows use their full width and remove recent records from the context menu only', () => {
   assert.doesNotMatch(renderer, /class="recent-remove"/);
   assert.doesNotMatch(renderer, /querySelectorAll\('\.recent-remove'\)/);
@@ -415,7 +422,13 @@ test('feedback dialog collects optional contact details, images, and automatic e
   assert.match(mainSource, /selectFeedbackImages:[\s\S]*Backend\.SelectFeedbackImages/);
   assert.match(mainSource, /submitFeedback:[\s\S]*Backend\.SubmitFeedback/);
   assert.match(renderer, /window\.quilliteMarkdown\.submitFeedback\(\{[\s\S]*category:[\s\S]*message,[\s\S]*email:[\s\S]*phone:[\s\S]*imagePaths:/);
-  assert.match(renderer, /feedbackPrivacy: '提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；不会上传当前文档。'/);
+  assert.match(renderer, /feedbackPrivacy: '提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；服务器会记录请求 IP 并解析所在城市，不会上传当前文档。'/);
+});
+
+test('feedback disclosure explains server-side IP and city collection', () => {
+  assert.match(html, /data-i18n="feedbackPrivacy">[^<]*记录请求 IP 并解析所在城市/);
+  assert.match(renderer, /feedbackPrivacy: '提交后[^']*记录请求 IP 并解析所在城市[^']*不会上传当前文档。'/);
+  assert.match(renderer, /feedbackPrivacy: 'Submitting[^']*records the request IP and resolves its city[^']*never uploaded.'/);
 });
 
 test('product improvement checkbox controls error logs without disabling anonymous daily active reporting', () => {

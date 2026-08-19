@@ -144,6 +144,9 @@ func (a *App) reportErrorLogInBackground(source, message, stack string, sender f
 		if sender == nil {
 			return
 		}
+		if isExpectedMissingDocumentError(source, message) {
+			return
+		}
 		prefs, err := a.readPreferences()
 		if err != nil || !prefs.UsageAnalytics {
 			return
@@ -154,6 +157,37 @@ func (a *App) reportErrorLogInBackground(source, message, stack string, sender f
 		}
 		sender(errorLog)
 	}()
+}
+
+// Missing files in Recent are expected when a document was moved, deleted, or
+// a chat application's temporary cache was cleaned. They are reflected in the
+// library UI and must not pollute software-error telemetry.
+func isExpectedMissingDocumentError(source, message string) bool {
+	source = strings.ToLower(strings.TrimSpace(source))
+	if source != "document.open" && source != "document.open-recent" && source != "document.refresh" {
+		return false
+	}
+	message = strings.ToLower(message)
+	markers := []string{
+		"no such file or directory",
+		"not a directory",
+		"file does not exist",
+		"cannot find the file specified",
+		"cannot find the path specified",
+		"the system cannot find the file specified",
+		"the system cannot find the path specified",
+		"path does not exist",
+		"系统找不到指定的文件",
+		"系统找不到指定的路径",
+		"找不到指定的文件",
+		"文件不存在",
+	}
+	for _, marker := range markers {
+		if strings.Contains(message, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *App) SetUsageAnalytics(enabled bool) (Preferences, error) {
