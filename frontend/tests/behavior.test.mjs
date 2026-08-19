@@ -8,8 +8,7 @@ const styles = await readFile(new URL('../src/styles.css', import.meta.url), 'ut
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 
 test('opening an existing recent document updates it in place', () => {
-  assert.match(renderer, /const existingIndex = state\.recentFiles\.findIndex\(file => sameDocumentPath\(file\.path, doc\.path\)\)/);
-  assert.match(renderer, /state\.recentFiles\[existingIndex\] = recentEntry\(doc\)/);
+  assert.match(renderer, /applyRecentPartition\(upsertRecentFile\([\s\S]*state\.recentFiles,[\s\S]*state\.pinnedRecentFiles,[\s\S]*recentEntry\(doc\)/);
   assert.doesNotMatch(renderer, /\[recentEntry\(doc\), \.\.\.state\.recentFiles\.filter/);
 });
 
@@ -21,7 +20,7 @@ test('recent documents show their source directory instead of a generic recently
 
 test('missing recent and favorite documents stay visible but cannot be opened', () => {
   assert.match(renderer, /const missing = state\.sidebarMode !== 'explorer' && file\.exists === false/);
-  assert.match(renderer, /file-row\$\{missing \? ' missing' : ''\}/);
+  assert.match(renderer, /file-row\$\{pinned \? ' pinned' : ''\}\$\{missing \? ' missing' : ''\}/);
   assert.match(renderer, /aria-disabled="true" data-missing="true" title=.*recentMissingTitle/);
   assert.match(renderer, /if \(button\.dataset\.missing === 'true'\) return/);
   assert.match(renderer, /recentMissingAria/);
@@ -67,10 +66,62 @@ test('favorite documents show a persistent theme-colored marker in every library
   assert.match(renderer, /const favorited = state\.favoriteFiles\.some\(favorite => sameDocumentPath\(favorite\.path, file\.path\)\)/);
   assert.match(renderer, /class="file-title-line"/);
   assert.match(renderer, /class="favorite-marker"/);
-  assert.match(renderer, /class="file-title-line">\$\{favoriteMarker\}<strong>/);
+  assert.match(renderer, /class="file-title-line">\$\{pinMarker\}\$\{favoriteMarker\}<strong>/);
   assert.match(renderer, /title="\$\{escapeHtml\(t\('favorited'\)\)\}"/);
   assert.match(styles, /\.favorite-marker \{[^}]*color: var\(--accent-strong\);/);
   assert.match(styles, /\.favorite-marker svg \{[^}]*fill: currentColor;/);
+});
+
+test('recent pins render in persistent groups and stay independent from favorite markers', () => {
+  assert.match(mainSource, /setRecentPinned: \(filePath, pinned\) => desktopRuntime \? Backend\.SetRecentPinned\(filePath, pinned\)/);
+  assert.match(mainSource, /reorderPinnedRecent: filePaths => desktopRuntime \? Backend\.ReorderPinnedRecent\(filePaths\)/);
+  assert.match(renderer, /pinnedRecentFiles: \[\]/);
+  assert.match(renderer, /partitionRecentFiles\([\s\S]*prefs\.pinnedRecentFiles \|\| \[\]/);
+  assert.match(renderer, /class="recent-file-group pinned-file-group"[\s\S]*data-pinned-list/);
+  assert.match(renderer, /const ordinaryGroup = `<div class="recent-file-group ordinary-file-group"/);
+  assert.match(renderer, /\$\{pinHandle\}<button class="file-item/);
+  assert.match(renderer, /\$\{pinMarker\}\$\{favoriteMarker\}<strong>/);
+  assert.match(styles, /\.pin-marker svg \{[^}]*stroke: currentColor;/);
+  assert.match(styles, /\.pin-drag-handle svg \{[^}]*fill: currentColor;[^}]*stroke: none;/);
+});
+
+test('pinned recents support menu toggles, pointer and keyboard reordering, and failure recovery', () => {
+  assert.match(html, /data-recent-action="pin"/);
+  assert.match(renderer, /pinButton\.dataset\.pinState = isPinned \? 'remove' : 'add'/);
+  assert.match(renderer, /const pinRemoval = button\.dataset\.recentAction === 'pin' && isPinned/);
+  assert.match(renderer, /action === 'pin'\) await setRecentPinnedRecord\(filePath, button\.dataset\.pinState === 'add'\)/);
+  assert.match(renderer, /const PIN_DRAG_THRESHOLD = 6/);
+  assert.match(renderer, /const PIN_AUTO_SCROLL_EDGE = 44/);
+  assert.match(renderer, /const PIN_AUTO_SCROLL_MAX_SPEED = 18/);
+  assert.match(renderer, /handle\.setPointerCapture\?\.\(event\.pointerId\)/);
+  assert.match(renderer, /handle\.closest\('\[data-pinned-list\]'\)/);
+  assert.match(renderer, /drag\.container\.insertBefore\(drag\.row, insertionPoint \|\| null\)/);
+  assert.match(renderer, /const visibleTop = Math\.max\(listRect\.top, pinnedRect\.top\)/);
+  assert.match(renderer, /const visibleBottom = Math\.min\(listRect\.bottom, pinnedRect\.bottom\)/);
+  assert.match(renderer, /els\.fileList\.scrollTop \+= velocity/);
+  assert.match(renderer, /requestAnimationFrame\(\(\) => runPinnedAutoScroll\(drag\)\)/);
+  assert.match(renderer, /cancelAnimationFrame\(drag\.autoScrollFrame\)/);
+  assert.match(renderer, /classList\.add\('dragging', 'pin-insertion-position'\)/);
+  assert.match(renderer, /classList\.add\('grabbing'\)/);
+  assert.match(renderer, /event\.key !== 'ArrowUp' && event\.key !== 'ArrowDown'/);
+  assert.match(renderer, /event\.key === 'Escape' && cancelPinnedPointerReorder\(\)/);
+  assert.match(renderer, /pinnedOrderPosition: '已将“\{name\}”移到置顶第 \{position\} 项，共 \{total\} 项'/);
+  assert.match(renderer, /pinnedOrderPosition: 'Moved “\{name\}” to pinned position \{position\} of \{total\}'/);
+  assert.match(renderer, /successAnnouncement: \(\) => \{[\s\S]*position: position \+ 1,[\s\S]*total: state\.pinnedRecentFiles\.length/);
+  assert.match(renderer, /if \(announcement\) showToast\(announcement, 'info'\)/);
+  assert.match(renderer, /restoreRecentLibrary\(snapshot\)[\s\S]*await refreshLibraryFileStatuses\(\)[\s\S]*showToast\(t\(errorKey\), 'error'\)/);
+  assert.match(renderer, /const savedPreferences = await save\(optimistic\.pinnedPaths\)/);
+  assert.match(renderer, /const backendStateApplied = syncPinnedPathsFromPreferences\(savedPreferences\)/);
+  assert.match(renderer, /expectedState && \(\(!backendStateApplied && !refreshed\) \|\| !expectedState\(\)\)/);
+  assert.match(renderer, /expectedState: \(\) => state\.pinnedRecentFiles\.some\(path => sameDocumentPath\(path, filePath\)\) === shouldPin/);
+  assert.match(renderer, /noOpKey: shouldPin \? 'pinRecentUnavailable' : 'pinRecentSaveFailed'/);
+  assert.match(renderer, /pinRecentUnavailable: '文件已不可用，未能置顶/);
+  assert.match(renderer, /pinRecentUnavailable: 'The file is no longer available and was not pinned/);
+  assert.match(renderer, /pinRecentSaveFailed: '置顶状态保存失败/);
+  assert.match(renderer, /pinRecentSaveFailed: 'Could not save the pinned state/);
+  assert.match(styles, /\.pin-drag-handle \{[^}]*opacity: 0;/);
+  assert.match(styles, /@media \(hover: none\) \{ \.pin-drag-handle \{ opacity: \.7; \} \}/);
+  assert.match(styles, /\.pin-insertion-position::before/);
 });
 
 test('reader search includes Markdown inline code and fenced code text', () => {
@@ -219,7 +270,9 @@ test('unwritable documents explain the cause and offer Save Copy and Edit withou
   assert.match(renderer, /fallbackToSaveAs = true;/);
   assert.match(renderer, /if \(fallbackToSaveAs\) await saveDocument\(true, options\);/);
   assert.match(renderer, /saveAsRequiredHint: '原文件可能来自微信缓存/);
-  assert.match(renderer, /replacingUnwritableSource && !sameDocumentPath\(saved\.path, originalPath\)/);
+  assert.match(renderer, /async function refreshLibraryAfterReplacement\(saved\)[\s\S]*if \(!saved\?\.replacedPath\) return;[\s\S]*await refreshLibraryFileStatuses\(\)/);
+  assert.match(renderer, /displayDocument\(saved\);\s*await refreshLibraryAfterReplacement\(saved\)/);
+  assert.doesNotMatch(renderer, /replacingUnwritableSource|saved\.replacedPath \|\|/);
 });
 
 test('the editor header offers an exit editing button', () => {
@@ -278,10 +331,22 @@ test('normal and exceptional notifications use distinct accessible toast treatme
   assert.match(styles, /\.toast:hover \.toast-progress i \{ animation-play-state: paused; \}/);
 });
 
-test('sidebar and TOC text scale with the global font scale', () => {
+test('sidebar and TOC text respond to the shared global font scale', () => {
   assert.match(styles, /\.file-copy strong \{ font-size: calc\(13px \* var\(--font-scale\)\);/);
   assert.match(styles, /\.file-copy small \{ color: var\(--faint\); font-size: calc\(10\.5px \* var\(--font-scale\)\);/);
-  assert.match(styles, /\.toc a \{[^}]*font-size: calc\(11\.5px \* var\(--font-scale\)\);/);
+  assert.match(styles, /--toc-font-size: calc\(var\(--toc-base-font-size\) \* var\(--toc-font-user-scale\)\);/);
+  assert.match(styles, /\.toc a \{[^}]*font-size: var\(--toc-font-size\);/);
+  assert.match(renderer, /--toc-font-user-scale', state\.fontScale/);
+  assert.match(renderer, /3: Math\.max\(baseFontSize - \.75, 12\.5\)/);
+  assert.match(renderer, /4: Math\.max\(baseFontSize - 1\.5, 12\)/);
+  assert.match(renderer, /5: Math\.max\(baseFontSize - 2, 11\.5\)/);
+  assert.match(renderer, /6: Math\.max\(baseFontSize - 2\.5, 11\)/);
+  assert.match(styles, /\.toc-node\.level-3 > \.toc-row a \{ font-size: calc\(var\(--toc-level-3-font-size\) \* var\(--toc-font-user-scale\)\); \}/);
+  assert.match(styles, /\.toc-row \{[^}]*grid-template-columns: max\(24px, calc\(var\(--toc-font-size\) \* 1\.55\)\)/);
+  assert.match(styles, /\.toc-toggle-placeholder \{[^}]*min-height: max\(30px, calc\(var\(--toc-font-size\) \* 2\)\)/);
+  assert.match(styles, /\.toc-toggle svg \{[^}]*width: max\(12px, calc\(var\(--toc-font-size\) \* \.72\)\)/);
+  assert.match(styles, /\.toc-panel > \.eyebrow \{ font-size: calc\(var\(--toc-eyebrow-font-size\) \* var\(--toc-font-user-scale\)\); \}/);
+  assert.match(styles, /\.toc-panel > small \{[^}]*font-size: calc\(var\(--toc-reading-font-size\) \* var\(--toc-font-user-scale\)\);/);
   assert.match(styles, /\.sidebar-tab \{ [^}]*font-size: calc\(11px \* var\(--font-scale\)\);/);
   assert.match(styles, /\.eyebrow \{ display: block; color: var\(--faint\); font-size: calc\(10px \* var\(--font-scale\)\);/);
   assert.match(styles, /\.sidebar-heading h2 \{ margin: 5px 0 0; font-size: calc\(18px \* var\(--font-scale\)\);/);
@@ -291,15 +356,45 @@ test('the document outline renders as a persistent collapsible tree', () => {
   assert.match(renderer, /const tree = buildTocTree\(/);
   assert.match(renderer, /data-toc-toggle=/);
   assert.match(renderer, /writeCollapsedToc\(localStorage, state\.currentFile\?\.path, collapsed\)/);
+  assert.match(renderer, /scrollDeltaForBounds\(\{[\s\S]*viewportTop,[\s\S]*viewportBottom,/);
+  assert.match(renderer, /function scheduleActiveTocRefresh\(\)[\s\S]*requestAnimationFrame\(\(\) => \{[\s\S]*updateActiveToc\(\)/);
+  assert.match(renderer, /function setFontScale\([\s\S]*applyTocDisplayStyles\(\);\s*scheduleActiveTocRefresh\(\)/);
+  assert.match(renderer, /function applyPaneWidths\(\)[\s\S]*setEditorPreviewWidth\(state\.editorPreviewWidth\);\s*scheduleActiveTocRefresh\(\)/);
+  assert.doesNotMatch(renderer, /panelRect\.top \+ 38|panelRect\.bottom - 34/);
   assert.match(styles, /\.toc-children\.hidden \{ display: none; \}/);
   assert.match(styles, /\.toc-node\.collapsed > \.toc-row \.toc-toggle svg/);
 });
 
-test('sidebar and TOC resizers have no practical maximum width', () => {
+test('sidebar and TOC resizers preserve preferred widths while fitting the current viewport', () => {
   assert.match(renderer, /sidebar: \{ min: 120, max: 2000, fallback: 258 \}/);
-  assert.match(renderer, /toc: \{ min: 120, max: 2000, fallback: 205 \}/);
-  assert.match(renderer, /els\.appShell\.clientWidth - otherWidth - 240/);
+  assert.match(renderer, /toc: \{ \.\.\.TOC_WIDTH_LIMITS, fallback: initialTocDisplay\.defaultWidth \}/);
+  assert.match(renderer, /sidebarPreferredWidth: initialSidebarPreferredWidth/);
+  assert.match(renderer, /els\.appShell\.clientWidth - dividerWidth - 240/);
+  assert.match(renderer, /fitReaderSidePanels\(\{[\s\S]*sidebarPreferredWidth: state\.sidebarPreferredWidth,[\s\S]*tocPreferredWidth: state\.tocPreferredWidth/);
+  assert.match(renderer, /state\.sidebarWidth = fitted\.sidebarWidth;[\s\S]*state\.tocWidth = fitted\.tocWidth/);
+  assert.match(renderer, /localStorage\.setItem\('sidebarWidth', String\(state\.sidebarPreferredWidth\)\)/);
+  assert.match(renderer, /localStorage\.setItem\('tocWidth', String\(state\.tocPreferredWidth\)\)/);
+  assert.match(renderer, /new ResizeObserver\(schedulePaneWidthRefresh\)/);
+  assert.match(renderer, /window\.addEventListener\('resize', scheduleTocDisplayRefresh\)/);
+  assert.match(renderer, /window\.matchMedia\(`\(resolution: \$\{window\.devicePixelRatio \|\| 1\}dppx\)`\)/);
+  assert.match(renderer, /setAttribute\('aria-valuemax', String\(maximumSidebarWidth\)\)/);
+  assert.match(renderer, /setAttribute\('aria-valuemax', String\(maximumTocWidth\)\)/);
+  assert.match(renderer, /function paneResizeSnapshot\(panelName\)[\s\S]*effectiveWidth:[\s\S]*preferredWidth:[\s\S]*tocWidthCustomized:/);
+  assert.match(renderer, /function resizePaneFromEffectiveWidth\(panelName, width, snapshot\)[\s\S]*effectiveWidth !== snapshot\.effectiveWidth[\s\S]*restorePaneResizeSnapshot\(panelName, snapshot\)/);
+  assert.match(renderer, /const resizeSnapshot = paneResizeSnapshot\(panelName\);\s*const startWidth = resizeSnapshot\.effectiveWidth;\s*let changed = false;/);
+  assert.match(renderer, /changed = resizePaneFromEffectiveWidth\(panelName, startWidth \+ delta, resizeSnapshot\)/);
+  assert.match(renderer, /if \(changed\) persistPaneWidth\(panelName\)/);
+  assert.match(renderer, /if \(resizePaneFromEffectiveWidth\(panelName, resizeSnapshot\.effectiveWidth \+ change, resizeSnapshot\)\) \{\s*persistPaneWidth\(panelName\)/);
+  assert.match(renderer, /const startPercent = state\.editorPreviewWidth;\s*let changed = false;/);
+  assert.match(renderer, /if \(changed\) localStorage\.setItem\('editorPreviewWidth', String\(state\.editorPreviewWidth\)\)/);
   assert.match(html, /aria-valuemax="2000"/);
+});
+
+test('TOC display metrics are polled while visible so same-DPR monitor moves are detected', () => {
+  assert.match(renderer, /let lastTocDisplaySignature = tocDisplaySignature\(currentDisplay\(\)\)/);
+  assert.match(renderer, /function detectTocDisplayChange\(\) \{[\s\S]*document\.visibilityState === 'hidden'[\s\S]*signature === lastTocDisplaySignature[\s\S]*scheduleTocDisplayRefresh\(\)/);
+  assert.match(renderer, /window\.setInterval\(detectTocDisplayChange, 1500\)/);
+  assert.match(renderer, /document\.addEventListener\('visibilitychange', detectTocDisplayChange\)/);
 });
 
 test('back-to-top follows the resized TOC while keeping a safe gap from the document scrollbar', () => {

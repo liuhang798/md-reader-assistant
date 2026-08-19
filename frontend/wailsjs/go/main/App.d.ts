@@ -46,6 +46,8 @@ export function RemoveFavorite(arg1:string):Promise<main.Preferences>;
 
 export function RemoveRecent(arg1:string):Promise<main.Preferences>;
 
+export function ReorderPinnedRecent(arg1:Array<string>):Promise<main.Preferences>;
+
 export function ReportErrorLog(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function RequestQuit():Promise<boolean>;
@@ -61,6 +63,8 @@ export function SelectImage(arg1:string):Promise<string>;
 export function SetDirty(arg1:boolean):Promise<void>;
 
 export function SetLanguage(arg1:string):Promise<string>;
+
+export function SetRecentPinned(arg1:string,arg2:boolean):Promise<main.Preferences>;
 
 export function SetTheme(arg1:boolean):Promise<void>;
 

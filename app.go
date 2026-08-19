@@ -28,13 +28,15 @@ const (
 	appNameEN       = "Quillite Markdown"
 	legacyAppNameZH = "MD阅读助手"
 	legacyAppNameEN = "MD Reader Assistant"
-	appVersion      = "2.4.7"
+	appVersion      = "2.4.8"
 	maxRecent       = 10
 )
 
 var markdownExtensions = map[string]bool{
 	".md": true, ".markdown": true, ".mdown": true, ".mkd": true, ".txt": true,
 }
+
+var errDraftReplacementInProgress = errors.New("draft replacement is already in progress")
 
 type Document struct {
 	Path         string `json:"path"`
@@ -67,6 +69,7 @@ type RecentFileStatus struct {
 type Preferences struct {
 	RecentFiles          []string           `json:"recentFiles"`
 	RecentFileStatuses   []RecentFileStatus `json:"recentFileStatuses,omitempty"`
+	PinnedRecentFiles    []string           `json:"pinnedRecentFiles"`
 	FavoriteFiles        []string           `json:"favoriteFiles"`
 	FavoriteFileStatuses []RecentFileStatus `json:"favoriteFileStatuses,omitempty"`
 	DraftFiles           []string           `json:"draftFiles,omitempty"`
@@ -86,6 +89,7 @@ type App struct {
 	preferencesMu       sync.Mutex
 	draftsMu            sync.Mutex
 	draftFiles          map[string]bool
+	draftReplacements   map[string]bool
 	dirty               bool
 	language            string
 	initialFile         string
@@ -203,7 +207,7 @@ func (a *App) languageSelectionMarkerPath() string {
 }
 
 func defaultPreferences() Preferences {
-	return Preferences{RecentFiles: []string{}, FavoriteFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN", UsageAnalytics: true}
+	return Preferences{RecentFiles: []string{}, PinnedRecentFiles: []string{}, FavoriteFiles: []string{}, DraftFiles: []string{}, Language: "zh-CN", UsageAnalytics: true}
 }
 
 func normaliseLanguage(language string) string {
@@ -236,12 +240,16 @@ func (a *App) readPreferencesUnlocked() (Preferences, error) {
 	if prefs.RecentFiles == nil {
 		prefs.RecentFiles = []string{}
 	}
+	if prefs.PinnedRecentFiles == nil {
+		prefs.PinnedRecentFiles = []string{}
+	}
 	if prefs.FavoriteFiles == nil {
 		prefs.FavoriteFiles = []string{}
 	}
 	if prefs.DraftFiles == nil {
 		prefs.DraftFiles = []string{}
 	}
+	normaliseRecentPreferences(&prefs)
 	return prefs, nil
 }
 
@@ -253,6 +261,7 @@ func (a *App) writePreferences(prefs Preferences) error {
 
 func (a *App) writePreferencesUnlocked(prefs Preferences) error {
 	prefs.Language = normaliseLanguage(prefs.Language)
+	normaliseRecentPreferences(&prefs)
 	path := a.preferencePath()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
@@ -272,35 +281,82 @@ func (a *App) updatePreferences(update func(*Preferences)) (Preferences, error) 
 		return prefs, err
 	}
 	update(&prefs)
+	normaliseRecentPreferences(&prefs)
 	return prefs, a.writePreferencesUnlocked(prefs)
+}
+
+func samePreferencePath(left, right string) bool {
+	if strings.TrimSpace(left) == "" || strings.TrimSpace(right) == "" {
+		return false
+	}
+	return strings.EqualFold(filepath.Clean(left), filepath.Clean(right))
+}
+
+func indexPreferencePath(paths []string, target string) int {
+	for index, item := range paths {
+		if samePreferencePath(item, target) {
+			return index
+		}
+	}
+	return -1
+}
+
+// normaliseRecentPreferences keeps one ordered recent list with two partitions:
+// every pinned record first (in pin order), followed by at most maxRecent
+// unpinned records (in recent order). Pinned records do not consume the
+// unpinned capacity and must also exist in RecentFiles.
+func normaliseRecentPreferences(prefs *Preferences) {
+	uniqueRecent := make([]string, 0, len(prefs.RecentFiles))
+	for _, item := range prefs.RecentFiles {
+		if strings.TrimSpace(item) == "" || indexPreferencePath(uniqueRecent, item) >= 0 {
+			continue
+		}
+		uniqueRecent = append(uniqueRecent, filepath.Clean(item))
+	}
+
+	pinned := make([]string, 0, len(prefs.PinnedRecentFiles))
+	for _, requested := range prefs.PinnedRecentFiles {
+		index := indexPreferencePath(uniqueRecent, requested)
+		if index < 0 || indexPreferencePath(pinned, uniqueRecent[index]) >= 0 {
+			continue
+		}
+		pinned = append(pinned, uniqueRecent[index])
+	}
+
+	unpinned := make([]string, 0, maxRecent)
+	for _, item := range uniqueRecent {
+		if indexPreferencePath(pinned, item) >= 0 {
+			continue
+		}
+		unpinned = append(unpinned, item)
+		if len(unpinned) == maxRecent {
+			break
+		}
+	}
+
+	recent := make([]string, 0, len(pinned)+len(unpinned))
+	recent = append(recent, pinned...)
+	recent = append(recent, unpinned...)
+	prefs.PinnedRecentFiles = pinned
+	prefs.RecentFiles = recent
 }
 
 func (a *App) rememberFile(filePath string) error {
 	cleaned := filepath.Clean(filePath)
 	_, err := a.updatePreferences(func(prefs *Preferences) {
-		recent := make([]string, 0, maxRecent)
-		alreadyRecent := false
-		for _, item := range prefs.RecentFiles {
-			if strings.EqualFold(filepath.Clean(item), cleaned) {
-				if alreadyRecent {
-					continue
-				}
-				alreadyRecent = true
-				recent = append(recent, cleaned)
-			} else {
-				recent = append(recent, item)
+		normaliseRecentPreferences(prefs)
+		if index := indexPreferencePath(prefs.RecentFiles, cleaned); index >= 0 {
+			// Reopening an existing recent record updates its canonical spelling
+			// without changing either its partition or its position.
+			prefs.RecentFiles[index] = cleaned
+			if pinnedIndex := indexPreferencePath(prefs.PinnedRecentFiles, cleaned); pinnedIndex >= 0 {
+				prefs.PinnedRecentFiles[pinnedIndex] = cleaned
 			}
-			if len(recent) >= maxRecent {
-				break
-			}
+		} else {
+			// New unpinned records enter at the front of the unpinned partition.
+			prefs.RecentFiles = append([]string{cleaned}, prefs.RecentFiles...)
 		}
-		if !alreadyRecent {
-			recent = append([]string{cleaned}, recent...)
-			if len(recent) > maxRecent {
-				recent = recent[:maxRecent]
-			}
-		}
-		prefs.RecentFiles = recent
+		normaliseRecentPreferences(prefs)
 		prefs.LastFile = cleaned
 	})
 	return err
@@ -399,6 +455,11 @@ func (a *App) migrateLegacyBundledDraftReferences(platform, homeDir string, pref
 				current.RecentFiles[index] = replacement
 			}
 		}
+		for index, filePath := range current.PinnedRecentFiles {
+			if replacement, ok := replacements[draftPathKey(filePath)]; ok {
+				current.PinnedRecentFiles[index] = replacement
+			}
+		}
 		for index, filePath := range current.DraftFiles {
 			if replacement, ok := replacements[draftPathKey(filePath)]; ok {
 				current.DraftFiles[index] = replacement
@@ -453,7 +514,24 @@ func draftPathKey(filePath string) string {
 	return cleaned
 }
 
-func (a *App) replaceDraft(originalPath, savedPath string) (string, error) {
+func replaceDraftPreferencePath(paths []string, originalKey, savedPath string) ([]string, bool) {
+	replaced := false
+	updated := make([]string, 0, len(paths))
+	for _, item := range paths {
+		candidate := item
+		if draftPathKey(item) == originalKey {
+			candidate = savedPath
+			replaced = true
+		}
+		if strings.TrimSpace(candidate) == "" || indexPreferencePath(updated, candidate) >= 0 {
+			continue
+		}
+		updated = append(updated, filepath.Clean(candidate))
+	}
+	return updated, replaced
+}
+
+func (a *App) claimDraftReplacement(originalPath, savedPath string) (string, bool, error) {
 	originalPath = filepath.Clean(originalPath)
 	savedPath = filepath.Clean(savedPath)
 	samePath := originalPath == savedPath
@@ -461,45 +539,43 @@ func (a *App) replaceDraft(originalPath, savedPath string) (string, error) {
 		samePath = strings.EqualFold(originalPath, savedPath)
 	}
 	if originalPath == "." || savedPath == "." || samePath {
-		return "", nil
+		return "", false, nil
 	}
 
 	a.draftsMu.Lock()
+	defer a.draftsMu.Unlock()
 	key := draftPathKey(originalPath)
-	isDraft := a.draftFiles[key]
+	if !a.draftFiles[key] {
+		return "", false, nil
+	}
+	if a.draftReplacements == nil {
+		a.draftReplacements = make(map[string]bool)
+	}
+	if a.draftReplacements[key] {
+		return "", false, errDraftReplacementInProgress
+	}
+	a.draftReplacements[key] = true
+	return key, true, nil
+}
+
+func (a *App) releaseDraftReplacementClaim(key string) {
+	if key == "" {
+		return
+	}
+	a.draftsMu.Lock()
+	delete(a.draftReplacements, key)
 	a.draftsMu.Unlock()
-	if !isDraft {
-		return "", nil
-	}
-	if err := os.Remove(originalPath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return "", err
-	}
+}
+
+func (a *App) migrateClaimedDraft(originalPath, savedPath, key string) (string, error) {
 	_, preferencesErr := a.updatePreferences(func(prefs *Preferences) {
-		recent := make([]string, 0, len(prefs.RecentFiles))
-		for _, item := range prefs.RecentFiles {
-			if draftPathKey(item) != key {
-				recent = append(recent, item)
-			}
+		recent, replacedRecent := replaceDraftPreferencePath(prefs.RecentFiles, key, savedPath)
+		if !replacedRecent && indexPreferencePath(recent, savedPath) < 0 {
+			recent = append([]string{savedPath}, recent...)
 		}
 		prefs.RecentFiles = recent
-		favorites := make([]string, 0, len(prefs.FavoriteFiles))
-		favoriteSavedPath := false
-		for _, item := range prefs.FavoriteFiles {
-			if draftPathKey(item) == key {
-				if !favoriteSavedPath {
-					favorites = append(favorites, savedPath)
-					favoriteSavedPath = true
-				}
-				continue
-			}
-			if strings.EqualFold(filepath.Clean(item), savedPath) {
-				if favoriteSavedPath {
-					continue
-				}
-				favoriteSavedPath = true
-			}
-			favorites = append(favorites, item)
-		}
+		prefs.PinnedRecentFiles, _ = replaceDraftPreferencePath(prefs.PinnedRecentFiles, key, savedPath)
+		favorites, _ := replaceDraftPreferencePath(prefs.FavoriteFiles, key, savedPath)
 		prefs.FavoriteFiles = favorites
 		drafts := make([]string, 0, len(prefs.DraftFiles))
 		for _, item := range prefs.DraftFiles {
@@ -509,16 +585,36 @@ func (a *App) replaceDraft(originalPath, savedPath string) (string, error) {
 		}
 		prefs.DraftFiles = drafts
 		if draftPathKey(prefs.LastFile) == key {
-			prefs.LastFile = ""
-			if len(recent) > 0 {
-				prefs.LastFile = recent[0]
-			}
+			prefs.LastFile = savedPath
 		}
 	})
+	if preferencesErr != nil {
+		// Keep both the original file and the in-memory draft identity so the
+		// operation can be retried without losing the user's recoverable draft.
+		return "", preferencesErr
+	}
+
+	// Preferences now point at the saved document. Do not roll them back if
+	// deleting the superseded draft fails: the target file has already been
+	// written and the committed migration is the authoritative state.
 	a.draftsMu.Lock()
 	delete(a.draftFiles, key)
+	delete(a.draftReplacements, key)
 	a.draftsMu.Unlock()
-	return originalPath, preferencesErr
+	// The target and preferences are already authoritative. Cleanup is best
+	// effort: reporting failure here would leave the frontend on the old path
+	// even though its draft identity has been migrated to savedPath.
+	_ = os.Remove(originalPath)
+	return originalPath, nil
+}
+
+func (a *App) replaceDraft(originalPath, savedPath string) (string, error) {
+	key, claimed, err := a.claimDraftReplacement(originalPath, savedPath)
+	if err != nil || !claimed {
+		return "", err
+	}
+	defer a.releaseDraftReplacementClaim(key)
+	return a.migrateClaimedDraft(filepath.Clean(originalPath), filepath.Clean(savedPath), key)
 }
 
 func createNewMarkdownFile(directories []string, baseName string, now time.Time) (string, error) {
@@ -704,6 +800,38 @@ func (a *App) SaveFile(filePath, content string) (*Document, error) {
 	return a.readDocument(filePath, true)
 }
 
+func (a *App) saveDocumentAs(currentPath, filePath, content string) (*Document, error) {
+	targetPath, err := filepath.Abs(filepath.Clean(filePath))
+	if err != nil {
+		return nil, err
+	}
+	claimKey, claimedDraft, err := a.claimDraftReplacement(currentPath, targetPath)
+	if err != nil {
+		return nil, err
+	}
+	if claimedDraft {
+		defer a.releaseDraftReplacementClaim(claimKey)
+	}
+	if err := os.WriteFile(targetPath, []byte(content), 0o644); err != nil {
+		return nil, err
+	}
+	saved, err := a.readDocument(targetPath, false)
+	if err != nil {
+		return nil, err
+	}
+	if claimedDraft {
+		replacedPath, err := a.migrateClaimedDraft(filepath.Clean(currentPath), saved.Path, claimKey)
+		if err != nil {
+			return nil, err
+		}
+		saved.ReplacedPath = replacedPath
+	} else if err := a.rememberFile(saved.Path); err != nil {
+		return nil, err
+	}
+	a.SetDirty(false)
+	return saved, nil
+}
+
 func (a *App) SaveAs(currentPath, content string) (*Document, error) {
 	defaultName := filepath.Base(currentPath)
 	if defaultName == "." || defaultName == "" {
@@ -719,14 +847,7 @@ func (a *App) SaveAs(currentPath, content string) (*Document, error) {
 	if err != nil || filePath == "" {
 		return nil, err
 	}
-	saved, err := a.SaveFile(filePath, content)
-	if err != nil {
-		return nil, err
-	}
-	if replacedPath, _ := a.replaceDraft(currentPath, saved.Path); replacedPath != "" {
-		saved.ReplacedPath = replacedPath
-	}
-	return saved, nil
+	return a.saveDocumentAs(currentPath, filePath, content)
 }
 
 func (a *App) SetDirty(dirty bool) {
@@ -839,6 +960,58 @@ func needsLanguageSelection(platform, preferencePath, markerPath string) bool {
 	return errors.Is(err, os.ErrNotExist)
 }
 
+// SetRecentPinned changes only an existing recent record. Pinning inserts the
+// record at the front of the pinned partition; repeating the same request is
+// idempotent and does not reorder an already pinned record.
+func (a *App) SetRecentPinned(filePath string, pinned bool) (Preferences, error) {
+	cleaned := filepath.Clean(filePath)
+	return a.updatePreferences(func(prefs *Preferences) {
+		normaliseRecentPreferences(prefs)
+		recentIndex := indexPreferencePath(prefs.RecentFiles, cleaned)
+		if recentIndex < 0 {
+			return
+		}
+		storedPath := prefs.RecentFiles[recentIndex]
+		pinnedIndex := indexPreferencePath(prefs.PinnedRecentFiles, storedPath)
+		if pinned {
+			if pinnedIndex < 0 {
+				info, err := os.Stat(storedPath)
+				if err != nil || info.IsDir() {
+					return
+				}
+				prefs.PinnedRecentFiles = append([]string{storedPath}, prefs.PinnedRecentFiles...)
+			}
+			return
+		}
+		if pinnedIndex >= 0 {
+			prefs.PinnedRecentFiles = append(prefs.PinnedRecentFiles[:pinnedIndex], prefs.PinnedRecentFiles[pinnedIndex+1:]...)
+		}
+	})
+}
+
+// ReorderPinnedRecent applies the requested order to currently pinned records.
+// Unknown, unpinned, and duplicate paths are ignored; omitted pinned records
+// retain their relative order at the end.
+func (a *App) ReorderPinnedRecent(filePaths []string) (Preferences, error) {
+	return a.updatePreferences(func(prefs *Preferences) {
+		normaliseRecentPreferences(prefs)
+		reordered := make([]string, 0, len(prefs.PinnedRecentFiles))
+		for _, requested := range filePaths {
+			index := indexPreferencePath(prefs.PinnedRecentFiles, requested)
+			if index < 0 || indexPreferencePath(reordered, prefs.PinnedRecentFiles[index]) >= 0 {
+				continue
+			}
+			reordered = append(reordered, prefs.PinnedRecentFiles[index])
+		}
+		for _, existing := range prefs.PinnedRecentFiles {
+			if indexPreferencePath(reordered, existing) < 0 {
+				reordered = append(reordered, existing)
+			}
+		}
+		prefs.PinnedRecentFiles = reordered
+	})
+}
+
 func (a *App) RemoveRecent(filePath string) (Preferences, error) {
 	cleaned := filepath.Clean(filePath)
 	return a.updatePreferences(func(prefs *Preferences) {
@@ -849,10 +1022,18 @@ func (a *App) RemoveRecent(filePath string) (Preferences, error) {
 			}
 		}
 		prefs.RecentFiles = filtered
-		if strings.EqualFold(filepath.Clean(prefs.LastFile), cleaned) {
+		filteredPins := make([]string, 0, len(prefs.PinnedRecentFiles))
+		for _, item := range prefs.PinnedRecentFiles {
+			if !samePreferencePath(item, cleaned) {
+				filteredPins = append(filteredPins, item)
+			}
+		}
+		prefs.PinnedRecentFiles = filteredPins
+		normaliseRecentPreferences(prefs)
+		if samePreferencePath(prefs.LastFile, cleaned) {
 			prefs.LastFile = ""
-			if len(filtered) > 0 {
-				prefs.LastFile = filtered[0]
+			if len(prefs.RecentFiles) > 0 {
+				prefs.LastFile = prefs.RecentFiles[0]
 			}
 		}
 	})

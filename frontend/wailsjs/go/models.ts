@@ -145,6 +145,7 @@ export namespace main {
 	export class Preferences {
 	    recentFiles: string[];
 	    recentFileStatuses?: RecentFileStatus[];
+	    pinnedRecentFiles: string[];
 	    favoriteFiles: string[];
 	    favoriteFileStatuses?: RecentFileStatus[];
 	    draftFiles?: string[];
@@ -165,6 +166,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.recentFiles = source["recentFiles"];
 	        this.recentFileStatuses = this.convertValues(source["recentFileStatuses"], RecentFileStatus);
+	        this.pinnedRecentFiles = source["pinnedRecentFiles"];
 	        this.favoriteFiles = source["favoriteFiles"];
 	        this.favoriteFileStatuses = this.convertValues(source["favoriteFileStatuses"], RecentFileStatus);
 	        this.draftFiles = source["draftFiles"];

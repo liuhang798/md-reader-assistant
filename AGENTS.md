@@ -6,7 +6,7 @@
 
 - 项目名称：轻阅 Markdown / Quillite Markdown
 - 仓库：`https://github.com/liuhang798/quillite-markdown`
-- 当前版本：`2.4.7`
+- 当前版本：`2.4.8`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
 - 支持平台：Windows x64、macOS Universal、Linux x64
@@ -81,7 +81,7 @@ app.go / updates.go（Go 后端）
 ### 阅读
 
 - Markdown 渲染、代码高亮、表格、引用、列表和图片。
-- 自动生成右侧本页目录，点击后滚动到标题位置。
+- 自动生成右侧本页目录，点击后滚动到标题位置；目录字号和默认宽度按显示器物理短边适配。
 - 当前章节跟随、阅读进度、阅读时长和字数估算。
 - 文档内搜索、打印、定位文件、回到顶部。
 - 明暗主题和阅读字号缩放。
@@ -102,7 +102,7 @@ app.go / updates.go（Go 后端）
 - 打开单个 Markdown 或文本文件。
 - 新建 Markdown 文档后立即进入编辑。
 - 打开文件夹并使用资源浏览器集中查看文档。
-- 打开文档后立即进入最近阅读，支持删除单条记录。
+- 打开文档后立即进入最近阅读，支持多条持久置顶、拖动排序和删除单条记录。
 - 单实例：再次打开 `.md` 文件时交给已有窗口处理。
 - 支持拖放文件和系统文件关联。
 
@@ -131,7 +131,8 @@ app.go / updates.go（Go 后端）
 
 偏好文件位于 `os.UserConfigDir()/轻阅 Markdown/preferences.json`，主要字段：
 
-- `recentFiles`：最多 10 个最近文档路径。
+- `recentFiles`：按“置顶区 + 普通最近区”保存的最终显示顺序；置顶项不计入普通区最多 10 条的限制。
+- `pinnedRecentFiles`：置顶文档的有序路径，是 `recentFiles` 的子集；新置顶项默认位于置顶区首位。
 - `favoriteFiles`：用户主动收藏的文档路径；独立于最近阅读，原文件失效时仍保留记录。
 - `draftFiles`：自动创建但尚未完成“另存为”替换的草稿路径。
 - `lastFile`：最近一个文档。
@@ -163,6 +164,8 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 - `ListFolder(root)`：递归深度最多 5 层、最多 800 个文件。
 - `GetPreferences()`：读取偏好。
 - `RemoveRecent(path)`：只删除最近记录，不删除原文件。
+- `SetRecentPinned(path, pinned)`：置顶或取消置顶最近文档。
+- `ReorderPinnedRecent(paths)`：保存置顶区顺序，仅重排当前已置顶路径。
 - `AddFavorite(path)` / `RemoveFavorite(path)`：添加或取消收藏，只修改偏好记录，不操作原文件。
 
 ### 图片
@@ -188,7 +191,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 `renderer.js` 的 `state` 是当前唯一前端状态源：
 
 - `currentFile`：当前文档。
-- `files`、`recentFiles`、`favoriteFiles`、`explorerFiles`：侧栏数据。
+- `files`、`recentFiles`、`pinnedRecentFiles`、`favoriteFiles`、`explorerFiles`：侧栏数据。
 - `root`、`sidebarMode`：资源浏览器状态。
 - `editing`、`dirty`、`savedContent`、`saving`：编辑与保存状态。
 - `dark`、`fontScale`、`language`：用户界面偏好。
@@ -238,19 +241,20 @@ WebView 会限制直接访问 `file://` 图片。Markdown 源码仍保存正常�
 
 1. 打开的文档必须立即出现在最近阅读，而不是下次启动后才出现。
 2. 删除最近记录不能删除用户原文件。
-3. 新建草稿另存后必须清除原草稿和重复记录；普通文件另存不能删除原文件。
-4. 自动保存不能覆盖保存过程中继续输入的新内容。
-5. 切换文档必须隔离撤回历史，不能把原始文档撤回成空白。
-6. 本地图片必须经 Go 后端读取，Markdown 路径本身保持可移植。
-7. 右侧目录点击必须准确滚动到正文标题。
-8. macOS 使用原生窗口按钮和菜单，不能显示 Windows 自绘窗口按钮。
-9. Windows 安装始终使用 current-user scope；CI 手动调用 NSIS 时必须同时传入：
+3. 置顶项必须保持在普通最近记录之前且不能被普通区的 10 条容量限制淘汰；拖动顺序必须跨重启保留。
+4. 新建草稿另存后必须清除原草稿和重复记录；普通文件另存不能删除原文件。
+5. 自动保存不能覆盖保存过程中继续输入的新内容。
+6. 切换文档必须隔离撤回历史，不能把原始文档撤回成空白。
+7. 本地图片必须经 Go 后端读取，Markdown 路径本身保持可移植。
+8. 右侧目录点击必须准确滚动到正文标题。
+9. macOS 使用原生窗口按钮和菜单，不能显示 Windows 自绘窗口按钮。
+10. Windows 安装始终使用 current-user scope；CI 手动调用 NSIS 时必须同时传入：
    - `-DWAILS_INSTALL_SCOPE=user`
    - `-DREQUEST_EXECUTION_LEVEL=user`
-10. 升级安装不能生成重复桌面图标或重复卸载项，并且必须自动沿用上次选择的安装目录；兼容旧版时可从卸载项的 `DisplayIcon` 反推目录。安装完成页默认勾选运行应用，但必须允许用户取消。
-11. Windows 安装、升级与卸载向导必须全程使用简体中文；全新安装默认写入中文偏好，旧版本升级必须迁移并保留已有语言与其他设置。macOS/Linux 以偏好文件是否存在判断首次运行。
-12. 版本号、安装包名称、关于窗口、更新检查和 CHANGELOG 必须一致。
-13. Windows 安装程序必须以 `.exe` 直接发布到 GitHub Release 和官网，不再额外打包 ZIP；应用内免安装更新仍使用独立的 `.bin`。
+11. 升级安装不能生成重复桌面图标或重复卸载项，并且必须自动沿用上次选择的安装目录；兼容旧版时可从卸载项的 `DisplayIcon` 反推目录。安装完成页默认勾选运行应用，但必须允许用户取消。
+12. Windows 安装、升级与卸载向导必须全程使用简体中文；全新安装默认写入中文偏好，旧版本升级必须迁移并保留已有语言与其他设置。macOS/Linux 以偏好文件是否存在判断首次运行。
+13. 版本号、安装包名称、关于窗口、更新检查和 CHANGELOG 必须一致。
+14. Windows 安装程序必须以 `.exe` 直接发布到 GitHub Release 和官网，不再额外打包 ZIP；应用内免安装更新仍使用独立的 `.bin`。
 
 ## 11. 安全边界
 

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"image"
 	"image/png"
 	"os"
@@ -50,6 +51,21 @@ func TestMigrateLegacyPreferencesFilePreservesExistingSettings(t *testing.T) {
 	unchanged, _ := os.ReadFile(newPath)
 	if !bytes.Equal(unchanged, existing) {
 		t.Fatal("an existing new-brand preference file must never be overwritten")
+	}
+}
+
+func TestLegacyPreferencesWithoutPinnedRecentsRemainCompatible(t *testing.T) {
+	app := testApp(t)
+	legacyData := []byte(`{"recentFiles":[],"favoriteFiles":[],"language":"en","usageAnalytics":true}`)
+	if err := os.WriteFile(app.preferencePath(), legacyData, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prefs.PinnedRecentFiles == nil || len(prefs.PinnedRecentFiles) != 0 {
+		t.Fatalf("legacy preferences did not receive an empty pinned recent default: %#v", prefs.PinnedRecentFiles)
 	}
 }
 
@@ -147,6 +163,7 @@ func TestRecoveredMacDraftReferencesMoveToTheSafeDocumentsDirectory(t *testing.T
 	}
 	if _, err := app.updatePreferences(func(prefs *Preferences) {
 		prefs.RecentFiles = []string{legacyPath}
+		prefs.PinnedRecentFiles = []string{legacyPath}
 		prefs.DraftFiles = []string{legacyPath}
 		prefs.LastFile = legacyPath
 	}); err != nil {
@@ -159,6 +176,9 @@ func TestRecoveredMacDraftReferencesMoveToTheSafeDocumentsDirectory(t *testing.T
 	prefs = app.migrateLegacyBundledDraftReferences("darwin", home, prefs)
 	if !reflect.DeepEqual(prefs.RecentFiles, []string{recoveredPath}) {
 		t.Fatalf("recent references were not migrated: %#v", prefs.RecentFiles)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{recoveredPath}) {
+		t.Fatalf("pinned recent references were not migrated: %#v", prefs.PinnedRecentFiles)
 	}
 	if !reflect.DeepEqual(prefs.DraftFiles, []string{recoveredPath}) {
 		t.Fatalf("draft references were not migrated: %#v", prefs.DraftFiles)
@@ -356,6 +376,603 @@ func TestReadingExistingRecentFileKeepsItsPosition(t *testing.T) {
 		if prefs.RecentFiles[index] != want[index] {
 			t.Fatalf("recent files reordered: got %#v, want %#v", prefs.RecentFiles, want)
 		}
+	}
+}
+
+func TestRecentPinningPartitionsPersistsAndCapsOnlyUnpinnedRecords(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	firstPinned := filepath.Join(root, "first-pinned.md")
+	secondPinned := filepath.Join(root, "second-pinned.md")
+	for _, filePath := range []string{firstPinned, secondPinned} {
+		if err := os.WriteFile(filePath, []byte("pinned"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := app.SetRecentPinned(firstPinned, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.SetRecentPinned(secondPinned, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.SetRecentPinned(firstPinned, true); err != nil {
+		t.Fatal(err)
+	}
+
+	unpinnedPaths := make([]string, 0, maxRecent+1)
+	for index := 0; index < maxRecent+1; index++ {
+		filePath := filepath.Join(root, fmt.Sprintf("recent-%02d.md", index))
+		unpinnedPaths = append(unpinnedPaths, filePath)
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantPins := []string{secondPinned, firstPinned}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, wantPins) {
+		t.Fatalf("idempotent pin changed pin order: got %#v, want %#v", prefs.PinnedRecentFiles, wantPins)
+	}
+	if len(prefs.RecentFiles) != len(wantPins)+maxRecent {
+		t.Fatalf("pinned records consumed unpinned capacity: %#v", prefs.RecentFiles)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles[:len(wantPins)], wantPins) {
+		t.Fatalf("pinned records are not the recent prefix: %#v", prefs.RecentFiles)
+	}
+	if indexPreferencePath(prefs.RecentFiles, unpinnedPaths[0]) >= 0 {
+		t.Fatalf("oldest unpinned record was not evicted: %#v", prefs.RecentFiles)
+	}
+
+	beforeReopen := append([]string(nil), prefs.RecentFiles...)
+	for _, filePath := range []string{unpinnedPaths[5], firstPinned} {
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+	prefs, err = app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, beforeReopen) {
+		t.Fatalf("reopening an existing pinned or unpinned record changed its position: got %#v, want %#v", prefs.RecentFiles, beforeReopen)
+	}
+
+	restarted := &App{language: "zh-CN", preferencesOverride: app.preferencesOverride}
+	prefs, err = restarted.ReorderPinnedRecent([]string{firstPinned, filepath.Join(root, "unknown.md"), firstPinned})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantPins = []string{firstPinned, secondPinned}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, wantPins) || !reflect.DeepEqual(prefs.RecentFiles[:2], wantPins) {
+		t.Fatalf("explicit pinned reorder failed: pins=%#v recent=%#v", prefs.PinnedRecentFiles, prefs.RecentFiles)
+	}
+	restarted = &App{language: "zh-CN", preferencesOverride: app.preferencesOverride}
+	prefs, err = restarted.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, wantPins) || !reflect.DeepEqual(prefs.RecentFiles[:2], wantPins) {
+		t.Fatalf("pinned reorder did not persist across restart: pins=%#v recent=%#v", prefs.PinnedRecentFiles, prefs.RecentFiles)
+	}
+
+	prefs, err = restarted.SetRecentPinned(firstPinned, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{secondPinned}) {
+		t.Fatalf("unpin did not preserve the remaining pin order: %#v", prefs.PinnedRecentFiles)
+	}
+	if len(prefs.RecentFiles) != 1+maxRecent || !reflect.DeepEqual(prefs.RecentFiles[:2], []string{secondPinned, firstPinned}) {
+		t.Fatalf("unpin did not move the record to the front of the bounded unpinned partition: %#v", prefs.RecentFiles)
+	}
+	if indexPreferencePath(prefs.RecentFiles, unpinnedPaths[1]) >= 0 {
+		t.Fatalf("unpin did not evict the oldest excess unpinned record: %#v", prefs.RecentFiles)
+	}
+}
+
+func TestRememberFileAfterAllExistingRecentsArePinnedAddsAnOrdinaryRecord(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	wantPins := make([]string, 0, maxRecent+2)
+	for index := 0; index < maxRecent+2; index++ {
+		filePath := filepath.Join(root, fmt.Sprintf("pinned-%02d.md", index))
+		if err := os.WriteFile(filePath, []byte("pinned"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := app.SetRecentPinned(filePath, true); err != nil {
+			t.Fatal(err)
+		}
+		wantPins = append([]string{filePath}, wantPins...)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, wantPins) || !reflect.DeepEqual(prefs.PinnedRecentFiles, wantPins) {
+		t.Fatalf("test setup does not contain only pinned recents: %#v", prefs)
+	}
+
+	newPath := filepath.Join(root, "new-ordinary.md")
+	if err := os.WriteFile(newPath, []byte("ordinary"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(newPath); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err = app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantRecent := append(append([]string(nil), wantPins...), newPath)
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, wantPins) || !reflect.DeepEqual(prefs.RecentFiles, wantRecent) {
+		t.Fatalf("new ordinary recent was lost after an all-pinned list: pins=%#v recent=%#v", prefs.PinnedRecentFiles, prefs.RecentFiles)
+	}
+}
+
+func TestMissingUnpinnedRecentCannotBeNewlyPinned(t *testing.T) {
+	app := testApp(t)
+	missingPath := filepath.Join(t.TempDir(), "never-existed.md")
+	if err := app.rememberFile(missingPath); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err := app.SetRecentPinned(missingPath, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefs.PinnedRecentFiles) != 0 || !reflect.DeepEqual(prefs.RecentFiles, []string{missingPath}) {
+		t.Fatalf("missing unpinned recent was pinned or removed: %#v", prefs)
+	}
+}
+
+func TestPreviouslyPinnedMissingRecentsCanBeUnpinnedAndRemoved(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	remainingPath := filepath.Join(root, "remaining.md")
+	missingToUnpin := filepath.Join(root, "missing-to-unpin.md")
+	missingToRemove := filepath.Join(root, "missing-to-remove.md")
+	for _, filePath := range []string{remainingPath, missingToUnpin, missingToRemove} {
+		if err := os.WriteFile(filePath, []byte("existing"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+		if filePath != remainingPath {
+			if _, err := app.SetRecentPinned(filePath, true); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	for _, filePath := range []string{missingToUnpin, missingToRemove} {
+		if err := os.Remove(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := app.AddFavorite(missingToRemove); err != nil {
+		t.Fatal(err)
+	}
+
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantPins := []string{missingToRemove, missingToUnpin}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, wantPins) {
+		t.Fatalf("previously pinned missing recents were not retained: %#v", prefs.PinnedRecentFiles)
+	}
+	wantStatuses := []RecentFileStatus{{Path: missingToRemove, Exists: false}, {Path: missingToUnpin, Exists: false}, {Path: remainingPath, Exists: true}}
+	if !reflect.DeepEqual(prefs.RecentFileStatuses, wantStatuses) {
+		t.Fatalf("missing pinned status was not retained: %#v", prefs.RecentFileStatuses)
+	}
+	prefs, err = app.ReorderPinnedRecent([]string{missingToUnpin, missingToRemove})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{missingToUnpin, missingToRemove}) || !reflect.DeepEqual(prefs.RecentFiles[:2], []string{missingToUnpin, missingToRemove}) {
+		t.Fatalf("missing pinned recents could not be reordered: %#v", prefs)
+	}
+
+	prefs, err = app.SetRecentPinned(missingToUnpin, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{missingToRemove}) || !reflect.DeepEqual(prefs.RecentFiles, []string{missingToRemove, missingToUnpin, remainingPath}) {
+		t.Fatalf("missing pinned recent could not be moved to the ordinary partition: %#v", prefs)
+	}
+	prefs, err = app.SetRecentPinned(missingToUnpin, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{missingToRemove}) || !reflect.DeepEqual(prefs.RecentFiles, []string{missingToRemove, missingToUnpin, remainingPath}) {
+		t.Fatalf("missing unpinned recent was unexpectedly re-pinned: %#v", prefs)
+	}
+
+	prefs, err = app.RemoveRecent(missingToRemove)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefs.PinnedRecentFiles) != 0 || !reflect.DeepEqual(prefs.RecentFiles, []string{missingToUnpin, remainingPath}) {
+		t.Fatalf("removing a pinned recent did not clear both recent indexes: %#v", prefs)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFiles, []string{missingToRemove}) {
+		t.Fatalf("removing a pinned recent changed favorites: %#v", prefs.FavoriteFiles)
+	}
+	if prefs.LastFile != missingToUnpin {
+		t.Fatalf("last file = %q, want first remaining recent %q", prefs.LastFile, missingToUnpin)
+	}
+}
+
+func TestSaveDocumentAsAtomicallyMigratesPinnedDraftAtFullCapacity(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	draftPath := filepath.Join(root, "New document-20260818-120000.md")
+	savedPath := filepath.Join(root, "final.md")
+	if err := os.WriteFile(draftPath, []byte("draft"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.SetRecentPinned(draftPath, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.AddFavorite(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	app.markDraft(draftPath)
+
+	unpinnedPaths := make([]string, 0, maxRecent)
+	for index := 0; index < maxRecent; index++ {
+		filePath := filepath.Join(root, fmt.Sprintf("unpinned-%02d.md", index))
+		unpinnedPaths = append(unpinnedPaths, filePath)
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := app.rememberFile(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	app.SetDirty(true)
+
+	saved, err := app.saveDocumentAs(draftPath, savedPath, "# Final")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if saved.ReplacedPath != draftPath || saved.Path != savedPath || saved.Content != "# Final" {
+		t.Fatalf("unexpected Save As result: %#v", saved)
+	}
+	if _, err := os.Stat(draftPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("temporary draft was not removed: %v", err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{savedPath}) {
+		t.Fatalf("draft pin was not migrated: %#v", prefs.PinnedRecentFiles)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFiles, []string{savedPath}) {
+		t.Fatalf("draft favorite was not migrated: %#v", prefs.FavoriteFiles)
+	}
+	if len(prefs.DraftFiles) != 0 || prefs.LastFile != savedPath {
+		t.Fatalf("draft metadata was not migrated atomically: drafts=%#v last=%q", prefs.DraftFiles, prefs.LastFile)
+	}
+	wantRecent := []string{savedPath}
+	for index := len(unpinnedPaths) - 1; index >= 0; index-- {
+		wantRecent = append(wantRecent, unpinnedPaths[index])
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, wantRecent) {
+		t.Fatalf("draft replacement lost a full-capacity recent record: got %#v, want %#v", prefs.RecentFiles, wantRecent)
+	}
+	app.mu.RLock()
+	dirty := app.dirty
+	app.mu.RUnlock()
+	if dirty {
+		t.Fatal("successful Save As did not clear dirty state")
+	}
+}
+
+func TestSaveDocumentAsAtomicallyReplacesUnpinnedDraftWithinFullRecentCapacity(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	draftPath := filepath.Join(root, "New document-20260818-130000.md")
+	savedPath := filepath.Join(root, "renamed.md")
+	if err := os.WriteFile(draftPath, []byte("draft"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	paths := make([]string, 0, maxRecent)
+	for index := 0; index < 5; index++ {
+		paths = append(paths, filepath.Join(root, fmt.Sprintf("older-%02d.md", index)))
+	}
+	paths = append(paths, draftPath)
+	for index := 0; index < 4; index++ {
+		paths = append(paths, filepath.Join(root, fmt.Sprintf("newer-%02d.md", index)))
+	}
+	for _, filePath := range paths {
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+	app.markDraft(draftPath)
+	if err := app.rememberFile(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	prefsBefore, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefsBefore.RecentFiles) != maxRecent {
+		t.Fatalf("test setup recent count = %d, want %d", len(prefsBefore.RecentFiles), maxRecent)
+	}
+	draftIndex := indexPreferencePath(prefsBefore.RecentFiles, draftPath)
+	if draftIndex <= 0 || draftIndex >= len(prefsBefore.RecentFiles)-1 {
+		t.Fatalf("test setup did not place draft within the full recent list: %#v", prefsBefore.RecentFiles)
+	}
+
+	saved, err := app.saveDocumentAs(draftPath, savedPath, "saved")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if saved.ReplacedPath != draftPath {
+		t.Fatalf("Save As replaced path = %q, want %q", saved.ReplacedPath, draftPath)
+	}
+	prefsAfter, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantRecent := append([]string(nil), prefsBefore.RecentFiles...)
+	wantRecent[draftIndex] = savedPath
+	if !reflect.DeepEqual(prefsAfter.RecentFiles, wantRecent) {
+		t.Fatalf("unpinned draft replacement lost or reordered a full-capacity record: got %#v, want %#v", prefsAfter.RecentFiles, wantRecent)
+	}
+	if len(prefsAfter.PinnedRecentFiles) != 0 {
+		t.Fatalf("unpinned draft became pinned during replacement: %#v", prefsAfter.PinnedRecentFiles)
+	}
+}
+
+func TestReplaceDraftPreferenceWriteFailurePreservesRecoverableDraft(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	draftPath := filepath.Join(root, "draft.md")
+	savedPath := filepath.Join(root, "saved.md")
+	for filePath, content := range map[string]string{draftPath: "draft", savedPath: "saved"} {
+		if err := os.WriteFile(filePath, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := app.rememberFile(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.SetRecentPinned(draftPath, true); err != nil {
+		t.Fatal(err)
+	}
+	app.markDraft(draftPath)
+
+	preferencesPath := app.preferencePath()
+	if err := os.Chmod(preferencesPath, 0o444); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(preferencesPath, 0o644)
+	if writable, err := os.OpenFile(preferencesPath, os.O_WRONLY, 0); err == nil {
+		_ = writable.Close()
+		t.Skip("the current user or filesystem can still write a read-only preferences file")
+	}
+
+	if replacedPath, err := app.replaceDraft(draftPath, savedPath); err == nil || replacedPath != "" {
+		t.Fatalf("replaceDraft() = %q, %v; want empty path and preference write error", replacedPath, err)
+	}
+	if content, err := os.ReadFile(draftPath); err != nil || string(content) != "draft" {
+		t.Fatalf("preference failure removed or changed the recoverable draft: content=%q err=%v", content, err)
+	}
+	app.draftsMu.Lock()
+	stillDraft := app.draftFiles[draftPathKey(draftPath)]
+	stillClaimed := app.draftReplacements[draftPathKey(draftPath)]
+	app.draftsMu.Unlock()
+	if !stillDraft {
+		t.Fatal("preference failure cleared the in-memory draft identity")
+	}
+	if stillClaimed {
+		t.Fatal("preference failure left the draft replacement claim stuck")
+	}
+	if err := os.Chmod(preferencesPath, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, []string{draftPath}) || !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{draftPath}) || !reflect.DeepEqual(prefs.DraftFiles, []string{draftPath}) {
+		t.Fatalf("preference failure partially migrated the draft: %#v", prefs)
+	}
+}
+
+func TestSaveDocumentAsDeleteFailureStillReturnsCommittedMigration(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	draftPath := filepath.Join(root, "non-empty-draft")
+	savedPath := filepath.Join(root, "saved.md")
+	if err := os.MkdirAll(draftPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(draftPath, "child"), []byte("keep"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	app.markDraft(draftPath)
+
+	saved, err := app.saveDocumentAs(draftPath, savedPath, "saved")
+	if err != nil || saved == nil || saved.Path != savedPath || saved.ReplacedPath != draftPath {
+		t.Fatalf("saveDocumentAs() = %#v, %v; want committed replacement of %q", saved, err, draftPath)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, []string{savedPath}) || len(prefs.PinnedRecentFiles) != 0 || len(prefs.DraftFiles) != 0 || prefs.LastFile != savedPath {
+		t.Fatalf("cleanup failure rolled back or damaged committed migration: %#v", prefs)
+	}
+	app.draftsMu.Lock()
+	stillDraft := app.draftFiles[draftPathKey(draftPath)]
+	stillClaimed := app.draftReplacements[draftPathKey(draftPath)]
+	app.draftsMu.Unlock()
+	if stillDraft {
+		t.Fatal("cleanup failure left in-memory draft state inconsistent with committed preferences")
+	}
+	if stillClaimed {
+		t.Fatal("cleanup failure left the completed draft replacement claim stuck")
+	}
+	if _, err := os.Stat(filepath.Join(draftPath, "child")); err != nil {
+		t.Fatalf("failed draft deletion damaged the original directory: %v", err)
+	}
+}
+
+func TestConcurrentSaveDocumentAsClaimsTheDraftBeforeWritingTarget(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	draftPath := filepath.Join(root, "draft.md")
+	firstSavedPath := filepath.Join(root, "first.md")
+	secondSavedPath := filepath.Join(root, "second.md")
+	if err := os.WriteFile(draftPath, []byte("draft"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.rememberFile(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.SetRecentPinned(draftPath, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.AddFavorite(draftPath); err != nil {
+		t.Fatal(err)
+	}
+	app.markDraft(draftPath)
+
+	type saveAsResult struct {
+		document *Document
+		err      error
+	}
+	// Hold preference persistence after the first call has claimed and written
+	// its target, keeping the claim active while the competing call starts.
+	app.preferencesMu.Lock()
+	preferencesLocked := true
+	defer func() {
+		if preferencesLocked {
+			app.preferencesMu.Unlock()
+		}
+	}()
+
+	firstResult := make(chan saveAsResult, 1)
+	go func() {
+		document, err := app.saveDocumentAs(draftPath, firstSavedPath, "first")
+		firstResult <- saveAsResult{document: document, err: err}
+	}()
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, err := os.Stat(firstSavedPath); err == nil {
+			break
+		} else if !errors.Is(err, os.ErrNotExist) {
+			t.Fatal(err)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("first Save As did not write its target before the deadline")
+		}
+		time.Sleep(time.Millisecond)
+	}
+
+	secondResult := make(chan saveAsResult, 1)
+	go func() {
+		document, err := app.saveDocumentAs(draftPath, secondSavedPath, "second")
+		secondResult <- saveAsResult{document: document, err: err}
+	}()
+	var second saveAsResult
+	select {
+	case second = <-secondResult:
+	case <-time.After(2 * time.Second):
+		t.Fatal("competing Save As did not reject the in-flight draft claim")
+	}
+	if second.document != nil || !errors.Is(second.err, errDraftReplacementInProgress) {
+		t.Fatalf("competing Save As = %#v, %v; want nil document and in-progress error", second.document, second.err)
+	}
+	if _, err := os.Stat(secondSavedPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("competing Save As wrote its target before acquiring the draft claim: %v", err)
+	}
+
+	app.preferencesMu.Unlock()
+	preferencesLocked = false
+	first := <-firstResult
+	if first.err != nil || first.document == nil || first.document.ReplacedPath != draftPath || first.document.Path != firstSavedPath {
+		t.Fatalf("winning Save As = %#v, %v; want replacement of %q", first.document, first.err, draftPath)
+	}
+
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, []string{firstSavedPath}) ||
+		!reflect.DeepEqual(prefs.PinnedRecentFiles, []string{firstSavedPath}) ||
+		!reflect.DeepEqual(prefs.FavoriteFiles, []string{firstSavedPath}) ||
+		len(prefs.DraftFiles) != 0 || prefs.LastFile != firstSavedPath {
+		t.Fatalf("concurrent replacement produced inconsistent preferences: %#v", prefs)
+	}
+	if _, err := os.Stat(draftPath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("claimed draft was not removed: %v", err)
+	}
+}
+
+func TestSaveDocumentAsForOrdinaryFileKeepsOriginalAndItsPin(t *testing.T) {
+	app := testApp(t)
+	root := t.TempDir()
+	originalPath := filepath.Join(root, "original.md")
+	olderRecentPath := filepath.Join(root, "older.md")
+	savedPath := filepath.Join(root, "copy.md")
+	for _, filePath := range []string{olderRecentPath, originalPath} {
+		if err := os.WriteFile(filePath, []byte("original"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := app.rememberFile(filePath); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := app.SetRecentPinned(originalPath, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.AddFavorite(originalPath); err != nil {
+		t.Fatal(err)
+	}
+
+	saved, err := app.saveDocumentAs(originalPath, savedPath, "copy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if saved.ReplacedPath != "" {
+		t.Fatalf("ordinary file was treated as a replaced draft: %#v", saved)
+	}
+	if content, err := os.ReadFile(originalPath); err != nil || string(content) != "original" {
+		t.Fatalf("ordinary original changed during Save As: content=%q err=%v", content, err)
+	}
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.PinnedRecentFiles, []string{originalPath}) {
+		t.Fatalf("ordinary original pin changed during Save As: %#v", prefs.PinnedRecentFiles)
+	}
+	if !reflect.DeepEqual(prefs.FavoriteFiles, []string{originalPath}) {
+		t.Fatalf("ordinary original favorite changed during Save As: %#v", prefs.FavoriteFiles)
+	}
+	wantRecent := []string{originalPath, savedPath, olderRecentPath}
+	if !reflect.DeepEqual(prefs.RecentFiles, wantRecent) {
+		t.Fatalf("ordinary Save As recent order = %#v, want %#v", prefs.RecentFiles, wantRecent)
 	}
 }
 

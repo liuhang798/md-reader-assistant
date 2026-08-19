@@ -54,6 +54,12 @@ On Windows, run `quillite-markdown-version-windows-amd64.exe` and follow the set
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
+## What's new in 2.4.8
+
+- The right-side document outline now scales its typography and default width continuously across 1080p, 2K, and 4K displays while preserving manually chosen widths.
+- Recent supports multiple persistent pins with drag-handle and keyboard reordering; pinned documents do not consume the ten ordinary Recent slots.
+- Fixed full-capacity draft Save As potentially evicting an ordinary recent entry, with draft paths, pins, favorites, and recent records now migrated consistently.
+
 ## What's new in 2.4.7
 
 - Removed the `GitHub` suffix from Check for Updates for a cleaner menu that accurately reflects the official website update channel.
@@ -139,8 +145,8 @@ The macOS build follows the computer's light/dark appearance automatically while
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
 - Export Word and PDF documents: Go generates standard DOCX files locally, while PDF export uses the Windows WebView2 or macOS system print panel to preserve the preview styling for headings, tables, code blocks, and images.
 - Built-in feedback for feature suggestions and functional issues, with optional contact details, up to five screenshots, and automatic app/system version information. Administrators can review, resolve, or delete feedback together with all attached images.
-- A collapsible hierarchical outline with clickable navigation, active section tracking and per-document folding memory, plus search, print and back-to-top.
-- Recent documents update immediately and show their source directory below the filename, with the full path available on hover for distinguishing duplicate names. Right-click a record for Edit, Save As, Favorite, Show in Folder and Remove. Save As creates a writable copy directly from a WeChat cache, read-only source, or ordinary document. Deleted, moved or temporarily unavailable files remain removable from the menu.
+- A collapsible hierarchical outline with clickable navigation, active section tracking and per-document folding memory. Its typography and default width adapt continuously across 1080p, 2K and 4K displays while remaining manually resizable. Document search, printing and back-to-top navigation remain available.
+- Recent documents update immediately and show their source directory below the filename, with the full path available on hover for distinguishing duplicate names. Right-click to pin, unpin, edit, save as, favorite, reveal or remove a record. Multiple pins persist above up to ten ordinary recent entries and can be reordered with the drag handle or keyboard arrow keys. Deleted, moved or temporarily unavailable pinned files can still be unpinned or removed from the menu.
 - Favorite documents from Recent or Explorer and manage them in a dedicated persistent Favorites view with Open, Edit, Show in Folder, and Remove from Favorites actions.
 - On macOS, closing the main window leaves the app running in the background. Clicking the Dock icon again restores and foregrounds the window, and Markdown files opened from Finder display directly.
 - Simplified Chinese and English interface with persistent language selection.

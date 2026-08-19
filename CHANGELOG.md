@@ -4,6 +4,20 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+## [2.4.8] - 2026-08-19
+
+### 简体中文
+
+- 右侧“本页目录”现在按显示器物理短边连续适配字号和默认宽度：1080p、2K、4K 的一级／二级目录在全局 100% 字号下分别约为 13px、15px、17px；超宽屏、竖屏和跨显示器切换不会再误用固定档位，用户手动调整的目录宽度仍优先保留。
+- 最近阅读新增多文档持久置顶：置顶文档独立于 10 条普通最近记录，可从右键菜单置顶或取消置顶，并通过悬停拖柄或键盘方向键调整顺序；缺失文件仍可取消置顶或移除，收藏与置顶互不影响。
+- 修复最近阅读已满时草稿另存可能先淘汰普通记录、再删除草稿而最终只剩 9 条的问题；草稿路径、置顶、收藏和最近记录现在会在一次偏好更新中迁移并去重。
+
+### English
+
+- The right-side document outline now adapts its typography and default width continuously from the display's physical short edge. At 100% global text size, primary outline entries are approximately 13px on 1080p, 15px on 2K, and 17px on 4K displays, while ultrawide, portrait, and cross-display layouts avoid fixed-resolution misclassification and preserve user-resized widths.
+- Recent now supports multiple persistent pins. Pinned documents stay above up to ten ordinary recent entries, can be pinned or unpinned from the context menu, and can be reordered with a hover handle or keyboard arrows. Missing pinned files can still be unpinned or removed, and pinning stays independent from Favorites.
+- Fixed draft Save As at full Recent capacity potentially evicting an ordinary entry before deleting the draft and leaving only nine entries. Draft paths, pins, favorites, and recent records now migrate and deduplicate in one preferences update.
+
 ## [2.4.7] - 2026-08-18
 
 ### 简体中文
@@ -533,5 +547,6 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.3]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.3
 [2.4.4]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.4
 [2.4.5]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.5
-[2.4.7]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.7
 [2.4.6]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.6
+[2.4.7]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.7
+[2.4.8]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.8

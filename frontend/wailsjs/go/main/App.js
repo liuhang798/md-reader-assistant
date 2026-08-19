@@ -90,6 +90,10 @@ export function RemoveRecent(arg1) {
   return window['go']['main']['App']['RemoveRecent'](arg1);
 }
 
+export function ReorderPinnedRecent(arg1) {
+  return window['go']['main']['App']['ReorderPinnedRecent'](arg1);
+}
+
 export function ReportErrorLog(arg1, arg2, arg3) {
   return window['go']['main']['App']['ReportErrorLog'](arg1, arg2, arg3);
 }
@@ -120,6 +124,10 @@ export function SetDirty(arg1) {
 
 export function SetLanguage(arg1) {
   return window['go']['main']['App']['SetLanguage'](arg1);
+}
+
+export function SetRecentPinned(arg1, arg2) {
+  return window['go']['main']['App']['SetRecentPinned'](arg1, arg2);
 }
 
 export function SetTheme(arg1) {
