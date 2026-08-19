@@ -106,6 +106,47 @@ func TestBuildDOCXExportsMathAsNativeOfficeMath(t *testing.T) {
 	assertWellFormedXML(t, []byte(document))
 }
 
+func TestBuildDOCXRemovesDuplicateMathSourceBesideNativeEquation(t *testing.T) {
+	html := `<ol>` +
+		`<li><span class="math-inline" data-math-source="y%20%3D%20ax%20%2B%20b"><math><semantics><mrow><mi>y</mi><mo>=</mo><mi>a</mi><mi>x</mi><mo>+</mo><mi>b</mi></mrow></semantics></math></span><code>y = ax + b</code></li>` +
+		`<li><span class="math-inline" data-math-source="x%20%3D%20%5Cfrac%7B-b%20%5Cpm%20%5Csqrt%7Bb%5E2-4ac%7D%7D%7B2a%7D"><math><semantics><mrow><mi>x</mi><mo>=</mo><mfrac><mrow><mo>-</mo><mi>b</mi><mo>±</mo><msqrt><mrow><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><mn>4</mn><mi>a</mi><mi>c</mi></mrow></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></mrow></semantics></math></span><code>x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}</code></li>` +
+		`<li><span class="math-inline" data-math-source="%5Cbar%7Bx%7D%3D%5Cfrac%7B1%7D%7Bn%7D%5Csum_%7Bi%3D1%7D%5E%7Bn%7Dx_i"><math><semantics><mrow><mover accent="true"><mi>x</mi><mo>¯</mo></mover><mo>=</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><msub><mi>x</mi><mi>i</mi></msub></mrow></semantics></math></span><code>\bar{x}=\frac{1}{n}\sum_{i=1}^{n}x_i</code></li>` +
+		`</ol>`
+	data, err := buildDOCX(html, "WPS math", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(readDOCXFiles(t, data)["word/document.xml"])
+	if strings.Count(document, `<m:oMath>`) != 3 {
+		t.Fatalf("expected three native equations: %s", document)
+	}
+	for _, source := range []string{`y = ax + b`, `x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}`, `\bar{x}=\frac{1}{n}\sum_{i=1}^{n}x_i`} {
+		if strings.Contains(document, source) {
+			t.Fatalf("duplicate formula source leaked into DOCX: %q in %s", source, document)
+		}
+	}
+	assertWellFormedXML(t, []byte(document))
+}
+
+func TestBuildDOCXRemovesSplitAndSpacedMathSourceBesideNativeEquation(t *testing.T) {
+	html := `<p><span class="math-inline" data-math-source="x%20%3D%20%5Cfrac%7B-b%20%5Cpm%20%5Csqrt%7Bb%5E2-4ac%7D%7D%7B2a%7D"><math><mrow><mi>x</mi><mo>=</mo><mfrac><mrow><mo>-</mo><mi>b</mi><mo>±</mo><msqrt><mrow><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><mn>4</mn><mi>a</mi><mi>c</mi></mrow></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></mrow></math></span>` +
+		` <span>x = </span><code>\frac{-b \pm </code><span>\sqrt{b^2-4ac}</span><code>}{2a}</code><span>，其中 a 不为 0</span></p>`
+	data, err := buildDOCX(html, "WPS split math", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(readDOCXFiles(t, data)["word/document.xml"])
+	if strings.Contains(document, `\frac`) || strings.Contains(document, `\sqrt`) {
+		t.Fatalf("split raw LaTeX duplicate leaked into DOCX: %s", document)
+	}
+	if !strings.Contains(document, `，其中 a 不为 0`) {
+		t.Fatalf("text following the duplicate formula was removed: %s", document)
+	}
+	if strings.Count(document, `<m:oMath>`) != 1 {
+		t.Fatalf("expected one native equation: %s", document)
+	}
+}
+
 func TestBuildDOCXKeepsReadableMathFallbackWhenMathMLIsUnavailable(t *testing.T) {
 	data, err := buildDOCX(`<p>公式：<span class="math-inline" data-math-source="E%20%3D%20mc%5E2"></span></p>`, "Math fallback", t.TempDir())
 	if err != nil {

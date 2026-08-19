@@ -12,6 +12,9 @@ All notable changes to Quillite Markdown are documented here.
 
 ### 简体中文
 
+- 修复 WPS／Word 导出学科公式时，原生公式后仍可能重复显示 LaTeX 源码的问题。导出现在只保留单一 MathML 表示，并能识别、去除被拆分到多个样式节点中的同源降级文本；已使用 WPS 实际打开回归 DOCX 验证，公式保持可编辑且后续正文不受影响。
+- 新增 HTML 导出：阅读页顶部和“更多”菜单均可将当前文档保存为独立 `.html` 网页，保留明暗模式、主题色、公式、代码、表格和已加载图片，并过滤脚本、事件属性及危险链接。
+- 修复 macOS 挂载安装 DMG 后，系统“应用”界面或启动台可能同时显示已安装版本和镜像内版本、形成两个“轻阅 Markdown”图标的问题；新版安装镜像会阻止 Spotlight 索引其中的应用副本，已安装的应用启动时还会安全识别并自动推出仍挂载的官方安装镜像。
 - 修复 macOS 重启后从“最近阅读”打开部分 Documents、Desktop、Downloads 等受保护目录文档时出现 `operation not permitted` 的问题。macOS 应用包补齐文件夹隐私用途声明，并在历史授权失效时通过已定位到原文件的系统打开窗口恢复访问；取消授权不再作为软件异常回传。
 - 修复 Word 导出遗漏或破坏学科公式的问题：行内与块级 LaTeX、分数、根式、上下标、求和、积分、极限和 mhchem 化学式现在导出为可缩放、可编辑的 Word 原生公式；编号公式保持居中并将编号对齐到右侧。MathML 不可用时仍会保留一份可读的 LaTeX 源式，避免公式再次空白。
 - 编辑器“学科公式”扩充到 79 种模板，覆盖基础数学、代数与函数、几何、微积分、线性代数、概率统计、物理、基础化学和化学反应；全部模板均校验默认参数、普通渲染和编号渲染。切换学科或公式时，右侧参数区会自动回到顶部，不再出现标题被滚动位置截断的问题。
@@ -22,6 +25,9 @@ All notable changes to Quillite Markdown are documented here.
 
 ### English
 
+- Fixed Academic Formulas still potentially showing raw LaTeX beside the native equation in WPS or Word. Export now keeps exactly one MathML representation and removes matching fallback source even when it is split across differently styled runs. The regression DOCX was opened in WPS to verify that equations remain editable and following prose is preserved.
+- Added HTML export to both the reader header and More menu. The standalone `.html` page preserves the current color mode, accent, formulas, code, tables, and loaded images while filtering scripts, event handlers, and unsafe links.
+- Fixed macOS potentially showing two Quillite Markdown icons in Apps or Launchpad while the installer DMG is mounted. New images opt the bundled copy out of Spotlight indexing, and the installed app safely detects and ejects a still-mounted official installer image on launch.
 - Fixed `operation not permitted` when reopening some Recent documents from protected macOS locations such as Documents, Desktop, and Downloads after an app restart. The macOS bundle now declares its folder-access purposes and recovers stale historical consent through a system open panel preselected to the original file; cancelling authorization is no longer reported as a software fault.
 - Fixed missing or malformed Academic Formulas in Word exports. Inline and display LaTeX, fractions, radicals, scripts, sums, integrals, limits, and mhchem chemistry now export as scalable, editable native Word equations. Numbered equations stay centered with right-aligned labels, while a readable LaTeX fallback prevents blank output when MathML is unavailable.
 - Expanded the bilingual Academic Formulas tool to 79 templates across mathematics, algebra and functions, geometry, calculus, linear algebra, probability and statistics, physics, chemistry, and chemical reactions. Every template is validated in normal and numbered rendering, and switching subjects or formulas now resets the parameter panel to the top instead of inheriting a clipped scroll position.

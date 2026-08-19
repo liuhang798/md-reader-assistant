@@ -230,15 +230,24 @@ test('the update dialog offers in-app download and apply with progress', () => {
   assert.doesNotMatch(mainSource, /github\.com\/liuhang798\/quillite-markdown\/releases/);
 });
 
-test('Word and PDF export are available from the document menu', () => {
+test('Word, HTML, and PDF export are available from the document menu', () => {
   assert.match(html, /data-action="export-word"/);
+  assert.match(html, /data-action="export-html"/);
   assert.match(html, /data-action="export-pdf"/);
   assert.match(html, /data-i18n="exportWord"/);
   assert.match(html, /data-i18n="exportPDF"/);
   assert.match(mainSource, /exportDOCX: \(filePath, title, renderedHTML\) => desktopRuntime \? Backend\.ExportDOCX\(filePath, title, renderedHTML\)/);
+  assert.match(mainSource, /exportHTML: \(filePath, title, renderedHTML, colorMode, accentColor\) => desktopRuntime \? Backend\.ExportHTML\(filePath, title, renderedHTML, colorMode, accentColor\)/);
   assert.match(renderer, /async function exportWordDocument\(\)/);
+  assert.match(renderer, /async function exportHTMLDocument\(\)/);
   assert.match(renderer, /cleanRenderedHTMLForExport\(container\)/);
+  assert.match(renderer, /formula\.setAttribute\('data-math-source', encodeURIComponent\(annotation\.textContent\.trim\(\)\)\)/);
+  assert.match(renderer, /const mathOnly = math\.cloneNode\(true\)/);
+  assert.match(renderer, /mathOnly\.querySelectorAll\('annotation, annotation-xml'\)/);
+  assert.match(renderer, /formula\.replaceChildren\(mathOnly\)/);
+  assert.match(renderer, /formula\.replaceChildren\(\)/);
   assert.match(renderer, /if \(action === 'export-word'\) exportWordDocument\(\)/);
+  assert.match(renderer, /if \(action === 'export-html'\) exportHTMLDocument\(\)/);
   assert.match(html, /id="pdfTutorialDialog"/);
   assert.match(html, /Microsoft Print to PDF/);
   assert.match(html, /data-i18n="pdfSaveAsPDF"/);
@@ -251,15 +260,16 @@ test('Word and PDF export are available from the document menu', () => {
   assert.match(styles, /@media print \{[\s\S]*\.toast, \.popover, \.pane-resizer \{ display: none !important; \}/);
 });
 
-test('reader header exposes responsive Word and PDF export actions', () => {
+test('reader header exposes responsive Word, HTML, and PDF export actions', () => {
   assert.match(html, /id="documentSaveAsButton"[^>]*data-document-action="save-as"[^>]*data-i18n="saveAs"/);
   assert.match(html, /id="documentExportWordButton"[^>]*data-document-action="export-word"[^>]*data-i18n="exportWord"/);
+  assert.match(html, /id="documentExportHTMLButton"[^>]*data-document-action="export-html"[^>]*data-i18n="exportHTML"/);
   assert.match(html, /id="documentExportPDFButton"[^>]*data-document-action="export-pdf"[^>]*data-i18n="exportPDF"/);
   assert.match(html, /id="documentActionsMoreButton"[^>]*aria-haspopup="menu"[^>]*data-i18n="moreDocumentActions"/);
-  assert.match(html, /id="documentActionsMenu"[^>]*role="menu"[\s\S]*data-document-action="save-as"[\s\S]*data-document-action="export-word"[\s\S]*data-document-action="export-pdf"[\s\S]*data-document-action="print"/);
+  assert.match(html, /id="documentActionsMenu"[^>]*role="menu"[\s\S]*data-document-action="save-as"[\s\S]*data-document-action="export-word"[\s\S]*data-document-action="export-html"[\s\S]*data-document-action="export-pdf"[\s\S]*data-document-action="print"/);
   assert.match(styles, /\.document-meta \{[^}]*container-type: inline-size;/);
   assert.match(styles, /@container \(max-width: 720px\) \{[\s\S]*\.document-actions > \.document-action-collapsible \{ display: none; \}[\s\S]*\.document-actions-more \{ display: block; \}/);
-  assert.match(renderer, /function runDocumentHeaderAction\(action\)[\s\S]*action === 'save-as'[\s\S]*saveLibraryDocumentAs\(state\.currentFile\.path\)[\s\S]*action === 'export-word'\) exportWordDocument\(\)[\s\S]*action === 'export-pdf'\) exportPDFDocument\(\)[\s\S]*action === 'print'/);
+  assert.match(renderer, /function runDocumentHeaderAction\(action\)[\s\S]*action === 'save-as'[\s\S]*saveLibraryDocumentAs\(state\.currentFile\.path\)[\s\S]*action === 'export-word'\) exportWordDocument\(\)[\s\S]*action === 'export-html'\) exportHTMLDocument\(\)[\s\S]*action === 'export-pdf'\) exportPDFDocument\(\)[\s\S]*action === 'print'/);
   assert.match(renderer, /els\.documentActions\.addEventListener\('click', event =>[\s\S]*documentActionsMenu\.classList\.toggle\('hidden', !opening\)[\s\S]*runDocumentHeaderAction\(actionButton\.dataset\.documentAction\)/);
   assert.match(renderer, /function closeDocumentActionsMenu\(\)[\s\S]*aria-expanded', 'false'/);
 });

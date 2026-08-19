@@ -78,6 +78,6 @@ The manual tag must exactly match the version in `wails.json`.
 - Confirm all platform assets are present.
 - Confirm `https://qm.ssssa.cn/#download` displays the new version and all official platform download links.
 - Install the Windows package and check the desktop icon and Markdown file association.
-- Mount the macOS DMG, confirm it contains exactly one `轻阅 Markdown.app`, and verify Spotlight shows `轻阅 Markdown` rather than the internal project name.
+- Mount the macOS DMG, confirm it contains exactly one `轻阅 Markdown.app` plus the hidden `.metadata_never_index` marker, copy the app into `/Applications`, launch it, and verify the installer image is ejected without leaving a second icon in Spotlight/Launchpad.
 - Verify that the in-app update checker opens the published Release page.
 - Confirm the website admin release list contains the new published version and six platform assets, and that the homepage shows it in the latest three entries.

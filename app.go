@@ -108,6 +108,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.mu.Unlock()
 	installMacFullscreenCloseWorkaround()
+	scheduleMacInstallerImageCleanup()
 	prefs, _ := a.readPreferences()
 	home, _ := os.UserHomeDir()
 	prefs = a.migrateLegacyBundledDraftReferences(goruntime.GOOS, home, prefs)
@@ -1234,7 +1235,7 @@ func (a *App) text(key string) string {
 			"discardAndOpen": "不保存并打开", "discardAndExit": "不保存并退出", "openMarkdown": "打开 Markdown 文档", "reauthorizeDocument": "请选择该文档以恢复访问权限",
 			"markdownDocument": "Markdown 文档", "textFile": "文本文件", "allFiles": "所有文件", "openFolder": "打开文档文件夹",
 			"saveAsMarkdown": "另存为 Markdown 文档", "newDocument": "新建文档.md", "newMarkdown": "新建 Markdown 文档",
-			"selectImage": "选择要插入的图片", "imageFile": "图片文件", "exportWord": "导出 Word 文档", "wordDocument": "Word 文档",
+			"selectImage": "选择要插入的图片", "imageFile": "图片文件", "exportWord": "导出 Word 文档", "wordDocument": "Word 文档", "exportHTML": "导出 HTML 网页", "htmlDocument": "HTML 网页",
 		},
 		"en": {
 			"unsavedTitle": "Unsaved Changes", "openUnsavedMessage": "The current document has unsaved changes. Opening another document will discard them.",
@@ -1242,7 +1243,7 @@ func (a *App) text(key string) string {
 			"discardAndOpen": "Discard and Open", "discardAndExit": "Discard and Exit", "openMarkdown": "Open Markdown Document", "reauthorizeDocument": "Choose this document to restore access",
 			"markdownDocument": "Markdown Document", "textFile": "Text File", "allFiles": "All Files", "openFolder": "Open Document Folder",
 			"saveAsMarkdown": "Save Markdown Document As", "newDocument": "New document.md", "newMarkdown": "New Markdown Document",
-			"selectImage": "Choose an image to insert", "imageFile": "Image files", "exportWord": "Export Word Document", "wordDocument": "Word Document",
+			"selectImage": "Choose an image to insert", "imageFile": "Image files", "exportWord": "Export Word Document", "wordDocument": "Word Document", "exportHTML": "Export HTML Page", "htmlDocument": "HTML Page",
 		},
 	}
 	if value := translations[a.language][key]; value != "" {

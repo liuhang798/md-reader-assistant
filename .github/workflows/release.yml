@@ -188,6 +188,9 @@ jobs:
           mkdir -p "${release_dir}"
           cp -R "${app_path}" "${staging_dir}/轻阅 Markdown.app"
           ln -s /Applications "${staging_dir}/Applications"
+          # Keep the mounted installer image out of Spotlight/Launchpad. Without
+          # this marker macOS can show the DMG copy beside the installed app.
+          touch "${staging_dir}/.metadata_never_index"
 
           created=false
           for attempt in 1 2 3; do

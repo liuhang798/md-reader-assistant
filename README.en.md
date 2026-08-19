@@ -54,11 +54,14 @@ On Windows, run `quillite-markdown-version-windows-amd64.exe` and follow the set
 
 The macOS build follows the computer's light/dark appearance automatically while still allowing a temporary manual switch. The temporary choice stays active until the system next changes between light and dark, then automatic following resumes. The interface and native title bar update together whenever the system mode changes. It centers native left-side window controls vertically within a slim title bar, and the controls stay stable during tiling and resizing. In fullscreen, the Logo and application name move left automatically, then restore the traffic-light safe area immediately on exit without briefly overlapping. Standard Command shortcuts remain available: `Command + W` closes the window while keeping the app in the background, and `Command + Q` quits the app. Closing from fullscreen exits fullscreen before hiding in the background; lazy editor loading and deferred explorer restoration reduce cold-start work.
 
+The macOS installer image carries a metadata no-index marker. On launch, the installed app also verifies the installer layout and Bundle Identifier before safely ejecting a still-mounted official DMG, preventing its bundled copy from appearing as a second Quillite Markdown icon.
+
 ## What's new in 2.4.9
 
 - Added Academic Formulas with 79 templates across elementary mathematics, algebra and functions, geometry, calculus, linear algebra, probability and statistics, physics, chemistry, and chemical reactions.
 - Added parameter entry, inline/display/numbered insertion, live preview, and editable generated Markdown. Numbered formulas keep the equation number aligned at the far right.
 - Added Typora-style LaTeX, mhchem chemistry, and `\tag{…}` equation numbers with consistent preview, source positioning, PDF printing, and Word export.
+- Fixed raw LaTeX appearing beside native equations in WPS/Word, and added standalone HTML export that preserves themes, formulas, code, tables, and images.
 - Added a direct link to the official bilingual formula guide with copy-ready mathematics, physics, and chemistry examples.
 - Improved handling of recent documents moved, deleted, or removed from chat caches, and added controlled IP/city visibility to authenticated feedback details.
 
@@ -152,7 +155,7 @@ The macOS build follows the computer's light/dark appearance automatically while
 - Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
 - `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls to the selected result; the polished find-and-replace panel follows the selected Chinese or English interface language.
 - Create a Markdown file and begin editing immediately, with autosave every 10 seconds while editing.
-- Export Word and PDF documents: Go generates standard DOCX files locally, converting LaTeX and mhchem Academic Formulas into scalable, editable native Word equations with right-aligned equation numbers. PDF export uses the Windows WebView2 or macOS system print panel to preserve preview styling for headings, tables, code blocks, and images.
+- Export Word, HTML, and PDF documents. Go generates standard DOCX files locally and converts LaTeX and mhchem Academic Formulas into native Word equations. HTML export creates a safe standalone page preserving the current color mode, accent, formulas, code, and images. PDF export uses the system print panel to preserve preview styling.
 - Built-in feedback for feature suggestions and functional issues, with optional contact details, up to five screenshots, and automatic app/system version information. Administrators can review, resolve, or delete feedback together with all attached images.
 - A collapsible hierarchical outline with clickable navigation, active section tracking and per-document folding memory. Its typography and default width adapt continuously across 1080p, 2K and 4K displays while remaining manually resizable. Document search, printing and back-to-top navigation remain available.
 - Recent documents update immediately and show their source directory below the filename, with the full path available on hover for distinguishing duplicate names. Right-click to pin, unpin, edit, save as, favorite, reveal or remove a record. Multiple pins persist above up to ten ordinary recent entries and can be reordered with the drag handle or keyboard arrow keys. Deleted, moved or temporarily unavailable pinned files can still be unpinned or removed from the menu.

@@ -14,6 +14,8 @@ export function DownloadAndApplyUpdate():Promise<void>;
 
 export function ExportDOCX(arg1:string,arg2:string,arg3:string):Promise<string>;
 
+export function ExportHTML(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<string>;
+
 export function GetFeedbackSystemInfo():Promise<main.FeedbackSystemInfo>;
 
 export function GetInitialFile():Promise<main.Document>;

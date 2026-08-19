@@ -1535,6 +1535,48 @@ func TestMacBundleUsesProductDisplayNameAndCanonicalFilename(t *testing.T) {
 		!strings.Contains(workflowText, `app_path="build/bin/轻阅 Markdown.app"`) {
 		t.Fatal("release workflow must build and package the canonical macOS app bundle")
 	}
+	if !strings.Contains(workflowText, `touch "${staging_dir}/.metadata_never_index"`) {
+		t.Fatal("macOS DMG must opt out of metadata indexing so its mounted app is not shown as a duplicate")
+	}
+}
+
+func TestMountedMacInstallerImageDetectionIsNarrow(t *testing.T) {
+	volumesRoot := t.TempDir()
+	validMount := filepath.Join(volumesRoot, appNameZH)
+	validApp := filepath.Join(validMount, appNameZH+".app", "Contents")
+	if err := os.MkdirAll(validApp, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(string(filepath.Separator)+"Applications", filepath.Join(validMount, "Applications")); err != nil {
+		t.Fatal(err)
+	}
+	validPlist := "<plist><dict><key>CFBundleIdentifier</key><string>" + macBundleIdentifier + "</string></dict></plist>"
+	if err := os.WriteFile(filepath.Join(validApp, "Info.plist"), []byte(validPlist), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	wrongBundleMount := filepath.Join(volumesRoot, appNameZH+" 1")
+	wrongBundleApp := filepath.Join(wrongBundleMount, appNameZH+".app", "Contents")
+	if err := os.MkdirAll(wrongBundleApp, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(string(filepath.Separator)+"Applications", filepath.Join(wrongBundleMount, "Applications")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(wrongBundleApp, "Info.plist"), []byte("<plist><dict><key>CFBundleIdentifier</key><string>example.invalid</string></dict></plist>"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	matches := findMountedMacInstallerImages(volumesRoot)
+	if len(matches) != 1 || matches[0] != validMount {
+		t.Fatalf("installer image matches = %#v, want only %q", matches, validMount)
+	}
+	if !isInstalledMacApplication(filepath.Join(string(filepath.Separator), "Applications", appNameZH+".app", "Contents", "MacOS", "QuilliteMarkdown"), "/Users/test") {
+		t.Fatal("the system Applications folder must be recognized as an installed app location")
+	}
+	if isInstalledMacApplication(filepath.Join(string(filepath.Separator), "Volumes", appNameZH, appNameZH+".app", "Contents", "MacOS", "QuilliteMarkdown"), "/Users/test") {
+		t.Fatal("an app running from a mounted installer image must never attempt to eject itself")
+	}
 }
 
 func TestPlainTextFilesAreSupportedEverywhere(t *testing.T) {

@@ -26,6 +26,10 @@ export function ExportDOCX(arg1, arg2, arg3) {
   return window['go']['main']['App']['ExportDOCX'](arg1, arg2, arg3);
 }
 
+export function ExportHTML(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['ExportHTML'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function GetFeedbackSystemInfo() {
   return window['go']['main']['App']['GetFeedbackSystemInfo']();
 }

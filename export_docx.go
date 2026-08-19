@@ -51,21 +51,22 @@ type docxImage struct {
 }
 
 type docxRun struct {
-	Text      string
-	MathXML   string
-	Bold      bool
-	Italic    bool
-	Strike    bool
-	Underline bool
-	Code      bool
-	BlockCode bool
-	Highlight bool
-	Sup       bool
-	Sub       bool
-	Color     string
-	Link      string
-	Break     bool
-	Image     *docxImage
+	Text       string
+	MathXML    string
+	MathSource string
+	Bold       bool
+	Italic     bool
+	Strike     bool
+	Underline  bool
+	Code       bool
+	BlockCode  bool
+	Highlight  bool
+	Sup        bool
+	Sub        bool
+	Color      string
+	Link       string
+	Break      bool
+	Image      *docxImage
 }
 
 type docxFormat struct {
@@ -138,7 +139,7 @@ func writeFileAtomically(filePath string, data []byte) error {
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return err
 	}
-	temporary, err := os.CreateTemp(directory, ".quillite-docx-*.tmp")
+	temporary, err := os.CreateTemp(directory, ".quillite-export-*.tmp")
 	if err != nil {
 		return err
 	}
@@ -370,7 +371,7 @@ func (b *docxBuilder) inlineRuns(node *html.Node, format docxFormat) []docxRun {
 	}
 	if hasHTMLClass(node, "math-inline") || hasHTMLClass(node, "math-block") {
 		if formula := mathOMML(node); formula != "" {
-			return []docxRun{{MathXML: formula}}
+			return []docxRun{{MathXML: formula, MathSource: mathSource(node)}}
 		}
 		if source := mathSource(node); source != "" {
 			return []docxRun{{Text: source, Bold: format.Bold, Italic: format.Italic, Color: format.Color, Link: format.Link, Code: true}}
@@ -423,6 +424,7 @@ func (b *docxBuilder) inlineRuns(node *html.Node, format docxFormat) []docxRun {
 }
 
 func (b *docxBuilder) writeParagraph(style string, indentLevel int, runs []docxRun) {
+	runs = removeDuplicateMathSourceRuns(runs)
 	if !runsHaveContent(runs) {
 		return
 	}
@@ -489,6 +491,7 @@ func taggedMathOMML(node *html.Node) (string, string, bool) {
 }
 
 func (b *docxBuilder) writeListParagraph(listLevel, numID int, runs []docxRun) {
+	runs = removeDuplicateMathSourceRuns(runs)
 	if !runsHaveContent(runs) {
 		return
 	}
@@ -504,6 +507,65 @@ func (b *docxBuilder) writeListParagraph(listLevel, numID int, runs []docxRun) {
 		b.writeRun(run)
 	}
 	b.body.WriteString(`</w:p>`)
+}
+
+// removeDuplicateMathSourceRuns prevents a KaTeX source fallback from being
+// emitted beside a successfully converted native Office Math equation. Some
+// WebView/WPS combinations expose both accessibility layers in list items.
+func removeDuplicateMathSourceRuns(runs []docxRun) []docxRun {
+	if len(runs) < 2 {
+		return runs
+	}
+	remove := make([]bool, len(runs))
+	for index, run := range runs {
+		source := normalizedMathSource(run.MathSource)
+		if run.MathXML == "" || source == "" {
+			continue
+		}
+		var combined strings.Builder
+		for candidate := index + 1; candidate < len(runs); candidate++ {
+			next := runs[candidate]
+			if next.MathXML != "" || next.Image != nil || next.Break {
+				break
+			}
+			combined.WriteString(next.Text)
+			text := normalizedMathSource(combined.String())
+			if text == "" {
+				continue
+			}
+			if text == source {
+				for duplicate := index + 1; duplicate <= candidate; duplicate++ {
+					remove[duplicate] = true
+				}
+				break
+			}
+			if !strings.HasPrefix(source, text) {
+				break
+			}
+		}
+	}
+	output := make([]docxRun, 0, len(runs))
+	for index, run := range runs {
+		if !remove[index] {
+			output = append(output, run)
+		}
+	}
+	return output
+}
+
+func normalizedMathSource(source string) string {
+	source = strings.TrimSpace(source)
+	switch {
+	case strings.HasPrefix(source, "$$") && strings.HasSuffix(source, "$$") && len(source) >= 4:
+		source = source[2 : len(source)-2]
+	case strings.HasPrefix(source, "\\(") && strings.HasSuffix(source, "\\)") && len(source) >= 4:
+		source = source[2 : len(source)-2]
+	case strings.HasPrefix(source, "\\[") && strings.HasSuffix(source, "\\]") && len(source) >= 4:
+		source = source[2 : len(source)-2]
+	case strings.HasPrefix(source, "$") && strings.HasSuffix(source, "$") && len(source) >= 2:
+		source = source[1 : len(source)-1]
+	}
+	return strings.Join(strings.Fields(source), "")
 }
 
 func (b *docxBuilder) writeCodeBlock(text string) {

@@ -33,6 +33,7 @@ window.quilliteMarkdown = {
   saveFile: (filePath, content) => desktopRuntime ? Backend.SaveFile(filePath, content) : resolved(null),
   saveAs: (filePath, content) => desktopRuntime ? Backend.SaveAs(filePath, content) : resolved(null),
   exportDOCX: (filePath, title, renderedHTML) => desktopRuntime ? Backend.ExportDOCX(filePath, title, renderedHTML) : resolved(''),
+  exportHTML: (filePath, title, renderedHTML, colorMode, accentColor) => desktopRuntime ? Backend.ExportHTML(filePath, title, renderedHTML, colorMode, accentColor) : resolved(''),
   selectImage: filePath => desktopRuntime ? Backend.SelectImage(filePath) : resolved(''),
   readImageData: (imagePath, documentDirectory) => desktopRuntime ? Backend.ReadImageData(imagePath, documentDirectory) : resolved(''),
   setDirty: dirty => desktopRuntime ? Backend.SetDirty(dirty) : resolved(),

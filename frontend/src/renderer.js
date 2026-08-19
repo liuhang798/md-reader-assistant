@@ -128,6 +128,7 @@ const translations = {
     codeLang: '选择编程语言', codeNoLang: '无语言（纯文本）',
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> 保存　 <kbd>Ctrl</kbd> + <kbd>E</kbd> 预览', backToTop: '回到顶部', backToTopAria: '回到文档顶部',
     toc: '本页目录', expandTocSection: '展开“{title}”', collapseTocSection: '折叠“{title}”', releaseToOpen: '松开以打开文档', interfaceLanguage: '界面语言', defaultApp: '设为默认 MD 应用', windowsSettings: 'Windows 设置',
+    exportHTML: '导出 HTML', htmlExported: 'HTML 网页已导出', htmlExportFailed: 'HTML 导出失败',
     zoomIn: '放大文字', zoomOut: '缩小文字', zoomReset: '恢复字号', textSizePresets: '文字大小调节', textSizeControl: '文字大小', fontScaleDefault: '默认 100%', fontScaleShortcuts: '<span class="font-scale-shortcut"><kbd>Ctrl +</kbd><em>放大</em></span><span class="font-scale-shortcut"><kbd>Ctrl −</kbd><em>缩小</em></span><span class="font-scale-shortcut"><kbd>Ctrl 0</kbd><em>默认</em></span>', fontScaleAuto: '自动适配显示器', autoFontScaleEnabled: '已自动适配显示器：{percent}%', exportDocument: '导出文档', exportWord: '导出 Word', exportPDF: '导出 PDF', systemPrint: '系统打印', wordExported: 'Word 文档已导出', wordExportFailed: 'Word 导出失败', pdfExportHint: '请在系统打印窗口中选择“Microsoft Print to PDF”或“存储为 PDF”', pdfTutorialLabel: 'PDF 导出指南', pdfTutorialTitle: '使用系统打印保存 PDF', pdfTutorialIntro: '为了尽量保持 Markdown 预览中的表格、代码块和图片样式，轻阅将打开系统打印窗口。请按下面步骤保存为 PDF。', pdfTutorialStep1Title: '打开系统打印', pdfTutorialStep1Text: '点击下方继续按钮，等待打印窗口出现。', pdfTutorialStep2Title: '选择 PDF 选项', pdfTutorialStep2Text: 'Windows 选择“Microsoft Print to PDF”；macOS 选择“存储为 PDF”。', pdfTutorialStep3Title: '选择位置并保存', pdfTutorialStep3Text: '确认打印后，输入文件名并选择保存目录。', pdfWindowsPrintTitle: '打印', pdfPrinterLabel: '打印机', pdfPagesLabel: '页面', pdfAllPages: '全部', pdfPrintButton: '打印', pdfWindowsCallout: '在“打印机”中选择 Microsoft Print to PDF', pdfMacPrintTitle: '打印', pdfSelectedPrinter: '已选择的打印机', pdfPresetsLabel: '预设', pdfDefaultPreset: '默认设置', pdfSaveAsPDF: '存储为 PDF…', pdfMacCallout: '打开左下角 PDF 菜单并选择“存储为 PDF”', pdfTutorialNote: '打印窗口由操作系统提供，实际界面可能因系统版本略有不同。', pdfContinueToPrint: '继续并打开打印窗口', exportNoDocument: '请先打开一个文档', printDocument: '打印文档', copy: '复制', copied: '已复制',
     docWidth: '文档宽度', widthNarrow: '窄', widthMedium: '中', widthWide: '宽', widthFull: '全宽', docWidthChanged: '文档宽度：{level}',
     bodyFontScale: '文字字号 {percent}%', recentOpened: '最近打开', pinnedRecentGroup: '置顶', ordinaryRecentGroup: '最近', pinnedRecent: '已置顶', pinRecent: '置顶', unpinRecent: '取消置顶', pinRecentAdded: '已置顶文档', pinRecentRemoved: '已取消置顶', pinRecentUnavailable: '文件已不可用，未能置顶；最近列表已重新同步', reorderPinnedRecent: '拖动或使用上下方向键调整“{name}”的置顶顺序', pinnedOrderPosition: '已将“{name}”移到置顶第 {position} 项，共 {total} 项', pinRecentSaveFailed: '置顶状态保存失败，已恢复并重新同步', pinnedOrderSaveFailed: '置顶顺序保存失败，已恢复并重新同步', favorited: '已收藏', favoriteDocument: '收藏文档', unfavoriteDocument: '取消收藏', favoriteAdded: '已收藏文档', favoriteRemoved: '已取消收藏，原文件未删除', recentContextHint: '右键打开文档操作菜单', recentContextMenuTitle: '文档操作', recentEdit: '编辑', recentSaveAs: '另存为', recentReveal: '打开所在文件夹', recentRemove: '移除', recentRevealFailed: '无法打开文件所在目录', recentMissing: '文件不存在', recentMissingTitle: '文件已删除、移动，或所在磁盘当前不可用', currentDocumentMissing: '原文件已移动或删除，当前预览内容已保留', recentMissingAria: '{name}，文件不存在', recentRemoved: '已从最近阅读中移除，原文件未删除', emptyRecent: '还没有最近文档', emptyFavorites: '还没有收藏文档', emptyExplorer: '请先打开一个文件夹',
@@ -165,6 +166,7 @@ const translations = {
     codeLang: 'Select a language', codeNoLang: 'No language (plain text)',
     editorShortcut: '<kbd>Ctrl</kbd> + <kbd>S</kbd> Save　 <kbd>Ctrl</kbd> + <kbd>E</kbd> Preview', backToTop: 'Back to top', backToTopAria: 'Back to document top',
     toc: 'ON THIS PAGE', expandTocSection: 'Expand “{title}”', collapseTocSection: 'Collapse “{title}”', releaseToOpen: 'Release to open document', interfaceLanguage: 'Interface language', defaultApp: 'Set as default MD app', windowsSettings: 'Windows Settings',
+    exportHTML: 'Export HTML', htmlExported: 'HTML page exported', htmlExportFailed: 'HTML export failed',
     zoomIn: 'Increase text size', zoomOut: 'Decrease text size', zoomReset: 'Reset text size', textSizePresets: 'Text size control', textSizeControl: 'Text size', fontScaleDefault: 'Default 100%', fontScaleShortcuts: '<span class="font-scale-shortcut"><kbd>Ctrl +</kbd><em>Larger</em></span><span class="font-scale-shortcut"><kbd>Ctrl −</kbd><em>Smaller</em></span><span class="font-scale-shortcut"><kbd>Ctrl 0</kbd><em>Default</em></span>', fontScaleAuto: 'Fit to display automatically', autoFontScaleEnabled: 'Display-adapted text size: {percent}%', exportDocument: 'Export document', exportWord: 'Export Word', exportPDF: 'Export PDF', systemPrint: 'System print', wordExported: 'Word document exported', wordExportFailed: 'Word export failed', pdfExportHint: 'Choose “Microsoft Print to PDF” or “Save as PDF” in the system print dialog', pdfTutorialLabel: 'PDF EXPORT GUIDE', pdfTutorialTitle: 'Save a PDF with system printing', pdfTutorialIntro: 'To preserve the tables, code blocks, images, and overall Markdown preview styling, Quillite opens the system print window. Follow these steps to save a PDF.', pdfTutorialStep1Title: 'Open system printing', pdfTutorialStep1Text: 'Select Continue below and wait for the print window to appear.', pdfTutorialStep2Title: 'Choose the PDF option', pdfTutorialStep2Text: 'On Windows choose “Microsoft Print to PDF”; on macOS choose “Save as PDF”.', pdfTutorialStep3Title: 'Choose a location and save', pdfTutorialStep3Text: 'Confirm printing, enter a file name, and choose the destination folder.', pdfWindowsPrintTitle: 'Print', pdfPrinterLabel: 'Printer', pdfPagesLabel: 'Pages', pdfAllPages: 'All', pdfPrintButton: 'Print', pdfWindowsCallout: 'Choose Microsoft Print to PDF under Printer', pdfMacPrintTitle: 'Print', pdfSelectedPrinter: 'Selected printer', pdfPresetsLabel: 'Presets', pdfDefaultPreset: 'Default Settings', pdfSaveAsPDF: 'Save as PDF…', pdfMacCallout: 'Open the PDF menu at bottom left and choose “Save as PDF”', pdfTutorialNote: 'The print window is provided by your operating system, so its appearance may vary slightly by system version.', pdfContinueToPrint: 'Continue to print window', exportNoDocument: 'Open a document first', printDocument: 'Print document', copy: 'Copy', copied: 'Copied',
     docWidth: 'Document width', widthNarrow: 'Narrow', widthMedium: 'Medium', widthWide: 'Wide', widthFull: 'Full width', docWidthChanged: 'Document width: {level}',
     bodyFontScale: 'Text size {percent}%', recentOpened: 'Recently opened', pinnedRecentGroup: 'PINNED', ordinaryRecentGroup: 'RECENT', pinnedRecent: 'Pinned', pinRecent: 'Pin', unpinRecent: 'Unpin', pinRecentAdded: 'Document pinned', pinRecentRemoved: 'Document unpinned', pinRecentUnavailable: 'The file is no longer available and was not pinned. Recent documents were synced again.', reorderPinnedRecent: 'Drag or use the up and down arrow keys to reorder pinned document “{name}”', pinnedOrderPosition: 'Moved “{name}” to pinned position {position} of {total}', pinRecentSaveFailed: 'Could not save the pinned state. The list was restored and synced again.', pinnedOrderSaveFailed: 'Could not save the pinned order. The list was restored and synced again.', favorited: 'Favorited', favoriteDocument: 'Add to Favorites', unfavoriteDocument: 'Remove from Favorites', favoriteAdded: 'Document added to Favorites', favoriteRemoved: 'Removed from Favorites. The original file was not deleted.', recentContextHint: 'Right-click for document actions', recentContextMenuTitle: 'Document actions', recentEdit: 'Edit', recentSaveAs: 'Save As', recentReveal: 'Show in Folder', recentRemove: 'Remove', recentRevealFailed: 'Unable to show the file in its folder', recentMissing: 'File unavailable', recentMissingTitle: 'The file was deleted, moved, or its disk is currently unavailable', currentDocumentMissing: 'The original file was moved or deleted. The current preview has been preserved.', recentMissingAria: '{name}, file unavailable', recentRemoved: 'Removed from Recent. The original file was not deleted.', emptyRecent: 'No recent documents', emptyFavorites: 'No favorite documents', emptyExplorer: 'Open a folder to browse files',
@@ -2643,6 +2645,24 @@ async function waitForPreviewImages(container, timeout = 3000) {
 
 function cleanRenderedHTMLForExport(container) {
   const clone = container.cloneNode(true);
+  clone.querySelectorAll('.math-inline, .math-block').forEach(formula => {
+    const annotation = formula.querySelector('annotation[encoding="application/x-tex"]');
+    if (!formula.hasAttribute('data-math-source') && annotation?.textContent?.trim()) {
+      formula.setAttribute('data-math-source', encodeURIComponent(annotation.textContent.trim()));
+    }
+    // Export exactly one representation of a formula. KaTeX deliberately
+    // renders both accessible MathML and a visual HTML layer; cloning the
+    // whole preview can otherwise let WPS expose the hidden LaTeX/HTML layer
+    // beside the native Office Math equation.
+    const math = formula.querySelector('math');
+    if (math) {
+      const mathOnly = math.cloneNode(true);
+      mathOnly.querySelectorAll('annotation, annotation-xml').forEach(element => element.remove());
+      formula.replaceChildren(mathOnly);
+    } else {
+      formula.replaceChildren();
+    }
+  });
   clone.querySelectorAll('button, script, style, svg').forEach(element => element.remove());
   clone.querySelectorAll('[id], [data-line], [contenteditable]').forEach(element => {
     element.removeAttribute('id');
@@ -2670,6 +2690,29 @@ async function exportWordDocument() {
     reportSilentError(error, 'document.export-word');
     console.error(error);
     showToast(t('wordExportFailed'), 'error');
+  }
+}
+
+async function exportHTMLDocument() {
+  if (!state.currentFile) {
+    showToast(t('exportNoDocument'), 'warning');
+    return;
+  }
+  const container = exportPreviewContainer();
+  try {
+    await waitForPreviewImages(container);
+    const output = await window.quilliteMarkdown.exportHTML(
+      state.currentFile.path,
+      state.currentFile.name,
+      cleanRenderedHTMLForExport(container),
+      state.colorMode,
+      ACCENT_THEMES[state.accentTheme].color
+    );
+    if (output) showToast(t('htmlExported'), 'success');
+  } catch (error) {
+    reportSilentError(error, 'document.export-html');
+    console.error(error);
+    showToast(t('htmlExportFailed'), 'error');
   }
 }
 
@@ -2710,6 +2753,7 @@ function runDocumentHeaderAction(action) {
   closeDocumentActionsMenu();
   if (action === 'save-as' && state.currentFile?.path) saveLibraryDocumentAs(state.currentFile.path);
   if (action === 'export-word') exportWordDocument();
+  if (action === 'export-html') exportHTMLDocument();
   if (action === 'export-pdf') exportPDFDocument();
   if (action === 'print') {
     if (state.editing) toggleEditor(false);
@@ -3660,6 +3704,7 @@ els.moreMenu.addEventListener('click', event => {
     window.quilliteMarkdown.print();
   }
   if (action === 'export-word') exportWordDocument();
+  if (action === 'export-html') exportHTMLDocument();
   if (action === 'export-pdf') exportPDFDocument();
   if (action === 'feedback') openFeedback();
   if (action === 'check-update') checkForUpdates(true);
