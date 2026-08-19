@@ -83,6 +83,22 @@ line 2</div>`, "Escape", t.TempDir())
 	assertWellFormedXML(t, files["word/document.xml"])
 }
 
+func TestBuildDOCXPreservesMathSourceOnce(t *testing.T) {
+	html := `<p>Inline <span class="math-inline"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">E = mc^2</annotation></semantics></math></span><span class="katex-html">visual duplicate</span></span></p>` +
+		`<div class="math-block"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">\\ce{2H2 + O2 -&gt; 2H2O} \\tag{1}</annotation></semantics></math></span><span class="katex-html">visual duplicate</span></div>`
+	data, err := buildDOCX(html, "Math", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(readDOCXFiles(t, data)["word/document.xml"])
+	if strings.Count(document, "E = mc^2") != 1 || strings.Count(document, `\\ce{2H2 + O2`) != 1 {
+		t.Fatalf("math source should be exported once: %s", document)
+	}
+	if strings.Contains(document, "visual duplicate") {
+		t.Fatal("KaTeX accessibility and visual layers were both exported")
+	}
+}
+
 func TestBuildDOCXRestartsSeparateOrderedLists(t *testing.T) {
 	data, err := buildDOCX(`<ol><li>第一组</li><li>第二项</li></ol><p>分隔内容</p><ol><li>重新从一开始</li></ol>`, "Lists", t.TempDir())
 	if err != nil {

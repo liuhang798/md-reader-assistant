@@ -12,6 +12,7 @@
 const HR_RE = /^ {0,3}(?:[-*_])(?:[ \t]*[-*_]){2,}[ \t]*$/;
 const ATX_HEADING_RE = /^ {0,3}#{1,6}(?:\s|$)/;
 const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
+const MATH_BLOCK_RE = /^ {0,3}(\$\$|\\\[)/;
 const LIST_ITEM_RE = /^ {0,3}(?:[-+*]|\d+[.)])\s+\S/;
 const QUOTE_RE = /^ {0,3}>/;
 const LINK_DEF_RE = /^ {0,3}\[[^\]]+\]:\s*\S/;
@@ -56,6 +57,21 @@ export function scanMarkdownBlockStartLines(markdown) {
       const close = new RegExp(`^ {0,3}${char}{3,}\\s*$`);
       let j = i + 1;
       while (j < len && !close.test(lines[j])) j++;
+      i = j + 1;
+      continue;
+    }
+
+    // Typora 风格的块级公式：$$ ... $$ 或 \[ ... \]。
+    // 整个公式只对应一个预览顶层元素，避免内部空行干扰源码定位。
+    const mathBlock = line.match(MATH_BLOCK_RE);
+    if (mathBlock) {
+      const opener = mathBlock[1];
+      const closer = opener === '$$' ? '$$' : '\\]';
+      const afterOpening = line.slice(mathBlock[0].length);
+      if (afterOpening.includes(closer)) { i++; continue; }
+      let j = i + 1;
+      const closePattern = opener === '$$' ? /^ {0,3}\$\$[ \t]*$/ : /^ {0,3}\\\][ \t]*$/;
+      while (j < len && !closePattern.test(lines[j])) j++;
       i = j + 1;
       continue;
     }

@@ -1,10 +1,13 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import 'katex/dist/katex.min.css';
 import hljs from 'highlight.js/lib/common';
 import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage, resolveMacColorMode, temporaryMacColorModeAfterToggle } from './appearance.js';
 import { previewWheelZoomDirection } from './font-wheel-zoom.js';
 import { clampFontScale, readFontScaleStorage, recommendedFontScale } from './font-scaling.js';
 import { escapeMarkdownText, highlightExtension, nextFootnoteNumber, prepareFootnotes, renderFootnoteSection } from './markdown-formats.js';
+import { buildFormulaExpression, buildFormulaMarkdown, FORMULA_DISCIPLINES, FORMULA_GROUP_LABELS, formulaPreviewExpression, formulaTemplateById, formulaTemplatesForDiscipline, formulaValues, parseFormulaMarkdown } from './formula-templates.js';
+import { mathExtensions, renderLatex } from './math-rendering.js';
 import { scanMarkdownBlockStartLines } from './preview-line-map.js';
 import { directoryFromDocumentPath, filesFromPreferencePaths, isMissingDocumentError, normalizeSidebarMode, partitionRecentFiles, pinRecentFile, reorderPinnedRecentFiles, sameDocumentPath, unpinRecentFile, upsertRecentFile } from './library-state.js';
 import { TEXT_COLOR_PALETTE, TEXT_COLOR_VALUES, textColorValue } from './text-colors.js';
@@ -13,6 +16,7 @@ import { buildTocTree, readCollapsedToc, writeCollapsedToc } from './toc-tree.js
 
 const $ = selector => document.querySelector(selector);
 const DOC_WIDTH_LEVELS = ['narrow', 'medium', 'wide', 'full'];
+const MATH_GUIDE_URL = 'https://qm.ssssa.cn/guides/formulas/';
 let codeEditor;
 let editorExtensions = [];
 let basicSetup;
@@ -128,7 +132,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限', saveAsRequired: '需要另存为', editPermissionDenied: '当前文件无编辑权限，可能是微信缓存只读或正被其他程序占用。请另存为可编辑副本后再编辑', editPermissionLabel: '编辑权限', editPermissionTitle: '当前文件无法直接编辑', editPermissionDescription: '轻阅无法获得这个文件的写入权限。原文件不会被修改或删除。', currentDocument: '当前文档', possibleReasons: '可能原因', permissionReasonCache: '文件来自微信、企业微信等应用的只读缓存目录', permissionReasonReadOnly: '文件或所在目录被设置为只读，当前账号没有写入权限', permissionReasonLocked: '文件正被其他程序占用或锁定', editPermissionGuide: '建议另存为一个可编辑副本。保存成功后，轻阅会自动打开副本并进入编辑模式。', saveCopyAndEdit: '另存为副本并编辑', saveAsRequiredHint: '原文件可能来自微信缓存、处于只读状态或正被其他程序占用，请另存为后继续编辑', saveAsFallback: '原文件无法直接写入，已为你打开“另存为”',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.4.8', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.4.9', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', officialWebsite: '官方网站', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     usageAnalytics: '参与产品改进计划', usageAnalyticsDescription: '此开关仅控制异常回传。勾选后，软件发生异常时会静默提交已清理的错误日志。无论是否勾选，每天最多提交一次匿名活跃记录；不会上传文档内容、文件名、文件路径或联系方式。', usageAnalyticsEnabled: '已参与产品改进计划', usageAnalyticsDisabled: '已关闭异常自动回传', usageAnalyticsSaveFailed: '无法保存产品改进计划设置',
     feedback: '意见反馈', feedbackShortHint: '建议与异常', feedbackLabel: '帮助我们改进', feedbackTitle: '意见反馈', feedbackIntro: '告诉我们你的建议或遇到的问题。邮箱和手机均为选填，仅用于需要进一步确认时联系你。', feedbackType: '反馈类型', feedbackFeature: '功能建议', feedbackFeatureHint: '希望新增或优化的功能', feedbackBug: '功能异常', feedbackBugHint: '功能无法使用或结果不正确', feedbackDescription: '反馈说明', feedbackDescriptionPlaceholder: '请描述期望效果、操作步骤或异常现象', feedbackEmail: '联系邮箱（选填）', feedbackPhone: '手机号码（选填）', feedbackPhonePlaceholder: '用于必要时联系', feedbackImages: '上传图片（选填）', feedbackImagesHint: '最多 5 张，支持 PNG、JPG、WebP；每张不超过 5 MB', selectImages: '选择图片', removeImage: '移除图片', softwareVersion: '软件版本', systemVersion: '系统版本', feedbackPrivacy: '提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；服务器会记录请求 IP 并解析所在城市，不会上传当前文档。', submitFeedback: '提交反馈', feedbackSubmitting: '正在提交反馈…', feedbackSubmitted: '感谢反馈，我们会认真查看', feedbackSubmitFailed: '反馈提交失败', feedbackImageSelectFailed: '无法选择反馈图片', feedbackNeedDescription: '请至少填写 5 个字的反馈说明',
@@ -138,8 +142,9 @@ const translations = {
     downloadAndUpdate: '下载并更新', downloadingUpdate: '正在下载更新… {percent}%', preparingUpdate: '正在安装更新…', updateFailed: '更新失败，请稍后重试', updateBlockedByUnsavedChanges: '请先保存当前文档再更新',
     formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', formatPainter: '格式刷', formatPainterTitle: '格式刷：复制选中文本的格式，再选中目标文本即可自动应用', formatCopied: '已复制格式，选中目标文本后自动应用', formatApplied: '格式已应用', formatNeedSelection: '请先选中要复制格式的文本', formatCleared: '已取消格式刷', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3', heading4: '标题 4', heading5: '标题 5', heading6: '标题 6',
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', strikethroughTitle: '删除线 (Ctrl+Shift+X)', highlightTitle: '高亮 (Ctrl+Shift+H)', textColorTitle: '文字颜色', textColorMenu: '选择文字颜色', textColorDefault: '默认颜色', textColorOption: '颜色', coloredText: '彩色文字', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', horizontalRule: '分隔线', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
-    moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
+    moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', formulaBuilder: '学科公式', inlineMath: '行内公式', mathBlock: '块级公式', chemicalFormula: '化学公式', mathGuide: '查看公式教程 ↗', numberedMath: '编号公式', mathExpression: 'LaTeX 公式', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
     markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试', imageDialogHint: '选择本地图片，或粘贴在线图片链接。', imageUrlLabel: '图片链接', imageUrlPlaceholder: 'https:// 或 http:// 链接', imageAltPlaceholder: '可选的图片说明', localImage: '本地图片…', imageUrlInvalid: '请输入有效的 http:// 或 https:// 链接',
+    formulaWizardLabel: '学科公式', formulaWizardTitle: '选择并生成公式', formulaWizardHint: '按学科选择常用公式，填写参数后直接插入 Markdown。', formulaSubject: '学科分类', formulaOutput: '插入方式', selectedFormula: '已选公式', equationNumber: '公式编号', formulaPreview: '实时预览', generatedMarkdown: '生成的 Markdown', insertFormula: '插入公式', formulaModeInline: '行内公式', formulaModeBlock: '块级公式', formulaModeNumbered: '编号公式', formulaInvalid: '请填写有效的公式内容',
     resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度', resizeEditor: '拖动调整预览宽度'
   },
   en: {
@@ -164,7 +169,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.', saveAsRequired: 'Save As required', editPermissionDenied: 'This file cannot be edited because it may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', editPermissionLabel: 'EDIT PERMISSION', editPermissionTitle: 'This file cannot be edited directly', editPermissionDescription: 'Quillite cannot obtain write access to this file. The original will not be changed or deleted.', currentDocument: 'Current document', possibleReasons: 'Possible reasons', permissionReasonCache: 'The file comes from a read-only WeChat, WeCom, or other application cache', permissionReasonReadOnly: 'The file or its folder is read-only, or your account lacks write permission', permissionReasonLocked: 'Another program currently has the file open or locked', editPermissionGuide: 'Save a writable copy instead. Quillite will open the copy and enter editing mode automatically after it is saved.', saveCopyAndEdit: 'Save Copy & Edit', saveAsRequiredHint: 'The source may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', saveAsFallback: 'The source cannot be written. Save As has been opened for you.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.4.8', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.4.9', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', officialWebsite: 'Official website', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     usageAnalytics: 'Join the product improvement program', usageAnalyticsDescription: 'This switch controls error reporting only. When enabled, sanitized error logs are submitted silently after failures. One anonymous daily-active event is submitted at most once per day regardless of this setting; document content, file names, paths, and contact details are never uploaded.', usageAnalyticsEnabled: 'Product improvement program enabled', usageAnalyticsDisabled: 'Automatic error reporting disabled', usageAnalyticsSaveFailed: 'Unable to save the product improvement setting',
     feedback: 'Feedback', feedbackShortHint: 'Ideas & issues', feedbackLabel: 'HELP US IMPROVE', feedbackTitle: 'Send Feedback', feedbackIntro: 'Tell us what you would like improved or what went wrong. Email and phone are optional and used only if we need to follow up.', feedbackType: 'Feedback type', feedbackFeature: 'Feature suggestion', feedbackFeatureHint: 'A new feature or an improvement', feedbackBug: 'Functional issue', feedbackBugHint: 'Something does not work as expected', feedbackDescription: 'Description', feedbackDescriptionPlaceholder: 'Describe the expected result, steps, or issue', feedbackEmail: 'Email (optional)', feedbackPhone: 'Phone (optional)', feedbackPhonePlaceholder: 'Only for necessary follow-up', feedbackImages: 'Images (optional)', feedbackImagesHint: 'Up to 5 PNG, JPG, or WebP images; 5 MB each', selectImages: 'Choose images', removeImage: 'Remove image', softwareVersion: 'App version', systemVersion: 'System version', feedbackPrivacy: 'Submitting sends this feedback, optional contact details, selected images, and version information to the Quillite website server. The server records the request IP and resolves its city. Your current document is never uploaded.', submitFeedback: 'Submit feedback', feedbackSubmitting: 'Submitting feedback…', feedbackSubmitted: 'Thank you. We will review your feedback.', feedbackSubmitFailed: 'Unable to submit feedback', feedbackImageSelectFailed: 'Unable to choose feedback images', feedbackNeedDescription: 'Enter at least 5 characters',
@@ -174,8 +179,9 @@ const translations = {
     downloadAndUpdate: 'Download & Update', downloadingUpdate: 'Downloading update… {percent}%', preparingUpdate: 'Installing update…', updateFailed: 'Update failed. Please try again.', updateBlockedByUnsavedChanges: 'Save the current document before updating',
     formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', formatPainter: 'Format painter', formatPainterTitle: 'Format painter: copy the selected text format, then select the target text to apply automatically', formatCopied: 'Format copied. Select the target text to apply automatically.', formatApplied: 'Format applied', formatNeedSelection: 'Select the text whose format you want to copy first', formatCleared: 'Format painter cancelled', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3', heading4: 'Heading 4', heading5: 'Heading 5', heading6: 'Heading 6',
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', strikethroughTitle: 'Strikethrough (Ctrl+Shift+X)', highlightTitle: 'Highlight (Ctrl+Shift+H)', textColorTitle: 'Text color', textColorMenu: 'Choose text color', textColorDefault: 'Default', textColorOption: 'Color', coloredText: 'colored text', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', horizontalRule: 'Horizontal rule', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
-    moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
+    moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', formulaBuilder: 'Academic formulas', inlineMath: 'Inline formula', mathBlock: 'Display formula', chemicalFormula: 'Chemical formula', mathGuide: 'Formula guide ↗', numberedMath: 'Numbered formula', mathExpression: 'LaTeX expression', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
     markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.', imageDialogHint: 'Pick a local image or paste an online image link.', imageUrlLabel: 'Image URL', imageUrlPlaceholder: 'https:// or http:// link', imageAltPlaceholder: 'Optional image description', localImage: 'Local image…', imageUrlInvalid: 'Enter a valid http:// or https:// link',
+    formulaWizardLabel: 'ACADEMIC FORMULAS', formulaWizardTitle: 'Choose and build a formula', formulaWizardHint: 'Choose a common formula by subject, fill in its values, and insert the generated Markdown.', formulaSubject: 'Subjects', formulaOutput: 'Insert as', selectedFormula: 'Selected formula', equationNumber: 'Equation number', formulaPreview: 'Live preview', generatedMarkdown: 'Generated Markdown', insertFormula: 'Insert formula', formulaModeInline: 'Inline', formulaModeBlock: 'Display', formulaModeNumbered: 'Numbered', formulaInvalid: 'Enter valid formula content',
     resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline', resizeEditor: 'Drag to resize the preview'
   }
 };
@@ -256,14 +262,14 @@ const els = {
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'), previewLocateHint: $('#previewLocateHint'),
   exitEditButton: $('#exitEditButton'), codeLangMenu: $('#codeLangMenu'), textColorMenu: $('#textColorMenu'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), feedbackDialog: $('#feedbackDialog'), feedbackForm: $('#feedbackForm'), feedbackImageList: $('#feedbackImageList'), updateDialog: $('#updateDialog'), editPermissionDialog: $('#editPermissionDialog'), editPermissionFileName: $('#editPermissionFileName'), pdfTutorialDialog: $('#pdfTutorialDialog'), usageAnalyticsToggle: $('#usageAnalyticsToggle'),
-  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'),
+  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'), formulaDialog: $('#formulaDialog'), formulaDisciplineTabs: $('#formulaDisciplineTabs'), formulaTemplateList: $('#formulaTemplateList'), formulaBuilderPanel: $('#formulaBuilderPanel'), formulaOutputModes: $('#formulaOutputModes'), formulaFields: $('#formulaFields'), formulaPreview: $('#formulaPreview'), formulaMarkdownSource: $('#formulaMarkdownSource'),
   editorUndoButton: $('#editorUndoButton')
 };
 
 marked.use({
   gfm: true,
   breaks: false,
-  extensions: [highlightExtension],
+  extensions: [highlightExtension, ...mathExtensions],
   renderer: {
     link({ href, title, tokens }) {
       const text = this.parser.parseInline(tokens);
@@ -592,6 +598,7 @@ function runFormatCommand(command) {
   if (command === 'underline') return wrapSelection('<u>', '</u>', t('underline'));
   if (command === 'superscript') return wrapSelection('<sup>', '</sup>', t('superscript'));
   if (command === 'subscript') return wrapSelection('<sub>', '</sub>', t('subscript'));
+  if (command === 'formula-builder') { openFormulaDialog(); return true; }
   if (command === 'keyboard-key') return wrapSelection('<kbd>', '</kbd>', state.language === 'en' ? 'Key' : '按键');
   if (command === 'comment') return wrapSelection('<!-- ', ' -->', state.language === 'en' ? 'comment' : '注释');
   if (command === 'autolink') return wrapSelection('<', '>', 'https://example.com');
@@ -877,6 +884,230 @@ function initializeFormatToolbarOverflow() {
     window.addEventListener('resize', scheduleFormatToolbarLayout);
   }
   scheduleFormatToolbarLayout();
+}
+
+const formulaWizardState = {
+  mode: 'block',
+  discipline: 'all',
+  templateId: 'equation',
+  valuesByTemplate: new Map(),
+};
+
+function formulaLocale() {
+  return state.language === 'en' ? 'en' : 'zh';
+}
+
+function selectedFormulaDetails() {
+  if (!codeEditor) return { source: '', templateId: 'equation', mode: 'block' };
+  const selection = codeEditor.state.selection.main;
+  const raw = codeEditor.state.doc.sliceString(selection.from, selection.to).trim();
+  if (!raw) return { source: '', templateId: 'equation', mode: 'block' };
+  let mode = 'block';
+  let source = raw;
+  if (/^\$\$(?:.|\n)*\$\$$/.test(raw)) source = raw.slice(2, -2).trim();
+  else if (/^\$(?:.|\n)*\$$/.test(raw)) {
+    mode = 'inline';
+    source = raw.slice(1, -1).trim();
+  } else if (/^\\\[(?:.|\n)*\\\]$/.test(raw)) source = raw.slice(2, -2).trim();
+  else if (/^\\\((?:.|\n)*\\\)$/.test(raw)) {
+    mode = 'inline';
+    source = raw.slice(2, -2).trim();
+  }
+  if (/\\tag\{[^{}]*\}\s*$/.test(source)) mode = 'numbered';
+  source = source.replace(/\s+\\tag\{[^{}]*\}\s*$/, '').trim();
+  const chemistry = source.match(/^\\ce\{([\s\S]*)\}$/);
+  if (chemistry) return { source: chemistry[1].trim(), templateId: 'chem-custom', mode };
+  return { source, templateId: 'custom', mode };
+}
+
+function formulaTemplateValues(template) {
+  return formulaWizardState.valuesByTemplate.get(template.id) || formulaValues(template);
+}
+
+function formulaFieldValues() {
+  return Object.fromEntries([...els.formulaFields.querySelectorAll('[data-formula-field]')].map(input => [input.dataset.formulaField, input.value]));
+}
+
+function rememberFormulaFieldValues() {
+  const template = formulaTemplateById(formulaWizardState.templateId);
+  if (template) formulaWizardState.valuesByTemplate.set(template.id, formulaFieldValues());
+}
+
+function renderFormulaDisciplineTabs() {
+  const locale = formulaLocale();
+  els.formulaDisciplineTabs.replaceChildren();
+  for (const discipline of FORMULA_DISCIPLINES) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.formulaDiscipline = discipline.id;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', String(discipline.id === formulaWizardState.discipline));
+    button.classList.toggle('active', discipline.id === formulaWizardState.discipline);
+    button.textContent = discipline.name[locale];
+    els.formulaDisciplineTabs.append(button);
+  }
+}
+
+function renderFormulaTemplateList() {
+  const locale = formulaLocale();
+  const templates = formulaTemplatesForDiscipline(formulaWizardState.discipline);
+  els.formulaTemplateList.replaceChildren();
+  let lastGroup = '';
+  for (const template of templates) {
+    if (template.group !== lastGroup) {
+      lastGroup = template.group;
+      const group = document.createElement('div');
+      group.className = 'formula-template-group';
+      group.textContent = FORMULA_GROUP_LABELS[template.group]?.[locale] || template.group;
+      els.formulaTemplateList.append(group);
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.formulaTemplate = template.id;
+    button.classList.toggle('active', template.id === formulaWizardState.templateId);
+    button.setAttribute('aria-pressed', String(template.id === formulaWizardState.templateId));
+    const name = document.createElement('span');
+    name.textContent = template.name[locale];
+    const kind = document.createElement('code');
+    kind.textContent = template.kind === 'chemistry' ? 'ce' : 'fx';
+    button.append(name, kind);
+    els.formulaTemplateList.append(button);
+  }
+}
+
+function renderFormulaOutputModes() {
+  for (const button of els.formulaOutputModes.querySelectorAll('[data-formula-mode]')) {
+    const active = button.dataset.formulaMode === formulaWizardState.mode;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  }
+}
+
+function renderFormulaFields() {
+  const locale = formulaLocale();
+  const template = formulaTemplateById(formulaWizardState.templateId);
+  if (!template) return;
+  const values = formulaTemplateValues(template);
+  els.formulaFields.replaceChildren();
+  $('#formulaTemplateName').textContent = template.name[locale];
+  $('#formulaTemplateKind').textContent = template.kind === 'chemistry' ? 'mhchem' : 'LaTeX';
+  for (const item of template.fields) {
+    const label = document.createElement('label');
+    const caption = document.createElement('span');
+    caption.textContent = item.label[locale];
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = 240;
+    input.autocomplete = 'off';
+    input.dataset.formulaField = item.key;
+    input.value = values[item.key] ?? item.value;
+    input.placeholder = item.placeholder || item.value;
+    label.append(caption, input);
+    els.formulaFields.append(label);
+  }
+  $('#formulaNumberField').classList.toggle('hidden', formulaWizardState.mode !== 'numbered');
+  renderFormulaOutputModes();
+  updateFormulaPreview();
+}
+
+function updateFormulaPreview() {
+  const template = formulaTemplateById(formulaWizardState.templateId);
+  if (!template) return;
+  const values = formulaFieldValues();
+  formulaWizardState.valuesByTemplate.set(template.id, values);
+  const expression = buildFormulaExpression(template, values);
+  const equationNumber = $('#formulaNumber').value;
+  const markdownSource = buildFormulaMarkdown(formulaWizardState.mode, expression, equationNumber);
+  els.formulaMarkdownSource.value = markdownSource;
+  if (!expression) {
+    els.formulaPreview.textContent = t('formulaInvalid');
+    return;
+  }
+  const previewExpression = formulaPreviewExpression(formulaWizardState.mode, expression, equationNumber);
+  const displayMode = formulaWizardState.mode === 'block' || formulaWizardState.mode === 'numbered';
+  els.formulaPreview.innerHTML = DOMPurify.sanitize(renderLatex(previewExpression, displayMode));
+}
+
+function updateFormulaPreviewFromMarkdown() {
+  const { expression, displayMode } = parseFormulaMarkdown(els.formulaMarkdownSource.value);
+  if (!expression) {
+    els.formulaPreview.textContent = t('formulaInvalid');
+    return;
+  }
+  els.formulaPreview.innerHTML = DOMPurify.sanitize(renderLatex(expression, displayMode));
+}
+
+function chooseFormulaTemplate(templateId) {
+  const template = formulaTemplateById(templateId);
+  if (!template) return;
+  rememberFormulaFieldValues();
+  formulaWizardState.templateId = templateId;
+  renderFormulaTemplateList();
+  renderFormulaFields();
+  els.formulaBuilderPanel.scrollTop = 0;
+  requestAnimationFrame(() => els.formulaFields.querySelector('input')?.focus());
+}
+
+function chooseFormulaDiscipline(discipline) {
+  if (!FORMULA_DISCIPLINES.some(item => item.id === discipline)) return;
+  rememberFormulaFieldValues();
+  formulaWizardState.discipline = discipline;
+  const templates = formulaTemplatesForDiscipline(discipline);
+  if (!templates.some(template => template.id === formulaWizardState.templateId)) {
+    formulaWizardState.templateId = templates[0]?.id || 'equation';
+  }
+  renderFormulaDisciplineTabs();
+  renderFormulaTemplateList();
+  renderFormulaFields();
+  els.formulaBuilderPanel.scrollTop = 0;
+}
+
+function chooseFormulaMode(mode) {
+  if (!['inline', 'block', 'numbered'].includes(mode)) return;
+  formulaWizardState.mode = mode;
+  $('#formulaNumberField').classList.toggle('hidden', mode !== 'numbered');
+  renderFormulaOutputModes();
+  updateFormulaPreview();
+}
+
+function openFormulaDialog() {
+  if (!state.currentFile || !codeEditor) return;
+  const selected = selectedFormulaDetails();
+  const preferred = selected.source ? selected.templateId : 'equation';
+  const template = formulaTemplateById(preferred);
+  formulaWizardState.mode = selected.mode;
+  formulaWizardState.discipline = selected.source ? template.group : 'all';
+  formulaWizardState.templateId = preferred;
+  formulaWizardState.valuesByTemplate = new Map();
+  if (selected.source) {
+    formulaWizardState.valuesByTemplate.set(preferred, formulaValues(template, { formula: selected.source }));
+  }
+  $('#formulaNumber').value = '1';
+  renderFormulaDisciplineTabs();
+  renderFormulaTemplateList();
+  renderFormulaFields();
+  els.formulaBuilderPanel.scrollTop = 0;
+  els.formulaDialog.classList.remove('hidden');
+  document.body.classList.add('dialog-open');
+  requestAnimationFrame(() => els.formulaTemplateList.querySelector('.active')?.focus());
+}
+
+function closeFormulaDialog() {
+  if (els.formulaDialog.classList.contains('hidden')) return;
+  els.formulaDialog.classList.add('hidden');
+  document.body.classList.remove('dialog-open');
+  focusCodeEditor();
+}
+
+function insertGeneratedFormula() {
+  const markdownSource = els.formulaMarkdownSource.value.trim();
+  if (!markdownSource) {
+    showToast(t('formulaInvalid'), 'warning');
+    els.formulaMarkdownSource.focus();
+    return;
+  }
+  closeFormulaDialog();
+  replaceSelection(markdownSource, markdownSource.length, 0);
 }
 
 function openTableDialog() {
@@ -2940,9 +3171,9 @@ async function openFeedback() {
   try {
     state.feedbackSystemInfo = await window.quilliteMarkdown.getFeedbackSystemInfo();
   } catch {
-    state.feedbackSystemInfo = { appVersion: '2.4.8', os: 'windows', systemVersion: '—' };
+    state.feedbackSystemInfo = { appVersion: '2.4.9', os: 'windows', systemVersion: '—' };
   }
-  $('#feedbackAppVersion').textContent = state.feedbackSystemInfo?.appVersion || '2.4.8';
+  $('#feedbackAppVersion').textContent = state.feedbackSystemInfo?.appVersion || '2.4.9';
   $('#feedbackSystemVersion').textContent = state.feedbackSystemInfo?.systemVersion || '—';
   requestAnimationFrame(() => $('#feedbackMessage').focus());
 }
@@ -2998,7 +3229,7 @@ async function submitFeedbackForm(event) {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.4.8';
+  $('#currentVersion').textContent = info.currentVersion || '2.4.9';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -3306,6 +3537,39 @@ els.imageDialog.addEventListener('click', event => {
 els.imageUrl.addEventListener('keydown', event => {
   if (event.key === 'Enter') insertImageFromUrl();
 });
+$('#closeFormulaDialog').addEventListener('click', closeFormulaDialog);
+$('#cancelFormula').addEventListener('click', closeFormulaDialog);
+$('#insertFormula').addEventListener('click', insertGeneratedFormula);
+$('#openFormulaGuide').addEventListener('click', () => {
+  Promise.resolve(window.quilliteMarkdown.openExternal(MATH_GUIDE_URL)).catch(error => reportSilentError(error, 'math-guide.open'));
+});
+els.formulaDialog.addEventListener('click', event => {
+  if (event.target === els.formulaDialog) closeFormulaDialog();
+});
+els.formulaDisciplineTabs.addEventListener('click', event => {
+  const button = event.target.closest('[data-formula-discipline]');
+  if (button) chooseFormulaDiscipline(button.dataset.formulaDiscipline);
+});
+els.formulaTemplateList.addEventListener('click', event => {
+  const button = event.target.closest('[data-formula-template]');
+  if (button) chooseFormulaTemplate(button.dataset.formulaTemplate);
+});
+els.formulaOutputModes.addEventListener('click', event => {
+  const button = event.target.closest('[data-formula-mode]');
+  if (button) chooseFormulaMode(button.dataset.formulaMode);
+});
+els.formulaFields.addEventListener('input', updateFormulaPreview);
+$('#formulaNumber').addEventListener('input', updateFormulaPreview);
+els.formulaMarkdownSource.addEventListener('input', updateFormulaPreviewFromMarkdown);
+els.formulaMarkdownSource.addEventListener('keydown', event => {
+  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) {
+    event.preventDefault();
+    insertGeneratedFormula();
+  }
+});
+els.formulaFields.addEventListener('keydown', event => {
+  if (event.key === 'Enter' && !event.isComposing) insertGeneratedFormula();
+});
 $('#headingSelect').addEventListener('change', event => {
   formatSelectedLines('heading', event.target.value);
   event.target.value = '';
@@ -3444,6 +3708,7 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Escape' && !els.codeLangMenu.classList.contains('hidden')) { els.codeLangMenu.classList.add('hidden'); focusCodeEditor(); }
   else if (event.key === 'Escape' && !els.accentMenu.classList.contains('hidden')) { closeAccentMenu(); $('#accentButton').focus(); }
   else if (event.key === 'Escape' && !els.documentActionsMenu.classList.contains('hidden')) { closeDocumentActionsMenu(); els.documentActionsMoreButton.focus(); }
+  else if (event.key === 'Escape' && !els.formulaDialog.classList.contains('hidden')) closeFormulaDialog();
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
   else if (event.key === 'Escape' && !els.imageDialog.classList.contains('hidden')) closeImageDialog();
   else if (event.key === 'Escape' && !els.editPermissionDialog.classList.contains('hidden')) closeEditPermissionDialog();

@@ -4,13 +4,21 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+## [2.4.9] - 2026-08-19
+
 ### 简体中文
 
+- 编辑器“学科公式”扩充到 79 种模板，覆盖基础数学、代数与函数、几何、微积分、线性代数、概率统计、物理、基础化学和化学反应；全部模板均校验默认参数、普通渲染和编号渲染。切换学科或公式时，右侧参数区会自动回到顶部，不再出现标题被滚动位置截断的问题。
+- 新增 Typora 风格科学公式：支持 `$…$` / `\(…\)` 行内 LaTeX、`$$…$$` / `\[…\]` 块级 LaTeX、mhchem `\ce{…}` 化学公式与 `\tag{…}` 手动公式编号；预览、定位和 PDF 打印保持一致，Word 导出保留单份可读 LaTeX 源式。
+- 编辑器公式菜单新增官网教程入口，可直接打开中英文公式文档，查看可复制的 LaTeX、化学公式和编号示例。
 - 修复 macOS／Windows 最近文档被移动、删除或聊天软件清理缓存后，打开与自动刷新会重复产生错误日志的问题。文件缺失现在会立即刷新为不可用状态、保留当前预览并仅提示一次，不再作为软件异常回传；权限、保存和渲染等真实错误仍会正常上报。
 - 意见反馈新增服务端 IP 与城市记录：提交前会明确告知采集范围，服务器通过离线地域库解析国家／省份／城市，并仅在登录后的后台反馈详情中展示；当前文档与文件路径仍不会上传。
 
 ### English
 
+- Expanded the bilingual Academic Formulas tool to 79 templates across mathematics, algebra and functions, geometry, calculus, linear algebra, probability and statistics, physics, chemistry, and chemical reactions. Every template is validated in normal and numbered rendering, and switching subjects or formulas now resets the parameter panel to the top instead of inheriting a clipped scroll position.
+- Added Typora-style scientific notation: `$…$` / `\(…\)` inline LaTeX, `$$…$$` / `\[…\]` display LaTeX, mhchem `\ce{…}` chemistry, and manual equation numbers with `\tag{…}`. Academic Formulas is available under More Formats; preview, source positioning, and PDF printing stay aligned, while Word export preserves one readable LaTeX source expression.
+- Added an official bilingual formula guide entry to the editor menu, with copy-ready LaTeX, chemistry, and equation-numbering examples.
 - Fixed repeated error reports when a recent document was moved, deleted, or removed by chat-app cache cleanup on macOS or Windows. Missing files now refresh to an unavailable state immediately, preserve the current preview with a single notice, and are excluded from software-error telemetry while genuine permission, save, and rendering failures remain reportable.
 - Feedback now records the request IP and server-resolved country, province, and city. The submission disclosure states this collection clearly, the information is shown only in authenticated admin feedback details, and the current document and file paths remain excluded.
 
@@ -564,3 +572,4 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.6]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.6
 [2.4.7]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.7
 [2.4.8]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.8
+[2.4.9]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.9

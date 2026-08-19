@@ -6,7 +6,7 @@ cd /d "%~dp0"
 
 set "REPO_URL=https://github.com/liuhang798/quillite-markdown.git"
 set "BRANCH=main"
-set "COMMIT_MSG=Release v2.4.8: responsive outline and pinned recents"
+set "COMMIT_MSG=Release v2.4.9: academic formulas and scientific notation"
 set "MAX_RETRIES=3"
 set "SYSTEM_PROXY="
 

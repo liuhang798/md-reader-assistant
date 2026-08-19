@@ -247,6 +247,12 @@ func (b *docxBuilder) renderBlock(node *html.Node, listLevel int) {
 			b.writeParagraph("Normal", 0, []docxRun{*imageRun})
 		}
 	case "div":
+		if hasHTMLClass(node, "math-block") {
+			if source := mathSource(node); source != "" {
+				b.writeParagraph("Normal", listLevel, []docxRun{{Text: source}})
+			}
+			return
+		}
 		if hasHTMLClass(node, "code-block") {
 			if pre := findFirstElement(node, "pre"); pre != nil {
 				b.writeCodeBlock(nodeText(pre))
@@ -361,6 +367,12 @@ func (b *docxBuilder) inlineRuns(node *html.Node, format docxFormat) []docxRun {
 		return []docxRun{{Text: text, Bold: format.Bold, Italic: format.Italic, Strike: format.Strike, Underline: format.Underline, Code: format.Code, Highlight: format.Highlight, Sup: format.Sup, Sub: format.Sub, Color: format.Color, Link: format.Link}}
 	}
 	if node.Type != html.ElementNode {
+		return nil
+	}
+	if hasHTMLClass(node, "math-inline") || hasHTMLClass(node, "math-block") {
+		if source := mathSource(node); source != "" {
+			return []docxRun{{Text: source, Bold: format.Bold, Italic: format.Italic, Color: format.Color, Link: format.Link}}
+		}
 		return nil
 	}
 	next := format
@@ -782,6 +794,21 @@ func hasHTMLClass(node *html.Node, className string) bool {
 		}
 	}
 	return false
+}
+
+func mathSource(node *html.Node) string {
+	if node == nil {
+		return ""
+	}
+	if node.Type == html.ElementNode && strings.EqualFold(node.Data, "annotation") && strings.EqualFold(htmlAttribute(node, "encoding"), "application/x-tex") {
+		return strings.TrimSpace(nodeText(node))
+	}
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if source := mathSource(child); source != "" {
+			return source
+		}
+	}
+	return ""
 }
 
 func htmlTextColor(node *html.Node) string {

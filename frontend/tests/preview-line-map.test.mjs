@@ -57,6 +57,11 @@ test('fenced code is a single block and hides inner markdown', () => {
   assertAligned('Before.\n\n```js\n# not heading\n- not list\n```\n\nAfter.\n', [1, 3, 8]);
 });
 
+test('Typora-style display formulas map to one preview block', () => {
+  const source = '$$\na + b\n= c\n$$\n\nAfter\n\n\\[\nx^2 + y^2\n\\]';
+  assert.deepEqual(scanMarkdownBlockStartLines(source), [1, 6, 8]);
+});
+
 test('an unclosed fence still produces one block', () => {
   assertAligned('```js\nunclosed\n', [1]);
 });

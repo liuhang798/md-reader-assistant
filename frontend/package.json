@@ -1,7 +1,7 @@
 {
   "name": "quillite-markdown-wails-frontend",
   "private": true,
-  "version": "2.4.8",
+  "version": "2.4.9",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,6 +20,7 @@
     "codemirror": "^6.0.2",
     "dompurify": "^3.2.6",
     "highlight.js": "^11.11.1",
+    "katex": "^0.16.47",
     "marked": "^15.0.12"
   },
   "devDependencies": {

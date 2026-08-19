@@ -6,7 +6,7 @@
 
 - 项目名称：轻阅 Markdown / Quillite Markdown
 - 仓库：`https://github.com/liuhang798/quillite-markdown`
-- 当前版本：`2.4.8`
+- 当前版本：`2.4.9`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
 - 支持平台：Windows x64、macOS Universal、Linux x64
@@ -25,6 +25,7 @@
 | 构建 | Vite 7 | 前端打包，输出到 `frontend/dist` |
 | 编辑器 | CodeMirror 6 | Markdown 编辑、语法高亮、撤回历史、快捷键 |
 | Markdown | marked | Markdown 转 HTML |
+| 科学公式 | KaTeX + mhchem | 本地渲染 LaTeX 行内/块级公式、化学式与公式编号 |
 | 安全清理 | DOMPurify | 清理渲染后的 HTML |
 | 代码高亮 | highlight.js | Markdown 代码块高亮 |
 | Windows 安装 | NSIS | 分步安装、快捷方式、文件关联、覆盖升级 |
@@ -60,6 +61,7 @@ app.go / updates.go（Go 后端）
 | `frontend/index.html` | 标题栏、侧栏、阅读页、分栏编辑器、菜单及弹窗结构 |
 | `frontend/src/main.js` | Wails 后端桥接、浏览器预览降级、平台检测 |
 | `frontend/src/renderer.js` | 前端状态、编辑器、Markdown 渲染、文件列表和全部交互 |
+| `frontend/src/math-rendering.js` | Typora/Pandoc 风格公式分隔符解析、KaTeX/mhchem 安全渲染 |
 | `frontend/src/styles.css` | 主题、布局、响应式、macOS/Windows 差异和打印样式 |
 | `frontend/wailsjs/` | Wails 自动生成绑定；Go 公开方法变化后需要重新生成 |
 | `build/` | 应用图标、Windows 资源及 NSIS 安装器配置 |
@@ -93,6 +95,7 @@ app.go / updates.go（Go 后端）
 - `Ctrl/Cmd + B` 加粗、`Ctrl/Cmd + I` 斜体、`Ctrl/Cmd + K` 链接。
 - 标题、引用、有序列表、无序列表、任务列表。
 - 行内代码、代码块、表格行列选择、图片选择。
+- “学科公式”工具（按基础数学、代数与函数、几何、微积分、线性代数、概率统计、物理、基础化学和化学反应分类 79 种模板，参数填写、行内/块级/编号输出、实时预览和弹窗内教程入口）、LaTeX 行内/块级公式、mhchem 化学公式和 `\tag{…}` 公式编号。
 - 工具栏撤回和 `Ctrl/Cmd + Z`。
 - 编辑时每 10 秒自动保存。
 - `Ctrl/Cmd + S` 保存、`Ctrl/Cmd + Shift + S` 另存为。

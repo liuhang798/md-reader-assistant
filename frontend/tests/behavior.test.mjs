@@ -300,6 +300,38 @@ test('code blocks let the user pick a common programming language', () => {
   assert.match(styles, /\.code-lang-menu \{ right: auto; top: auto;/);
 });
 
+test('LaTeX math, chemistry, and numbered equations are available in preview and editor formats', () => {
+  assert.match(renderer, /import 'katex\/dist\/katex\.min\.css'/);
+  assert.match(renderer, /extensions: \[highlightExtension, \.\.\.mathExtensions\]/);
+  assert.match(html, /value="formula-builder" data-i18n="formulaBuilder"/);
+  assert.doesNotMatch(html, /value="(?:inline-math|math-block|chemical-formula|numbered-math|math-guide)"/);
+  assert.match(renderer, /command === 'formula-builder'/);
+  assert.match(renderer, /MATH_GUIDE_URL = 'https:\/\/qm\.ssssa\.cn\/guides\/formulas\/'/);
+  assert.match(html, /id="formulaDialog"[^>]*role="dialog"[^>]*aria-modal="true"/);
+  assert.match(html, /id="openFormulaGuide"/);
+  assert.match(html, /id="formulaDisciplineTabs"[^>]*role="tablist"/);
+  assert.match(html, /id="formulaTemplateList"/);
+  assert.match(html, /id="formulaBuilderPanel" class="formula-builder-panel"/);
+  assert.match(html, /id="formulaOutputModes"[^>]*role="group"/);
+  assert.match(html, /data-formula-mode="inline"/);
+  assert.match(html, /data-formula-mode="block"/);
+  assert.match(html, /data-formula-mode="numbered"/);
+  assert.match(html, /id="formulaFields"/);
+  assert.match(html, /id="formulaPreview"/);
+  assert.match(renderer, /FORMULA_DISCIPLINES/);
+  assert.match(renderer, /formulaTemplatesForDiscipline/);
+  assert.match(renderer, /openFormulaDialog\(\)/);
+  assert.match(renderer, /buildFormulaMarkdown\(formulaWizardState\.mode, expression/);
+  assert.match(renderer, /function chooseFormulaTemplate\(templateId\)[\s\S]*els\.formulaBuilderPanel\.scrollTop = 0;/);
+  assert.match(renderer, /function chooseFormulaDiscipline\(discipline\)[\s\S]*els\.formulaBuilderPanel\.scrollTop = 0;/);
+  assert.match(styles, /\.formula-dialog-layout \{ display: grid;/);
+  assert.match(styles, /\.formula-preview \.katex-display \{ width: 100%; margin: 0; \}/);
+  assert.match(html, /<textarea id="formulaMarkdownSource"[^>]*data-i18n-aria-label="generatedMarkdown"/);
+  assert.match(renderer, /els\.formulaMarkdownSource\.addEventListener\('input', updateFormulaPreviewFromMarkdown\)/);
+  assert.match(renderer, /const markdownSource = els\.formulaMarkdownSource\.value\.trim\(\)/);
+  assert.match(styles, /\.markdown-body \.math-block \{[^}]*overflow-x: auto;/);
+});
+
 test('editor split panes are draggable without a maximum width limit', () => {
   assert.match(html, /id="editorResizer" class="pane-resizer editor-resizer"/);
   assert.match(renderer, /editorPreviewWidth/);
