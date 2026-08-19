@@ -6,16 +6,13 @@ All notable changes to Quillite Markdown are documented here.
 
 ### 简体中文
 
-- 修复 macOS 重启后从“最近阅读”打开部分 Documents、Desktop、Downloads 等受保护目录文档时出现 `operation not permitted` 的问题。macOS 应用包补齐文件夹隐私用途声明，并在历史授权失效时通过已定位到原文件的系统打开窗口恢复访问；取消授权不再作为软件异常回传。
-
 ### English
-
-- Fixed `operation not permitted` when reopening some Recent documents from protected macOS locations such as Documents, Desktop, and Downloads after an app restart. The macOS bundle now declares its folder-access purposes and recovers stale historical consent through a system open panel preselected to the original file; cancelling authorization is no longer reported as a software fault.
 
 ## [2.4.9] - 2026-08-19
 
 ### 简体中文
 
+- 修复 macOS 重启后从“最近阅读”打开部分 Documents、Desktop、Downloads 等受保护目录文档时出现 `operation not permitted` 的问题。macOS 应用包补齐文件夹隐私用途声明，并在历史授权失效时通过已定位到原文件的系统打开窗口恢复访问；取消授权不再作为软件异常回传。
 - 修复 Word 导出遗漏或破坏学科公式的问题：行内与块级 LaTeX、分数、根式、上下标、求和、积分、极限和 mhchem 化学式现在导出为可缩放、可编辑的 Word 原生公式；编号公式保持居中并将编号对齐到右侧。MathML 不可用时仍会保留一份可读的 LaTeX 源式，避免公式再次空白。
 - 编辑器“学科公式”扩充到 79 种模板，覆盖基础数学、代数与函数、几何、微积分、线性代数、概率统计、物理、基础化学和化学反应；全部模板均校验默认参数、普通渲染和编号渲染。切换学科或公式时，右侧参数区会自动回到顶部，不再出现标题被滚动位置截断的问题。
 - 新增 Typora 风格科学公式：支持 `$…$` / `\(…\)` 行内 LaTeX、`$$…$$` / `\[…\]` 块级 LaTeX、mhchem `\ce{…}` 化学公式与 `\tag{…}` 手动公式编号；预览、定位和 PDF 打印保持一致，Word 导出保留单份可读 LaTeX 源式。
@@ -25,6 +22,7 @@ All notable changes to Quillite Markdown are documented here.
 
 ### English
 
+- Fixed `operation not permitted` when reopening some Recent documents from protected macOS locations such as Documents, Desktop, and Downloads after an app restart. The macOS bundle now declares its folder-access purposes and recovers stale historical consent through a system open panel preselected to the original file; cancelling authorization is no longer reported as a software fault.
 - Fixed missing or malformed Academic Formulas in Word exports. Inline and display LaTeX, fractions, radicals, scripts, sums, integrals, limits, and mhchem chemistry now export as scalable, editable native Word equations. Numbered equations stay centered with right-aligned labels, while a readable LaTeX fallback prevents blank output when MathML is unavailable.
 - Expanded the bilingual Academic Formulas tool to 79 templates across mathematics, algebra and functions, geometry, calculus, linear algebra, probability and statistics, physics, chemistry, and chemical reactions. Every template is validated in normal and numbered rendering, and switching subjects or formulas now resets the parameter panel to the top instead of inheriting a clipped scroll position.
 - Added Typora-style scientific notation: `$…$` / `\(…\)` inline LaTeX, `$$…$$` / `\[…\]` display LaTeX, mhchem `\ce{…}` chemistry, and manual equation numbers with `\tag{…}`. Academic Formulas is available under More Formats; preview, source positioning, and PDF printing stay aligned, while Word export preserves one readable LaTeX source expression.
