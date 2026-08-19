@@ -52,6 +52,7 @@ type docxImage struct {
 
 type docxRun struct {
 	Text      string
+	MathXML   string
 	Bold      bool
 	Italic    bool
 	Strike    bool
@@ -248,9 +249,7 @@ func (b *docxBuilder) renderBlock(node *html.Node, listLevel int) {
 		}
 	case "div":
 		if hasHTMLClass(node, "math-block") {
-			if source := mathSource(node); source != "" {
-				b.writeParagraph("Normal", listLevel, []docxRun{{Text: source}})
-			}
+			b.writeMathParagraph(node, listLevel)
 			return
 		}
 		if hasHTMLClass(node, "code-block") {
@@ -370,8 +369,11 @@ func (b *docxBuilder) inlineRuns(node *html.Node, format docxFormat) []docxRun {
 		return nil
 	}
 	if hasHTMLClass(node, "math-inline") || hasHTMLClass(node, "math-block") {
+		if formula := mathOMML(node); formula != "" {
+			return []docxRun{{MathXML: formula}}
+		}
 		if source := mathSource(node); source != "" {
-			return []docxRun{{Text: source, Bold: format.Bold, Italic: format.Italic, Color: format.Color, Link: format.Link}}
+			return []docxRun{{Text: source, Bold: format.Bold, Italic: format.Italic, Color: format.Color, Link: format.Link, Code: true}}
 		}
 		return nil
 	}
@@ -438,6 +440,54 @@ func (b *docxBuilder) writeParagraph(style string, indentLevel int, runs []docxR
 	b.body.WriteString(`</w:p>`)
 }
 
+func (b *docxBuilder) writeMathParagraph(node *html.Node, indentLevel int) {
+	if formula, label, ok := taggedMathOMML(node); ok {
+		b.body.WriteString(`<w:p><w:pPr><w:tabs><w:tab w:val="center" w:pos="4699"/><w:tab w:val="right" w:pos="9398"/></w:tabs><w:spacing w:before="100" w:after="160"/>`)
+		if indentLevel > 0 {
+			b.body.WriteString(`<w:ind w:left="` + strconv.Itoa(indentLevel*360) + `"/>`)
+		}
+		b.body.WriteString(`</w:pPr><w:r><w:tab/></w:r><m:oMath>` + formula + `</m:oMath><w:r><w:tab/></w:r><m:oMath>` + label + `</m:oMath></w:p>`)
+		return
+	}
+	formula := mathOMML(node)
+	if formula == "" {
+		if source := mathSource(node); source != "" {
+			b.writeParagraph("Normal", indentLevel, []docxRun{{Text: source, Code: true}})
+		}
+		return
+	}
+	b.body.WriteString(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="100" w:after="160"/>`)
+	if indentLevel > 0 {
+		b.body.WriteString(`<w:ind w:left="` + strconv.Itoa(indentLevel*360) + `"/>`)
+	}
+	b.body.WriteString(`</w:pPr><m:oMathPara><m:oMathParaPr><m:jc m:val="centerGroup"/></m:oMathParaPr><m:oMath>` + formula + `</m:oMath></m:oMathPara></w:p>`)
+}
+
+func taggedMathOMML(node *html.Node) (string, string, bool) {
+	math := findFirstElement(node, "math")
+	if math == nil {
+		return "", "", false
+	}
+	table := findFirstElement(math, "mtable")
+	if table == nil || !strings.EqualFold(strings.TrimSpace(htmlAttribute(table, "width")), "100%") {
+		return "", "", false
+	}
+	rows := directChildElements(table, "mtr", "mlabeledtr")
+	if len(rows) != 1 {
+		return "", "", false
+	}
+	var populated []string
+	for _, cell := range directChildElements(rows[0], "mtd") {
+		if content := mathMLNodeToOMML(cell); content != "" {
+			populated = append(populated, content)
+		}
+	}
+	if len(populated) < 2 {
+		return "", "", false
+	}
+	return populated[0], populated[len(populated)-1], true
+}
+
 func (b *docxBuilder) writeListParagraph(listLevel, numID int, runs []docxRun) {
 	if !runsHaveContent(runs) {
 		return
@@ -482,6 +532,10 @@ func (b *docxBuilder) writeRun(run docxRun) {
 	}
 	if run.Break {
 		b.body.WriteString(`<w:r><w:br/></w:r>`)
+		return
+	}
+	if run.MathXML != "" {
+		b.body.WriteString(`<m:oMath>` + run.MathXML + `</m:oMath>`)
 		return
 	}
 	if run.Text == "" {
@@ -800,6 +854,12 @@ func mathSource(node *html.Node) string {
 	if node == nil {
 		return ""
 	}
+	if encoded := strings.TrimSpace(htmlAttribute(node, "data-math-source")); encoded != "" {
+		if decoded, err := url.PathUnescape(encoded); err == nil {
+			return strings.TrimSpace(decoded)
+		}
+		return encoded
+	}
 	if node.Type == html.ElementNode && strings.EqualFold(node.Data, "annotation") && strings.EqualFold(htmlAttribute(node, "encoding"), "application/x-tex") {
 		return strings.TrimSpace(nodeText(node))
 	}
@@ -809,6 +869,220 @@ func mathSource(node *html.Node) string {
 		}
 	}
 	return ""
+}
+
+// mathOMML converts the accessible MathML emitted by KaTeX into native Office
+// Math markup. Keeping formulas as OMML makes them visible, scalable and
+// editable in Word instead of exporting the hidden LaTeX source as plain text.
+func mathOMML(node *html.Node) string {
+	math := findFirstElement(node, "math")
+	if math == nil {
+		return ""
+	}
+	return mathMLNodeToOMML(math)
+}
+
+func mathMLNodeToOMML(node *html.Node) string {
+	if node == nil {
+		return ""
+	}
+	if node.Type == html.TextNode {
+		if strings.TrimSpace(node.Data) == "" {
+			return ""
+		}
+		return mathTextRun(node.Data, false)
+	}
+	if node.Type != html.ElementNode {
+		return ""
+	}
+	tag := strings.ToLower(node.Data)
+	children := func() string {
+		return mathMLChildrenToOMML(node)
+	}
+	childAt := func(index int) string {
+		current := 0
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			if child.Type == html.TextNode && strings.TrimSpace(child.Data) == "" {
+				continue
+			}
+			if current == index {
+				return mathMLNodeToOMML(child)
+			}
+			current++
+		}
+		return ""
+	}
+	switch tag {
+	case "math", "mrow", "mstyle", "mpadded", "menclose", "maction":
+		return children()
+	case "semantics":
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			if child.Type == html.ElementNode && !strings.EqualFold(child.Data, "annotation") && !strings.EqualFold(child.Data, "annotation-xml") {
+				return mathMLNodeToOMML(child)
+			}
+		}
+		return ""
+	case "annotation", "annotation-xml", "mphantom", "none":
+		return ""
+	case "mi", "mn", "mo", "mtext", "ms":
+		text := nodeText(node)
+		italic := tag == "mi" && !strings.EqualFold(htmlAttribute(node, "mathvariant"), "normal") && len([]rune(strings.TrimSpace(text))) == 1
+		return mathTextRun(text, italic)
+	case "mglyph":
+		return mathTextRun(htmlAttribute(node, "alt"), false)
+	case "mspace":
+		return mathTextRun(" ", false)
+	case "msup":
+		return `<m:sSup><m:e>` + childAt(0) + `</m:e><m:sup>` + childAt(1) + `</m:sup></m:sSup>`
+	case "msub":
+		return `<m:sSub><m:e>` + childAt(0) + `</m:e><m:sub>` + childAt(1) + `</m:sub></m:sSub>`
+	case "msubsup":
+		return `<m:sSubSup><m:e>` + childAt(0) + `</m:e><m:sub>` + childAt(1) + `</m:sub><m:sup>` + childAt(2) + `</m:sup></m:sSubSup>`
+	case "mfrac":
+		properties := ""
+		if thickness := strings.ToLower(strings.TrimSpace(htmlAttribute(node, "linethickness"))); thickness == "0" || thickness == "0px" {
+			properties = `<m:fPr><m:type m:val="noBar"/></m:fPr>`
+		}
+		return `<m:f>` + properties + `<m:num>` + childAt(0) + `</m:num><m:den>` + childAt(1) + `</m:den></m:f>`
+	case "msqrt":
+		return `<m:rad><m:radPr><m:degHide m:val="1"/></m:radPr><m:deg/><m:e>` + children() + `</m:e></m:rad>`
+	case "mroot":
+		return `<m:rad><m:deg>` + childAt(1) + `</m:deg><m:e>` + childAt(0) + `</m:e></m:rad>`
+	case "munder":
+		return `<m:limLow><m:e>` + childAt(0) + `</m:e><m:lim>` + childAt(1) + `</m:lim></m:limLow>`
+	case "mover":
+		base, over := childAt(0), childAt(1)
+		if over == "" {
+			return base
+		}
+		if strings.EqualFold(htmlAttribute(node, "accent"), "true") {
+			accent := strings.TrimSpace(nodeText(elementChild(node, 1)))
+			if accent == "" {
+				return base
+			}
+			return `<m:acc><m:accPr><m:chr m:val="` + xmlAttribute(accent) + `"/></m:accPr><m:e>` + base + `</m:e></m:acc>`
+		}
+		return `<m:limUpp><m:e>` + base + `</m:e><m:lim>` + over + `</m:lim></m:limUpp>`
+	case "munderover":
+		lower := `<m:limLow><m:e>` + childAt(0) + `</m:e><m:lim>` + childAt(1) + `</m:lim></m:limLow>`
+		return `<m:limUpp><m:e>` + lower + `</m:e><m:lim>` + childAt(2) + `</m:lim></m:limUpp>`
+	case "mfenced":
+		open, close := htmlAttribute(node, "open"), htmlAttribute(node, "close")
+		if open == "" {
+			open = "("
+		}
+		if close == "" {
+			close = ")"
+		}
+		return `<m:d><m:dPr><m:begChr m:val="` + xmlAttribute(open) + `"/><m:endChr m:val="` + xmlAttribute(close) + `"/></m:dPr><m:e>` + children() + `</m:e></m:d>`
+	case "mtable":
+		return mathTableOMML(node)
+	case "mtr", "mlabeledtr":
+		var row strings.Builder
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			if child.Type == html.ElementNode && strings.EqualFold(child.Data, "mtd") {
+				row.WriteString(`<m:e>` + mathMLNodeToOMML(child) + `</m:e>`)
+			}
+		}
+		return `<m:mr>` + row.String() + `</m:mr>`
+	case "mtd":
+		return children()
+	default:
+		return children()
+	}
+}
+
+func mathMLChildrenToOMML(node *html.Node) string {
+	var output strings.Builder
+	for child := node.FirstChild; child != nil; {
+		if child.Type == html.TextNode && strings.TrimSpace(child.Data) == "" {
+			child = child.NextSibling
+			continue
+		}
+		next := nextMathSibling(child.NextSibling)
+		if next != nil && next.Type == html.ElementNode && mathMLNodeToOMML(elementChild(next, 0)) == "" {
+			base := mathMLNodeToOMML(child)
+			switch strings.ToLower(next.Data) {
+			case "msub":
+				output.WriteString(`<m:sSub><m:e>` + base + `</m:e><m:sub>` + mathMLNodeToOMML(elementChild(next, 1)) + `</m:sub></m:sSub>`)
+				child = next.NextSibling
+				continue
+			case "msup":
+				output.WriteString(`<m:sSup><m:e>` + base + `</m:e><m:sup>` + mathMLNodeToOMML(elementChild(next, 1)) + `</m:sup></m:sSup>`)
+				child = next.NextSibling
+				continue
+			case "msubsup":
+				output.WriteString(`<m:sSubSup><m:e>` + base + `</m:e><m:sub>` + mathMLNodeToOMML(elementChild(next, 1)) + `</m:sub><m:sup>` + mathMLNodeToOMML(elementChild(next, 2)) + `</m:sup></m:sSubSup>`)
+				child = next.NextSibling
+				continue
+			}
+		}
+		output.WriteString(mathMLNodeToOMML(child))
+		child = child.NextSibling
+	}
+	return output.String()
+}
+
+func nextMathSibling(node *html.Node) *html.Node {
+	for current := node; current != nil; current = current.NextSibling {
+		if current.Type != html.TextNode || strings.TrimSpace(current.Data) != "" {
+			return current
+		}
+	}
+	return nil
+}
+
+func mathTextRun(text string, italic bool) string {
+	if text == "" {
+		return ""
+	}
+	style := `<m:rPr><m:sty m:val="p"/></m:rPr>`
+	if italic {
+		style = `<m:rPr><m:sty m:val="i"/></m:rPr>`
+	}
+	return `<m:r>` + style + `<m:t xml:space="preserve">` + xmlText(text) + `</m:t></m:r>`
+}
+
+func mathTableOMML(table *html.Node) string {
+	rows := directChildElements(table, "mtr", "mlabeledtr")
+	if len(rows) == 0 {
+		return ""
+	}
+	columns := 1
+	for _, row := range rows {
+		if count := len(directChildElements(row, "mtd")); count > columns {
+			columns = count
+		}
+	}
+	return `<m:m><m:mPr><m:mcs><m:mc><m:mcPr><m:count m:val="` + strconv.Itoa(columns) + `"/><m:mcJc m:val="center"/></m:mcPr></m:mc></m:mcs></m:mPr>` + mathChildrenByTag(table, "mtr", "mlabeledtr") + `</m:m>`
+}
+
+func mathChildrenByTag(node *html.Node, tags ...string) string {
+	allowed := map[string]bool{}
+	for _, tag := range tags {
+		allowed[strings.ToLower(tag)] = true
+	}
+	var output strings.Builder
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == html.ElementNode && allowed[strings.ToLower(child.Data)] {
+			output.WriteString(mathMLNodeToOMML(child))
+		}
+	}
+	return output.String()
+}
+
+func elementChild(node *html.Node, index int) *html.Node {
+	current := 0
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type != html.ElementNode {
+			continue
+		}
+		if current == index {
+			return child
+		}
+		current++
+	}
+	return nil
 }
 
 func htmlTextColor(node *html.Node) string {
@@ -938,7 +1212,7 @@ func containsBlockElement(node *html.Node) bool {
 
 func runsHaveContent(runs []docxRun) bool {
 	for _, run := range runs {
-		if run.Image != nil || run.Break || strings.TrimSpace(run.Text) != "" {
+		if run.Image != nil || run.Break || run.MathXML != "" || strings.TrimSpace(run.Text) != "" {
 			return true
 		}
 	}
@@ -962,7 +1236,7 @@ func xmlAttribute(value string) string {
 
 const rootRelationshipsXML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`
 
-const documentXMLPrefix = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>`
+const documentXMLPrefix = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>`
 
 const documentXMLSuffix = `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`
 

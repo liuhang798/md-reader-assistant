@@ -50,6 +50,10 @@ function firstUnescapedInlineDelimiter(source) {
   return -1;
 }
 
+function encodedMathSource(source) {
+  return encodeURIComponent(String(source).trim());
+}
+
 export function renderLatex(source, displayMode = false) {
   return katex.renderToString(String(source).trim(), {
     displayMode,
@@ -79,7 +83,7 @@ export const mathBlockExtension = {
     return undefined;
   },
   renderer(token) {
-    return `<div class="math-block" role="math">${renderLatex(token.text, true)}</div>`;
+    return `<div class="math-block" role="math" data-math-source="${encodedMathSource(token.text)}">${renderLatex(token.text, true)}</div>`;
   },
 };
 
@@ -96,7 +100,7 @@ export const mathInlineExtension = {
     return { type: 'mathInline', raw: match.raw, text: match.text };
   },
   renderer(token) {
-    return `<span class="math-inline" role="math">${renderLatex(token.text, false)}</span>`;
+    return `<span class="math-inline" role="math" data-math-source="${encodedMathSource(token.text)}">${renderLatex(token.text, false)}</span>`;
   },
 };
 

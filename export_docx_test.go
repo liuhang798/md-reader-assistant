@@ -83,19 +83,64 @@ line 2</div>`, "Escape", t.TempDir())
 	assertWellFormedXML(t, files["word/document.xml"])
 }
 
-func TestBuildDOCXPreservesMathSourceOnce(t *testing.T) {
-	html := `<p>Inline <span class="math-inline"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">E = mc^2</annotation></semantics></math></span><span class="katex-html">visual duplicate</span></span></p>` +
-		`<div class="math-block"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">\\ce{2H2 + O2 -&gt; 2H2O} \\tag{1}</annotation></semantics></math></span><span class="katex-html">visual duplicate</span></div>`
+func TestBuildDOCXExportsMathAsNativeOfficeMath(t *testing.T) {
+	html := `<p>Inline <span class="math-inline" data-math-source="E%20%3D%20mc%5E2"><span class="katex-mathml"><math><semantics><mrow><mi>E</mi><mo>=</mo><msup><mi>m</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">E = mc^2</annotation></semantics></math></span><span class="katex-html">visual duplicate</span></span></p>` +
+		`<div class="math-block"><span class="katex-mathml"><math><semantics><mrow><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>+</mo><msqrt><mi>x</mi></msqrt><mo>+</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover></mrow><annotation encoding="application/x-tex">\\frac{a}{b}+\\sqrt{x}+\\sum_{i=1}^{n}</annotation></semantics></math></span></div>` +
+		`<div class="math-block"><span class="katex-mathml"><math><semantics><mrow><mn>2</mn><mtext> </mtext><mi mathvariant="normal">H</mi><msub><mpadded width="0px"><mphantom><mi>X</mi></mphantom></mpadded><mpadded height="0px"><mn>2</mn></mpadded></msub><mo>+</mo><mi mathvariant="normal">O</mi><msub><mpadded width="0px"><mphantom><mi>X</mi></mphantom></mpadded><mpadded height="0px"><mn>2</mn></mpadded></msub><mover><mo>→</mo><mpadded><mrow></mrow></mpadded></mover><mn>2</mn><mtext> </mtext><mi mathvariant="normal">H</mi><msub><mpadded width="0px"><mphantom><mi>X</mi></mphantom></mpadded><mpadded height="0px"><mn>2</mn></mpadded></msub><mi mathvariant="normal">O</mi></mrow><annotation encoding="application/x-tex">\\ce{2H2 + O2 -&gt; 2H2O}</annotation></semantics></math></span></div>`
 	data, err := buildDOCX(html, "Math", t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	document := string(readDOCXFiles(t, data)["word/document.xml"])
-	if strings.Count(document, "E = mc^2") != 1 || strings.Count(document, `\\ce{2H2 + O2`) != 1 {
-		t.Fatalf("math source should be exported once: %s", document)
+	for _, expected := range []string{`<m:oMath>`, `<m:sSup>`, `<m:f>`, `<m:rad>`, `<m:limLow>`, `<m:sSub>`, `→`} {
+		if !strings.Contains(document, expected) {
+			t.Fatalf("native Office Math is missing %q: %s", expected, document)
+		}
 	}
-	if strings.Contains(document, "visual duplicate") {
-		t.Fatal("KaTeX accessibility and visual layers were both exported")
+	if !strings.Contains(document, `<m:sSub><m:e><m:r><m:rPr><m:sty m:val="p"/></m:rPr><m:t xml:space="preserve">H</m:t></m:r></m:e><m:sub>`) {
+		t.Fatal("mhchem phantom-base subscript was not attached to its chemical element")
+	}
+	if strings.Contains(document, "visual duplicate") || strings.Contains(document, `\\frac{a}{b}`) {
+		t.Fatal("KaTeX visual duplicate or raw LaTeX leaked into native Office Math output")
+	}
+	assertWellFormedXML(t, []byte(document))
+}
+
+func TestBuildDOCXKeepsReadableMathFallbackWhenMathMLIsUnavailable(t *testing.T) {
+	data, err := buildDOCX(`<p>公式：<span class="math-inline" data-math-source="E%20%3D%20mc%5E2"></span></p>`, "Math fallback", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(readDOCXFiles(t, data)["word/document.xml"])
+	if !strings.Contains(document, "E = mc^2") {
+		t.Fatalf("encoded formula source fallback is missing: %s", document)
+	}
+}
+
+func TestBuildDOCXAlignsNumberedFormulaAtTheRightMargin(t *testing.T) {
+	html := `<div class="math-block"><math><semantics><mtable width="100%"><mtr><mtd width="50%"></mtd><mtd><mrow><mi>E</mi><mo>=</mo><mi>m</mi><msup><mi>c</mi><mn>2</mn></msup></mrow></mtd><mtd width="50%"></mtd><mtd><mtext>(1)</mtext></mtd></mtr></mtable></semantics></math></div>`
+	data, err := buildDOCX(html, "Numbered math", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(readDOCXFiles(t, data)["word/document.xml"])
+	if !strings.Contains(document, `<w:tab w:val="center" w:pos="4699"/>`) || !strings.Contains(document, `<w:tab w:val="right" w:pos="9398"/>`) {
+		t.Fatalf("numbered formula does not use centered formula and right-aligned label tabs: %s", document)
+	}
+	if strings.Count(document, `<m:oMath>`) != 2 || !strings.Contains(document, `(1)`) {
+		t.Fatalf("numbered formula or label is missing: %s", document)
+	}
+}
+
+func TestBuildDOCXPreservesBinomialAsAStackWithoutFractionBar(t *testing.T) {
+	html := `<div class="math-block"><math><mrow><mo>(</mo><mfrac linethickness="0px"><mi>n</mi><mi>k</mi></mfrac><mo>)</mo></mrow></math></div>`
+	data, err := buildDOCX(html, "Binomial", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(readDOCXFiles(t, data)["word/document.xml"])
+	if !strings.Contains(document, `<m:fPr><m:type m:val="noBar"/></m:fPr>`) {
+		t.Fatalf("binomial coefficient gained an incorrect fraction bar: %s", document)
 	}
 }
 

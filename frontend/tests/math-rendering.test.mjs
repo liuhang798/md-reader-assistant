@@ -9,6 +9,8 @@ test('renders Typora-style inline and display LaTeX', () => {
   const html = marked.parse('质能方程 $E = mc^2$。\n\n$$\n\\frac{a}{b}\n$$');
   assert.match(html, /class="math-inline"/);
   assert.match(html, /class="math-block"/);
+  assert.match(html, /data-math-source="E%20%3D%20mc%5E2"/);
+  assert.match(html, /data-math-source="%5Cfrac%7Ba%7D%7Bb%7D"/);
   assert.match(html, /katex/);
   assert.match(html, /mfrac/);
 });
