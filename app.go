@@ -38,6 +38,8 @@ var markdownExtensions = map[string]bool{
 
 var errDraftReplacementInProgress = errors.New("draft replacement is already in progress")
 
+var errMacDocumentAccessNotGranted = errors.New("macOS document access was not granted")
+
 type Document struct {
 	Path         string `json:"path"`
 	Name         string `json:"name"`
@@ -384,15 +386,19 @@ func (a *App) readDocument(filePath string, remember bool) (*Document, error) {
 	}, nil
 }
 
-func (a *App) OpenFile() (*Document, error) {
-	filePath, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
+func (a *App) markdownOpenDialogOptions() wailsruntime.OpenDialogOptions {
+	return wailsruntime.OpenDialogOptions{
 		Title: a.text("openMarkdown"),
 		Filters: []wailsruntime.FileFilter{
 			{DisplayName: a.text("markdownDocument"), Pattern: "*.md;*.markdown;*.mdown;*.mkd"},
 			{DisplayName: a.text("textFile"), Pattern: "*.txt"},
 			{DisplayName: a.text("allFiles"), Pattern: "*.*"},
 		},
-	})
+	}
+}
+
+func (a *App) OpenFile() (*Document, error) {
+	filePath, err := wailsruntime.OpenFileDialog(a.ctx, a.markdownOpenDialogOptions())
 	if err != nil || filePath == "" {
 		return nil, err
 	}
@@ -764,6 +770,47 @@ func (a *App) OpenFolder() (*FolderResult, error) {
 
 func (a *App) ReadFile(filePath string) (*Document, error) {
 	return a.readDocument(filePath, true)
+}
+
+// OpenRecentFile opens a user-selected library record. macOS protects files in
+// folders such as Documents, Desktop and Downloads. A path remembered by the
+// app can outlive the system's permission for the app identity (notably after
+// replacing an unsigned build), so a direct POSIX read can return EPERM even
+// though Finder can still open the file. In that case, let the system open
+// panel renew the user's consent and continue with the selected document.
+// Background refreshes deliberately keep using ReadFile so they never summon
+// an authorization panel without a user action.
+func (a *App) OpenRecentFile(filePath string) (*Document, error) {
+	document, err := a.readDocument(filePath, true)
+	if err == nil || !isDocumentAccessDenied(goruntime.GOOS, err) {
+		return document, err
+	}
+
+	cleaned, cleanErr := filepath.Abs(filepath.Clean(filePath))
+	if cleanErr != nil {
+		return nil, err
+	}
+	options := a.markdownOpenDialogOptions()
+	options.Title = a.text("reauthorizeDocument")
+	options.DefaultFilename = filepath.Base(cleaned)
+	if directory := filepath.Dir(cleaned); directory != "" {
+		if info, statErr := os.Stat(directory); statErr == nil && info.IsDir() {
+			options.DefaultDirectory = directory
+		}
+	}
+
+	selected, dialogErr := wailsruntime.OpenFileDialog(a.ctx, options)
+	if dialogErr != nil {
+		return nil, dialogErr
+	}
+	if strings.TrimSpace(selected) == "" {
+		return nil, errMacDocumentAccessNotGranted
+	}
+	return a.readDocument(selected, true)
+}
+
+func isDocumentAccessDenied(platform string, err error) bool {
+	return platform == "darwin" && errors.Is(err, os.ErrPermission)
 }
 
 // CanEditFile checks whether the existing document can be opened for writing
@@ -1184,7 +1231,7 @@ func (a *App) text(key string) string {
 		"zh-CN": {
 			"unsavedTitle": "尚未保存", "openUnsavedMessage": "当前文档有尚未保存的更改。打开其他文档将放弃这些更改。",
 			"exitUnsavedMessage": "文档中的更改尚未保存。确定要退出并放弃这些更改吗？", "continueEditing": "继续编辑",
-			"discardAndOpen": "不保存并打开", "discardAndExit": "不保存并退出", "openMarkdown": "打开 Markdown 文档",
+			"discardAndOpen": "不保存并打开", "discardAndExit": "不保存并退出", "openMarkdown": "打开 Markdown 文档", "reauthorizeDocument": "请选择该文档以恢复访问权限",
 			"markdownDocument": "Markdown 文档", "textFile": "文本文件", "allFiles": "所有文件", "openFolder": "打开文档文件夹",
 			"saveAsMarkdown": "另存为 Markdown 文档", "newDocument": "新建文档.md", "newMarkdown": "新建 Markdown 文档",
 			"selectImage": "选择要插入的图片", "imageFile": "图片文件", "exportWord": "导出 Word 文档", "wordDocument": "Word 文档",
@@ -1192,7 +1239,7 @@ func (a *App) text(key string) string {
 		"en": {
 			"unsavedTitle": "Unsaved Changes", "openUnsavedMessage": "The current document has unsaved changes. Opening another document will discard them.",
 			"exitUnsavedMessage": "The document has unsaved changes. Exit and discard them?", "continueEditing": "Continue Editing",
-			"discardAndOpen": "Discard and Open", "discardAndExit": "Discard and Exit", "openMarkdown": "Open Markdown Document",
+			"discardAndOpen": "Discard and Open", "discardAndExit": "Discard and Exit", "openMarkdown": "Open Markdown Document", "reauthorizeDocument": "Choose this document to restore access",
 			"markdownDocument": "Markdown Document", "textFile": "Text File", "allFiles": "All Files", "openFolder": "Open Document Folder",
 			"saveAsMarkdown": "Save Markdown Document As", "newDocument": "New document.md", "newMarkdown": "New Markdown Document",
 			"selectImage": "Choose an image to insert", "imageFile": "Image files", "exportWord": "Export Word Document", "wordDocument": "Word Document",

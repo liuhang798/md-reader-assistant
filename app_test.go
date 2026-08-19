@@ -13,11 +13,25 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 )
+
+func TestDocumentAccessDeniedRecoveryIsLimitedToMacOSPermissions(t *testing.T) {
+	permissionError := fmt.Errorf("open document: %w", &os.PathError{Op: "open", Path: "/Users/demo/Documents/guide.md", Err: syscall.EPERM})
+	if !isDocumentAccessDenied("darwin", permissionError) {
+		t.Fatal("macOS permission error should request user-authorized recovery")
+	}
+	if isDocumentAccessDenied("windows", permissionError) || isDocumentAccessDenied("linux", permissionError) {
+		t.Fatal("non-macOS permission errors must not open an unexpected file picker")
+	}
+	if isDocumentAccessDenied("darwin", os.ErrNotExist) {
+		t.Fatal("missing files must stay on the missing-file path")
+	}
+}
 
 func TestMigrateLegacyPreferencesFilePreservesExistingSettings(t *testing.T) {
 	root := t.TempDir()
@@ -1486,6 +1500,21 @@ func TestMacBundleUsesProductDisplayNameAndCanonicalFilename(t *testing.T) {
 		if !strings.Contains(plist, "<key>CFBundleDisplayName</key>") ||
 			!strings.Contains(plist, "<string>{{.Info.ProductName}}</string>") {
 			t.Errorf("%s must expose the configured product name through CFBundleDisplayName", path)
+		}
+		if !strings.Contains(plist, "<key>CFBundleIdentifier</key>") ||
+			!strings.Contains(plist, "<string>com.liuhang.quillite-markdown</string>") {
+			t.Errorf("%s must keep a stable bundle identifier for macOS privacy permissions", path)
+		}
+		for _, privacyKey := range []string{
+			"NSDocumentsFolderUsageDescription",
+			"NSDesktopFolderUsageDescription",
+			"NSDownloadsFolderUsageDescription",
+			"NSNetworkVolumesUsageDescription",
+			"NSRemovableVolumesUsageDescription",
+		} {
+			if !strings.Contains(plist, "<key>"+privacyKey+"</key>") {
+				t.Errorf("%s must declare %s", path, privacyKey)
+			}
 		}
 	}
 

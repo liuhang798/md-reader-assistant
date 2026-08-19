@@ -35,6 +35,13 @@ test('documents removed outside the app become unavailable without software-erro
   assert.match(renderer, /missingCurrentFilePath = requestedPath;[\s\S]*await refreshLibraryFileStatuses\(\);[\s\S]*if \(firstMissingNotice\) showToast\(t\('currentDocumentMissing'\), 'warning'\);[\s\S]*return;[\s\S]*reportSilentError\(error, 'document\.refresh'\)/);
 });
 
+test('macOS recent documents recover protected-folder access through a user-authorized open panel', () => {
+  assert.match(mainSource, /openRecentFile: filePath => desktopRuntime \? Backend\.OpenRecentFile\(filePath\)/);
+  assert.match(renderer, /async function loadFile\(filePath\)[\s\S]*window\.quilliteMarkdown\.openRecentFile\(filePath\)/);
+  assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*window\.quilliteMarkdown\.openRecentFile\(filePath\)/);
+  assert.match(renderer, /if \(isMacAccessNotGrantedError\(error\)\) \{[\s\S]*showToast\(t\('macAccessNotGranted'\), 'warning'\);[\s\S]*return;/);
+});
+
 test('library rows use their full width and remove recent records from the context menu only', () => {
   assert.doesNotMatch(renderer, /class="recent-remove"/);
   assert.doesNotMatch(renderer, /querySelectorAll\('\.recent-remove'\)/);
@@ -63,7 +70,7 @@ test('document context menu edits, favorites, reveals, or removes the selected d
   assert.match(renderer, /else if \(action === 'favorite'\) await setFavoriteRecord\(filePath/);
   assert.match(renderer, /else if \(action === 'reveal'\) await revealFileInFolder\(filePath\)/);
   assert.match(renderer, /else if \(action === 'remove'\) await removeRecentRecord\(filePath\)/);
-  assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*window\.quilliteMarkdown\.readFile\(filePath\)[\s\S]*await toggleEditor\(true\)/);
+  assert.match(renderer, /async function editRecentDocument\(filePath\)[\s\S]*window\.quilliteMarkdown\.openRecentFile\(filePath\)[\s\S]*await toggleEditor\(true\)/);
   assert.match(renderer, /async function saveLibraryDocumentAs\(filePath, \{ editAfterSave = false \} = \{\}\)[\s\S]*window\.quilliteMarkdown\.saveAs\(source\.path, source\.content\)[\s\S]*displayDocument\(saved\)/);
   assert.match(renderer, /await window\.quilliteMarkdown\.showInFolder\(filePath\)/);
   assert.match(styles, /\.recent-context-menu \{[^}]*right: auto;[^}]*width: 190px;/);

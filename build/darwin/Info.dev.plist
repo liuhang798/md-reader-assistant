@@ -10,7 +10,7 @@
         <key>CFBundleExecutable</key>
         <string>{{.OutputFilename}}</string>
         <key>CFBundleIdentifier</key>
-        <string>com.wails.{{safeBundleID .Name}}</string>
+        <string>com.liuhang.quillite-markdown</string>
         <key>CFBundleVersion</key>
         <string>{{.Info.ProductVersion}}</string>
         <key>CFBundleGetInfoString</key>
@@ -25,6 +25,18 @@
         <string>true</string>
         <key>NSHumanReadableCopyright</key>
         <string>{{.Info.Copyright}}</string>
+        <key>LSSupportsOpeningDocumentsInPlace</key>
+        <true/>
+        <key>NSDocumentsFolderUsageDescription</key>
+        <string>轻阅 Markdown 需要访问您选择的文档，以便在重启后继续阅读和编辑。Quillite Markdown needs access to documents you choose so it can reopen them after restarting.</string>
+        <key>NSDesktopFolderUsageDescription</key>
+        <string>轻阅 Markdown 需要访问您在桌面上选择的文档。Quillite Markdown needs access to documents you choose on the Desktop.</string>
+        <key>NSDownloadsFolderUsageDescription</key>
+        <string>轻阅 Markdown 需要访问您在下载目录中选择的文档。Quillite Markdown needs access to documents you choose in Downloads.</string>
+        <key>NSNetworkVolumesUsageDescription</key>
+        <string>轻阅 Markdown 需要访问您在网络磁盘中选择的文档。Quillite Markdown needs access to documents you choose on network volumes.</string>
+        <key>NSRemovableVolumesUsageDescription</key>
+        <string>轻阅 Markdown 需要访问您在移动磁盘中选择的文档。Quillite Markdown needs access to documents you choose on removable volumes.</string>
         {{if .Info.FileAssociations}}
         <key>CFBundleDocumentTypes</key>
         <array>

@@ -28,6 +28,7 @@ window.quilliteMarkdown = {
   openFile: () => desktopRuntime ? Backend.OpenFile() : resolved(null),
   openFolder: () => desktopRuntime ? Backend.OpenFolder() : resolved(null),
   readFile: filePath => desktopRuntime ? Backend.ReadFile(filePath) : resolved(null),
+  openRecentFile: filePath => desktopRuntime ? Backend.OpenRecentFile(filePath) : resolved(null),
   canEditFile: filePath => desktopRuntime ? Backend.CanEditFile(filePath) : resolved(true),
   saveFile: (filePath, content) => desktopRuntime ? Backend.SaveFile(filePath, content) : resolved(null),
   saveAs: (filePath, content) => desktopRuntime ? Backend.SaveAs(filePath, content) : resolved(null),

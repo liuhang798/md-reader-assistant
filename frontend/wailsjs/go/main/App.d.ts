@@ -36,6 +36,8 @@ export function OpenFile():Promise<main.Document>;
 
 export function OpenFolder():Promise<main.FolderResult>;
 
+export function OpenRecentFile(arg1:string):Promise<main.Document>;
+
 export function Print():Promise<void>;
 
 export function ReadFile(arg1:string):Promise<main.Document>;

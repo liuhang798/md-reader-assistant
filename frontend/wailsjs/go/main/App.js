@@ -70,6 +70,10 @@ export function OpenFolder() {
   return window['go']['main']['App']['OpenFolder']();
 }
 
+export function OpenRecentFile(arg1) {
+  return window['go']['main']['App']['OpenRecentFile'](arg1);
+}
+
 export function Print() {
   return window['go']['main']['App']['Print']();
 }
