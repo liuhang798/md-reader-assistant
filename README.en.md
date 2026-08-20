@@ -61,7 +61,7 @@ The macOS installer image carries a metadata no-index marker. On launch, the ins
 - Added Academic Formulas with 79 templates across elementary mathematics, algebra and functions, geometry, calculus, linear algebra, probability and statistics, physics, chemistry, and chemical reactions.
 - Added parameter entry, inline/display/numbered insertion, live preview, and editable generated Markdown. Numbered formulas keep the equation number aligned at the far right.
 - Added Typora-style LaTeX, mhchem chemistry, and `\tag{…}` equation numbers with consistent preview, source positioning, PDF printing, and Word export.
-- Fixed raw LaTeX appearing beside native equations in WPS/Word, and added standalone HTML export that preserves themes, formulas, code, tables, and images.
+- Fixed raw LaTeX appearing beside rendered equations in WPS/Word and standalone HTML exports. Both formats now keep one equation consistent with the app preview, while HTML also preserves themes, code, tables, and images.
 - Added a direct link to the official bilingual formula guide with copy-ready mathematics, physics, and chemistry examples.
 - Improved handling of recent documents moved, deleted, or removed from chat caches, and added controlled IP/city visibility to authenticated feedback details.
 

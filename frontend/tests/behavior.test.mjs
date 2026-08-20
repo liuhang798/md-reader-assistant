@@ -42,6 +42,15 @@ test('macOS recent documents recover protected-folder access through a user-auth
   assert.match(renderer, /if \(isMacAccessNotGrantedError\(error\)\) \{[\s\S]*showToast\(t\('macAccessNotGranted'\), 'warning'\);[\s\S]*return;/);
 });
 
+test('an occupied export target is explained without uploading a software error', () => {
+  assert.match(renderer, /function isExportFileInUseError\(error\)[\s\S]*message\.includes\('EXPORT_FILE_IN_USE'\)/);
+  assert.match(renderer, /function reportSilentError\(error, source = 'frontend'\) \{[\s\S]*if \(isExportFileInUseError\(error\)\) return;/);
+  assert.match(renderer, /async function exportWordDocument\(\)[\s\S]*catch \(error\) \{\s*if \(isExportFileInUseError\(error\)\) \{\s*showToast\(t\('exportFileInUse'\), 'warning'\);\s*return;/);
+  assert.match(renderer, /async function exportHTMLDocument\(\)[\s\S]*catch \(error\) \{\s*if \(isExportFileInUseError\(error\)\) \{\s*showToast\(t\('exportFileInUse'\), 'warning'\);\s*return;/);
+  assert.match(renderer, /exportFileInUse: '导出文件正被其他程序占用/);
+  assert.match(renderer, /exportFileInUse: 'The export file is open in another app/);
+});
+
 test('library rows use their full width and remove recent records from the context menu only', () => {
   assert.doesNotMatch(renderer, /class="recent-remove"/);
   assert.doesNotMatch(renderer, /querySelectorAll\('\.recent-remove'\)/);
@@ -244,6 +253,8 @@ test('Word, HTML, and PDF export are available from the document menu', () => {
   assert.match(renderer, /formula\.setAttribute\('data-math-source', encodeURIComponent\(annotation\.textContent\.trim\(\)\)\)/);
   assert.match(renderer, /const mathOnly = math\.cloneNode\(true\)/);
   assert.match(renderer, /mathOnly\.querySelectorAll\('annotation, annotation-xml'\)/);
+  assert.match(renderer, /\[mathOnly, \.\.\.mathOnly\.querySelectorAll\('semantics'\)\]/);
+  assert.match(renderer, /child\.nodeType === 3 && child\.textContent\.trim\(\)/);
   assert.match(renderer, /formula\.replaceChildren\(mathOnly\)/);
   assert.match(renderer, /formula\.replaceChildren\(\)/);
   assert.match(renderer, /if \(action === 'export-word'\) exportWordDocument\(\)/);

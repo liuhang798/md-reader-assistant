@@ -142,6 +142,39 @@ func sanitizeStandaloneNode(node *html.Node) {
 		attributes = append(attributes, attribute)
 	}
 	node.Attr = attributes
+	removeFlattenedMathSource(node)
+}
+
+// removeFlattenedMathSource removes the plain-text LaTeX copy that some
+// DOMPurify/WebView combinations leave directly below a MathML container after
+// unwrapping KaTeX's <annotation>. The structural MathML remains the single
+// exported representation, matching the formula shown in the application.
+func removeFlattenedMathSource(node *html.Node) {
+	if node == nil || node.Type != html.ElementNode {
+		return
+	}
+	tag := strings.ToLower(node.Data)
+	if tag != "math" && tag != "semantics" {
+		return
+	}
+	hasStructuralMath := false
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == html.ElementNode && !strings.EqualFold(child.Data, "annotation") && !strings.EqualFold(child.Data, "annotation-xml") {
+			hasStructuralMath = true
+			break
+		}
+	}
+	if !hasStructuralMath {
+		return
+	}
+	for child := node.FirstChild; child != nil; {
+		next := child.NextSibling
+		if (child.Type == html.TextNode && strings.TrimSpace(child.Data) != "") ||
+			(child.Type == html.ElementNode && (strings.EqualFold(child.Data, "annotation") || strings.EqualFold(child.Data, "annotation-xml"))) {
+			node.RemoveChild(child)
+		}
+		child = next
+	}
 }
 
 func unsafeStandaloneElement(tag string) bool {

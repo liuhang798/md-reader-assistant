@@ -1548,7 +1548,7 @@ func TestMountedMacInstallerImageDetectionIsNarrow(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := os.Symlink(string(filepath.Separator)+"Applications", filepath.Join(validMount, "Applications")); err != nil {
-		t.Fatal(err)
+		t.Skipf("platform does not permit creating the macOS installer test symlink: %v", err)
 	}
 	validPlist := "<plist><dict><key>CFBundleIdentifier</key><string>" + macBundleIdentifier + "</string></dict></plist>"
 	if err := os.WriteFile(filepath.Join(validApp, "Info.plist"), []byte(validPlist), 0o644); err != nil {

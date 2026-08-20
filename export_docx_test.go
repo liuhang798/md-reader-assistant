@@ -5,10 +5,40 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/xml"
+	"errors"
 	"io"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 )
+
+func TestClassifyExportWriteErrorRecognizesWindowsFileLocks(t *testing.T) {
+	for _, errno := range []syscall.Errno{syscall.Errno(32), syscall.Errno(33)} {
+		original := &os.PathError{Op: "remove", Path: "open-document.docx", Err: errno}
+		classified := classifyExportWriteError("windows", original)
+		if !strings.Contains(classified.Error(), exportFileInUseErrorMarker) {
+			t.Fatalf("Windows lock error %d was not classified: %v", errno, classified)
+		}
+		if !errors.Is(classified, original) {
+			t.Fatalf("classified error no longer wraps the original error: %v", classified)
+		}
+	}
+}
+
+func TestClassifyExportWriteErrorLeavesOtherFailuresUnchanged(t *testing.T) {
+	permission := &os.PathError{Op: "remove", Path: "protected.docx", Err: syscall.Errno(5)}
+	if classified := classifyExportWriteError("windows", permission); classified != permission {
+		t.Fatalf("permission error should stay unchanged: %v", classified)
+	}
+	sharing := &os.PathError{Op: "remove", Path: "open-document.docx", Err: syscall.Errno(32)}
+	if classified := classifyExportWriteError("darwin", sharing); classified != sharing {
+		t.Fatalf("non-Windows error should stay unchanged: %v", classified)
+	}
+	if classified := classifyExportWriteError("windows", nil); classified != nil {
+		t.Fatalf("nil error should remain nil: %v", classified)
+	}
+}
 
 func TestBuildDOCXCreatesValidOfficePackage(t *testing.T) {
 	pixelPNG := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
@@ -102,6 +132,22 @@ func TestBuildDOCXExportsMathAsNativeOfficeMath(t *testing.T) {
 	}
 	if strings.Contains(document, "visual duplicate") || strings.Contains(document, `\\frac{a}{b}`) {
 		t.Fatal("KaTeX visual duplicate or raw LaTeX leaked into native Office Math output")
+	}
+	assertWellFormedXML(t, []byte(document))
+}
+
+func TestBuildDOCXIgnoresFlattenedKatexSourceInsideMathML(t *testing.T) {
+	html := `<p>分数：</p><div class="math-block" data-math-source="y%3D%5Cfrac%7Bx%2B1%7D%7Bx-1%7D"><math display="block"><mrow><mi>y</mi><mo>=</mo><mfrac><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><mrow><mi>x</mi><mo>-</mo><mn>1</mn></mrow></mfrac></mrow>y=\frac{x+1}{x-1}</math></div>`
+	data, err := buildDOCX(html, "Flattened KaTeX", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(readDOCXFiles(t, data)["word/document.xml"])
+	if !strings.Contains(document, `<m:oMath>`) || !strings.Contains(document, `<m:f>`) {
+		t.Fatalf("native Word equation is missing: %s", document)
+	}
+	if strings.Contains(document, `y=\frac{x+1}{x-1}`) {
+		t.Fatalf("flattened raw LaTeX leaked into DOCX: %s", document)
 	}
 	assertWellFormedXML(t, []byte(document))
 }

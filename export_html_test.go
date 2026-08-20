@@ -18,6 +18,21 @@ func TestBuildStandaloneHTMLPreservesDocumentAndAppearance(t *testing.T) {
 	}
 }
 
+func TestBuildStandaloneHTMLRemovesFlattenedKatexSource(t *testing.T) {
+	fragment := `<p>分数：</p><div class="math-block" data-math-source="y%3D%5Cfrac%7Bx%2B1%7D%7Bx-1%7D"><math display="block"><mrow><mi>y</mi><mo>=</mo><mfrac><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><mrow><mi>x</mi><mo>-</mo><mn>1</mn></mrow></mfrac></mrow>y=\frac{x+1}{x-1}</math></div>`
+	data, err := buildStandaloneHTML(fragment, "Math", "zh-CN", "light", "#159A63")
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := string(data)
+	if !strings.Contains(document, `<mfrac>`) || !strings.Contains(document, `data-math-source="y%3D%5Cfrac%7Bx%2B1%7D%7Bx-1%7D"`) {
+		t.Fatalf("structural MathML or encoded source metadata was removed: %s", document)
+	}
+	if strings.Contains(document, `y=\frac{x+1}{x-1}`) {
+		t.Fatalf("flattened raw LaTeX leaked into standalone HTML: %s", document)
+	}
+}
+
 func TestBuildStandaloneHTMLRemovesExecutableContent(t *testing.T) {
 	data, err := buildStandaloneHTML(`<p onclick="alert(1)" style="background:url(https://example.com/track)">安全正文</p><script>alert(1)</script><style>body{display:none}</style><iframe src="https://example.com"></iframe><a href="javascript:alert(1)">危险链接</a><img src="data:image/png;base64,AA==" srcset="https://example.com/track 2x" onerror="alert(1)">`, "Safe", "en", "light", "not-a-color")
 	if err != nil {

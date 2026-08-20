@@ -18,8 +18,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -28,8 +30,9 @@ import (
 )
 
 const (
-	maxDOCXHTMLSize  = 24 * 1024 * 1024
-	maxDOCXImageSize = 20 * 1024 * 1024
+	maxDOCXHTMLSize            = 24 * 1024 * 1024
+	maxDOCXImageSize           = 20 * 1024 * 1024
+	exportFileInUseErrorMarker = "EXPORT_FILE_IN_USE"
 )
 
 type docxRelationship struct {
@@ -158,9 +161,25 @@ func writeFileAtomically(filePath string, data []byte) error {
 		return nil
 	}
 	if err := os.Remove(filepath.Clean(filePath)); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
+		return classifyExportWriteError(runtime.GOOS, err)
 	}
-	return os.Rename(temporaryPath, filepath.Clean(filePath))
+	return classifyExportWriteError(runtime.GOOS, os.Rename(temporaryPath, filepath.Clean(filePath)))
+}
+
+// classifyExportWriteError turns Windows sharing and lock violations into a
+// stable business error that the frontend can explain without reporting it as
+// a software fault. Numeric Errno values keep this testable on every platform.
+func classifyExportWriteError(platform string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if platform == "windows" {
+		var errno syscall.Errno
+		if errors.As(err, &errno) && (errno == syscall.Errno(32) || errno == syscall.Errno(33)) {
+			return fmt.Errorf("%s: %w", exportFileInUseErrorMarker, err)
+		}
+	}
+	return err
 }
 
 func buildDOCX(renderedHTML, title, baseDirectory string) ([]byte, error) {
@@ -975,7 +994,9 @@ func mathMLNodeToOMML(node *html.Node) string {
 		return ""
 	}
 	switch tag {
-	case "math", "mrow", "mstyle", "mpadded", "menclose", "maction":
+	case "math":
+		return mathMLStructuralChildrenToOMML(node)
+	case "mrow", "mstyle", "mpadded", "menclose", "maction":
 		return children()
 	case "semantics":
 		for child := node.FirstChild; child != nil; child = child.NextSibling {
@@ -1052,6 +1073,31 @@ func mathMLNodeToOMML(node *html.Node) string {
 	default:
 		return children()
 	}
+}
+
+// mathMLStructuralChildrenToOMML ignores flattened KaTeX annotation text when
+// a MathML container already has structural element children. This protects
+// DOCX exports even when an older frontend sends <math><mrow>...</mrow>latex
+// source</math> after sanitization.
+func mathMLStructuralChildrenToOMML(node *html.Node) string {
+	hasElement := false
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == html.ElementNode && !strings.EqualFold(child.Data, "annotation") && !strings.EqualFold(child.Data, "annotation-xml") {
+			hasElement = true
+			break
+		}
+	}
+	if !hasElement {
+		return mathMLChildrenToOMML(node)
+	}
+	var output strings.Builder
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type != html.ElementNode || strings.EqualFold(child.Data, "annotation") || strings.EqualFold(child.Data, "annotation-xml") {
+			continue
+		}
+		output.WriteString(mathMLNodeToOMML(child))
+	}
+	return output.String()
 }
 
 func mathMLChildrenToOMML(node *html.Node) string {
