@@ -42,6 +42,13 @@ test('macOS recent documents recover protected-folder access through a user-auth
   assert.match(renderer, /if \(isMacAccessNotGrantedError\(error\)\) \{[\s\S]*showToast\(t\('macAccessNotGranted'\), 'warning'\);[\s\S]*return;/);
 });
 
+test('file-association opens are subscribed before startup and protect unsaved changes', () => {
+  const listenerIndex = renderer.indexOf('window.quilliteMarkdown.onOpenFile(doc =>');
+  const initializeIndex = renderer.indexOf('initialize();', listenerIndex);
+  assert.ok(listenerIndex >= 0 && initializeIndex > listenerIndex);
+  assert.match(renderer, /window\.quilliteMarkdown\.onOpenFile\(doc => \{\s*if \(!doc\?\.path \|\| !maybeDiscardChanges\(\)\) return;/);
+});
+
 test('an occupied export target is explained without uploading a software error', () => {
   assert.match(renderer, /function isExportFileInUseError\(error\)[\s\S]*message\.includes\('EXPORT_FILE_IN_USE'\)/);
   assert.match(renderer, /function reportSilentError\(error, source = 'frontend'\) \{[\s\S]*if \(isExportFileInUseError\(error\)\) return;/);
@@ -287,7 +294,7 @@ test('reader header exposes responsive Word, HTML, and PDF export actions', () =
 
 test('unwritable documents explain the cause and offer Save Copy and Edit without repeating failed autosaves', () => {
   assert.match(mainSource, /canEditFile: filePath => desktopRuntime \? Backend\.CanEditFile\(filePath\) : resolved\(true\)/);
-  assert.match(renderer, /canEdit = await window\.quilliteMarkdown\.canEditFile\(state\.currentFile\.path\)/);
+  assert.match(renderer, /const requestedPath = state\.currentFile\.path;[\s\S]*canEdit = await window\.quilliteMarkdown\.canEditFile\(requestedPath\)/);
   assert.match(renderer, /if \(!canEdit\) \{[\s\S]*state\.saveAsRequired = true;[\s\S]*openEditPermissionDialog\(\);[\s\S]*return;/);
   assert.match(html, /id="editPermissionDialog"[^>]*role="dialog"[^>]*aria-modal="true"/);
   assert.match(html, /data-i18n="permissionReasonCache"/);
@@ -314,6 +321,15 @@ test('the editor header offers an exit editing button', () => {
   assert.match(html, /id="exitEditButton" class="text-button exit-edit-button"/);
   assert.match(html, /data-i18n="exitEdit"/);
   assert.match(renderer, /els\.exitEditButton\.addEventListener\('click', \(\) => \{\s*if \(state\.editing\) toggleEditor\(false\);/);
+});
+
+test('editor preview switching handles Ctrl+E once and serializes asynchronous transitions', () => {
+  assert.match(renderer, /\{ key: 'Mod-e',[^\n]*stopPropagation: true \}/);
+  assert.match(renderer, /document\.addEventListener\('keydown', event => \{\s*if \(event\.defaultPrevented\) return;/);
+  assert.match(renderer, /let editorModeSwitching = false;/);
+  assert.match(renderer, /async function toggleEditor\(forceEditing\) \{\s*if \(!state\.currentFile \|\| editorModeSwitching\) return;/);
+  assert.match(renderer, /editorModeSwitching = true;[\s\S]*try \{[\s\S]*finally \{\s*editorModeSwitching = false;/);
+  assert.match(renderer, /const requestedPath = state\.currentFile\.path;[\s\S]*sameDocumentPath\(state\.currentFile\.path, requestedPath\)/);
 });
 
 test('code blocks let the user pick a common programming language', () => {
@@ -352,6 +368,8 @@ test('LaTeX math, chemistry, and numbered equations are available in preview and
   assert.match(renderer, /buildFormulaMarkdown\(formulaWizardState\.mode, expression/);
   assert.match(renderer, /function chooseFormulaTemplate\(templateId\)[\s\S]*els\.formulaBuilderPanel\.scrollTop = 0;/);
   assert.match(renderer, /function chooseFormulaDiscipline\(discipline\)[\s\S]*els\.formulaBuilderPanel\.scrollTop = 0;/);
+  assert.match(html, /value="formula-builder" data-i18n="formulaBuilder">学科公式 🔥<\/option>/);
+  assert.match(renderer, /formulaBuilder: '学科公式 🔥'/);
   assert.match(styles, /\.formula-dialog-layout \{ display: grid;/);
   assert.match(styles, /\.formula-preview \.katex-display \{ width: 100%; margin: 0; \}/);
   assert.match(html, /<textarea id="formulaMarkdownSource"[^>]*data-i18n-aria-label="generatedMarkdown"/);

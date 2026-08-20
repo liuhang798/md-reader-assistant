@@ -4,11 +4,55 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-08-20
+
 ### 简体中文
 
+- 图表生成器新增 15 类离线数据图表：柱状图、折线图、堆叠柱状图、面积图、散点图、正反向对比图、柱线组合图、漏斗图、热力图、箱线图、气泡图、仪表盘、环形图、瀑布图和词云图。数据图表使用可编辑的 `echarts` JSON 围栏源码，实时预览采用 SVG，Word／HTML 导出自动转换为清晰图片，PDF 打印保持预览效果。
+- 图表目录现共提供 37 类模板（22 类 Mermaid + 15 类 ECharts）。新增真实浏览器巡检覆盖全部模板的中英文版本，共验证 74 次 SVG 渲染与 74 次 PNG 导出；15 类新增图表还逐项核对了有效画布、可见文字和实际绘制元素。
+- 编辑器新增“图表生成器”：参照“学科公式”的统一弹窗交互，将 22 类常用 Mermaid 图表按流程与项目、软件与系统、数据分析、知识与规划分类展示。选择模板后可查看用途说明、直接编辑完整源码并实时预览，确认后插入 Markdown；原流程图、时序图和甘特图三个分散入口已合并为一个入口。
+- 放大图表生成器弹窗并重新规划工作区：宽屏下源码编辑与实时图表左右并排、各自独立滚动，能够同时查看更完整的源码和图表；较窄窗口自动切回上下布局，避免内容被压缩或操作按钮超出屏幕。
+- 新增覆盖全部 22 种 Mermaid 图表中英文模板的真实渲染巡检；修正 XY 图表纵轴标题与刻度重叠，并自动扩展过紧的 SVG 画布，避免时序图、XY 图表和雷达图的边缘文字被裁切。
+- 修复 C4 图节点顶部的 `<<person>>`、`<<system>>` 被强制压缩后字母重叠的问题；类型标识现在使用与 Mermaid 测量一致的 `«person»`、`«system»` 并在节点中精确居中。
+- 修复 Mermaid 需求图关系标签显示成黑色块的问题；`satisfies` 等关系说明现在使用清晰的中性色文字与底色，预览及 Word／HTML 导出保持一致。
+- 新增 Typora 风格 Mermaid 图表：使用 ` ```mermaid ` 围栏代码块即可实时渲染流程图、时序图、甘特图及 Mermaid 支持的其他图表；编辑器“更多格式”提供三类常用模板。图表跟随明暗模式和主题色，语法错误会在原位说明且不影响文档其他内容，Word／HTML 导出会转换为清晰的内嵌图片，PDF 打印保持预览效果。
+- 修复主题变量使用 CSS `color-mix()` 时 Mermaid 将其误判为不支持颜色、导致所有图表显示“图表语法有误”的问题。渲染前现在由浏览器把全部主题色转换成 Mermaid 可识别的标准 sRGB 十六进制颜色，明暗模式和八套主题均可正常使用。
+- 修复流程图、类图、状态图、实体关系图和思维导图节点文字缺失的问题：Mermaid 现在统一生成安全的纯 SVG 文字，不再依赖会被安全过滤器移除的 HTML 标签。甘特图等宽图保持可读尺寸并支持横向滚动；图表引擎改为按需加载、复用主题配置并丢弃过期渲染任务，降低打开普通文档和连续编辑时的卡顿。
+- 修复编辑长篇 Mermaid 文档时左侧实时预览突然跳到前面图表的问题。预览更新现在会原位复用主题一致且源码未变化的安全 SVG，只重新绘制正在修改的图表，既保持当前章节的滚动位置，也进一步减少多图文档的重复渲染。
+- 统一 Mermaid 图表的中文字体和常规字重，移除通用 SVG 图标描边意外施加到图表文字后产生的粗黑轮廓，并将过小或过大的标签收敛到可读字号范围。C4 系统上下文图保留足够画布宽度，窄窗口下通过横向滚动避免整图缩小到无法阅读。
+- 修复包含大量 Mermaid 图表的文档在编辑时左侧预览定位偏移：图表异步渲染完成后会基于最终高度再次校正到当前源码位置，过期渲染任务不会干扰新的光标位置。
+- Mermaid 饼图改用独立于软件主题色的高区分度分类色板，各扇区不再只是同一颜色的浅色变化；图例、分区文字及明暗模式均保持清晰可辨。
+- ER 实体关系图的关系标签改用独立中性色，不再强制继承软件主题色；修复 `creates`、`contains` 等关系文字与背景同色而显示为空白色块的问题。关系文字、标签底色和连线颜色会直接写入 SVG，软件预览及 Word／HTML 导出保持一致。
+- 修复 C4 系统上下文图的角色类型、系统类型和关系说明在布局完成后被二次放大，导致文字压线、越过节点边界或互相重叠的问题。C4 图现在保留参与原生布局计算的字号，只统一字体、常规字重与清晰度。
+- 修复较长的中文 C4 关系说明仍会伸入相邻节点的问题。C4 专用布局现在为连线标题和技术标签预留 240px 间隔，每行最多排列三个节点，并使用可横向滚动的宽画布，避免“打开、阅读和编辑”“检查更新 [HTTPS]”等文字覆盖系统说明。
+- 修复包含“四反引号外层代码块 + 三反引号 Mermaid 示例”的教程文档中，左侧预览右键定位逐节偏移的问题。源码块扫描现在遵循 CommonMark 围栏长度规则，较短的内层围栏不会错误关闭外层代码块，桑基图及其后续章节可准确定位到对应源码。
+- macOS 现在会为用户通过系统文件／文件夹窗口、Finder 或文件关联授权的文档保存原生 Security-Scoped Bookmark。最近阅读与资源浏览器在应用重启后会优先静默恢复授权，书签过期时自动刷新；只有旧记录或因未签名更新导致书签身份失效时，才会再次显示已定位到原文件的系统授权窗口。
+- 修复 Mermaid 用户旅程图阶段标题与阶段背景使用同一颜色、导致“打开文档”“编辑文档”等文字不可见的问题；阶段标题现在使用独立正文色，并纳入全部图表真实渲染巡检与导出校验。
+- 统一 Mermaid 连线备注样式：类图、状态图、实体关系图和需求图中的关系说明不再显示容易被误认为节点的矩形描边，仅保留遮挡连线所需的无边框底色与正常文字；预览及 Word／HTML／图片导出保持一致。
 
 ### English
 
+- Added 15 offline data-chart templates to Diagram Builder: bar, line, stacked bar, area, scatter, diverging comparison, bar-and-line combo, funnel, heatmap, box plot, bubble, gauge, doughnut, waterfall, and word cloud. Their editable `echarts` JSON fences render as SVG in live preview, convert to clear embedded images for Word/HTML exports, and retain preview styling when printed to PDF.
+- Diagram Builder now contains 37 templates in total (22 Mermaid + 15 ECharts). A real-browser audit verifies both localized variants of every template—74 SVG renders and 74 PNG exports—and separately checks that every newly added chart has a valid canvas, visible labels, and real drawing elements.
+- Added a unified Diagram Builder to the editor. Its formula-builder-style dialog organizes 22 common Mermaid templates into Process & Projects, Software & Systems, Data Analysis, and Knowledge & Planning; each template includes a use-case description, fully editable source, live preview, and one-click Markdown insertion. The three separate flowchart, sequence, and Gantt entries are now consolidated into one command.
+- Enlarged and reorganized the Diagram Builder. On wide displays the editable source and live diagram sit side by side with independent scrolling so both remain visible; narrower windows automatically return to a stacked layout without clipping controls.
+- Added a real-render audit covering the Chinese and English variants of all 22 Mermaid templates. Fixed the XY-chart Y-axis title overlapping tick labels and now expands overly tight SVG canvases so edge labels in sequence, XY, and radar diagrams are not clipped.
+- Fixed overlapping C4 stereotype letters caused by Mermaid compressing `<<person>>` and `<<system>>`; stereotypes now use the correctly measured guillemet form and remain centred in their nodes.
+- Fixed Mermaid Requirement Diagram relationship captions appearing as solid black bars. Labels such as `satisfies` now use readable neutral text and backgrounds consistently in preview and Word/HTML exports.
+- Added Typora-style Mermaid diagrams. Fenced ` ```mermaid ` blocks now render flowcharts, sequence diagrams, Gantt charts, and other Mermaid syntax in live preview, with ready-to-insert templates under More Formats. Diagrams follow the current color mode and accent, show an inline non-blocking syntax error when invalid, export as embedded high-resolution images to Word/HTML, and retain preview styling in PDF printing.
+- Fixed every Mermaid diagram being reported as invalid when the active theme used CSS `color-mix()`. All theme colors are now resolved by the browser to Mermaid-compatible sRGB hex values before rendering, covering both color modes and all eight accent palettes.
+- Fixed missing node labels in flowcharts, class, state, ER, and mind-map diagrams. Mermaid now emits safe pure-SVG text instead of HTML labels removed by sanitization. Wide diagrams such as Gantt retain a readable canvas with horizontal scrolling, while lazy engine loading, cached theme setup, and stale-render cancellation reduce startup and continuous-editing lag.
+- Fixed the live preview jumping to an earlier chart while editing long Mermaid documents. Preview refreshes now reuse safe, unchanged SVGs for the active theme in document order and redraw only the diagram being changed, preserving the current section and avoiding redundant multi-diagram rendering.
+- Normalized Mermaid labels to the application UI font at regular weight, removed the global SVG icon stroke that accidentally outlined and emboldened diagram text, and constrained extreme label sizes to a readable range. C4 context diagrams retain a sufficiently wide canvas and scroll horizontally in narrow panes instead of becoming illegibly small.
+- Fixed inaccurate live-preview positioning in documents with many Mermaid diagrams by correcting the scroll position after the latest asynchronous chart layout reaches its final height, while ignoring stale render tasks.
+- Mermaid pie charts now use a high-contrast categorical palette independent of the application accent, keeping slices, labels, and legends distinct in both light and dark modes.
+- ER relationship labels now use an accent-independent neutral palette. This fixes captions such as `creates` and `contains` becoming invisible when their text and background inherited the same theme colour. Final caption, background, and connector colours are written into the SVG so the app preview and Word/HTML exports remain consistent.
+- Fixed C4 context stereotype, system-type, and relationship labels being resized after layout, which caused text to cross node boundaries, collide with connectors, or overlap. C4 diagrams now preserve the exact font sizes used by Mermaid's layout while retaining the normalized font family, regular weight, and clear rendering.
+- Fixed long Chinese C4 relationship captions still extending into neighbouring nodes. The dedicated C4 layout now reserves a 240px lane for relation and technology labels, limits each row to three nodes, and uses a horizontally scrollable wide canvas so captions such as “Open, read and edit” or “Check for updates [HTTPS]” cannot cover system descriptions.
+- Fixed progressively shifted right-click source positioning in tutorials that wrap a triple-backtick Mermaid example inside a four-backtick code fence. Source block scanning now follows CommonMark fence-length rules, so a shorter inner fence cannot close the outer block and Sankey or later sections locate their actual source lines.
+- macOS now persists native security-scoped bookmarks for documents and folders authorized through system panels, Finder, or file associations. Recent and Explorer restore access silently after relaunch and refresh stale bookmarks automatically; the preselected system authorization panel is retained only for legacy records or bookmarks invalidated by an unsigned app update.
+- Fixed Mermaid User Journey section headings inheriting the same fill as their section backgrounds, which hid labels such as “Open document” and “Edit document.” Section headings now use an explicit readable foreground and are covered by the full real-render and export audit.
+- Unified Mermaid connector annotations across class, state, ER, and requirement diagrams. Relationship captions no longer show a framed rectangle that resembles a node; they retain only a borderless background mask and normal text, consistently in preview and Word/HTML/image exports.
 
 ## [2.4.9] - 2026-08-19
 
@@ -593,3 +637,4 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.7]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.7
 [2.4.8]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.8
 [2.4.9]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.9
+[2.5.0]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.5.0

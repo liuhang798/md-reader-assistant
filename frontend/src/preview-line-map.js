@@ -54,7 +54,12 @@ export function scanMarkdownBlockStartLines(markdown) {
     const fence = line.match(FENCE_RE);
     if (fence) {
       const char = fence[1][0];
-      const close = new RegExp(`^ {0,3}${char}{3,}\\s*$`);
+      // CommonMark requires the closing fence to contain at least as many
+      // markers as the opener. This matters for documentation that uses a
+      // four-backtick outer block to demonstrate an inner ```mermaid block:
+      // accepting the inner triple fence here shifts every following preview
+      // block to the wrong source line.
+      const close = new RegExp(`^ {0,3}${char}{${fence[1].length},}\\s*$`);
       let j = i + 1;
       while (j < len && !close.test(lines[j])) j++;
       i = j + 1;

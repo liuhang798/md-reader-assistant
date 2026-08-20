@@ -28,7 +28,7 @@
 !define INFO_PROJECTNAME    "quillite-markdown"
 !define INFO_COMPANYNAME    "Quillite Open Source"
 !define INFO_PRODUCTNAME    "轻阅 Markdown"
-!define INFO_PRODUCTVERSION "2.4.9"
+!define INFO_PRODUCTVERSION "2.5.0"
 !define INFO_COPYRIGHT      "Copyright © 2026 柳航"
 !define PRODUCT_EXECUTABLE  "QuilliteMarkdown.exe"
 !define LEGACY_PRODUCTNAME  "MD阅读助手"
@@ -38,7 +38,15 @@
 ## !define PRODUCT_EXECUTABLE  "Application.exe"      # Default "${INFO_PROJECTNAME}.exe"
 ## !define UNINST_KEY_NAME     "UninstKeyInRegistry"  # Default "${INFO_COMPANYNAME}${INFO_PRODUCTNAME}"
 ####
-## !define REQUEST_EXECUTION_LEVEL "admin"            # Default "admin"  see also https://nsis.sourceforge.io/Docs/Chapter4.html
+## Keep the installed application at the same integrity level as Explorer.
+## Otherwise an app launched from an elevated installer cannot receive Wails'
+## single-instance WM_COPYDATA message when a document is double-clicked.
+!ifndef WAILS_INSTALL_SCOPE
+  !define WAILS_INSTALL_SCOPE "user"
+!endif
+!ifndef REQUEST_EXECUTION_LEVEL
+  !define REQUEST_EXECUTION_LEVEL "user"
+!endif
 ####
 ## Include the wails tools
 ####

@@ -28,7 +28,7 @@ const (
 	appNameEN       = "Quillite Markdown"
 	legacyAppNameZH = "MD阅读助手"
 	legacyAppNameEN = "MD Reader Assistant"
-	appVersion      = "2.4.9"
+	appVersion      = "2.5.0"
 	maxRecent       = 10
 )
 
@@ -89,6 +89,7 @@ type App struct {
 	ctx                 context.Context
 	mu                  sync.RWMutex
 	preferencesMu       sync.Mutex
+	securityBookmarksMu sync.Mutex
 	draftsMu            sync.Mutex
 	draftFiles          map[string]bool
 	draftReplacements   map[string]bool
@@ -130,15 +131,22 @@ func (a *App) beforeClose(ctx context.Context) bool {
 func (a *App) onSecondInstanceLaunch(data options.SecondInstanceData) {
 	filePath := findMarkdownArgument(data.Args)
 	if filePath != "" {
-		if doc, err := a.ReadFile(filePath); err == nil {
-			wailsruntime.EventsEmit(a.ctx, "file:open-from-main", doc)
-		}
+		a.openFileFromSystem(filePath)
 	}
-	wailsruntime.WindowUnminimise(a.ctx)
-	wailsruntime.WindowShow(a.ctx)
+	a.mu.RLock()
+	ctx := a.ctx
+	a.mu.RUnlock()
+	if ctx != nil {
+		wailsruntime.WindowUnminimise(ctx)
+		wailsruntime.WindowShow(ctx)
+	}
 }
 
 func (a *App) onFileOpen(filePath string) {
+	a.openFileFromSystem(filePath)
+}
+
+func (a *App) openFileFromSystem(filePath string) {
 	if filePath == "" {
 		return
 	}
@@ -150,7 +158,8 @@ func (a *App) onFileOpen(filePath string) {
 		return
 	}
 	a.mu.Unlock()
-	if doc, err := a.ReadFile(filePath); err == nil {
+	_ = a.rememberMacSecurityScopedPath(filePath, false)
+	if doc, err := a.OpenRecentFile(filePath); err == nil {
 		wailsruntime.EventsEmit(ctx, "file:open-from-main", doc)
 		wailsruntime.WindowUnminimise(ctx)
 		wailsruntime.WindowShow(ctx)
@@ -370,14 +379,21 @@ func (a *App) readDocument(filePath string, remember bool) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := os.ReadFile(absPath)
-	if err != nil {
-		return nil, err
+	data, info, resolvedPath, foundBookmark, bookmarkErr := a.readDocumentWithMacBookmark(absPath)
+	if !foundBookmark || bookmarkErr != nil {
+		data, err = os.ReadFile(absPath)
+		if err == nil {
+			info, err = os.Stat(absPath)
+		}
+		if err != nil {
+			if foundBookmark {
+				return nil, joinDocumentAccessErrors(err, bookmarkErr)
+			}
+			return nil, err
+		}
+		resolvedPath = absPath
 	}
-	info, err := os.Stat(absPath)
-	if err != nil {
-		return nil, err
-	}
+	absPath = filepath.Clean(resolvedPath)
 	if remember {
 		_ = a.rememberFile(absPath)
 	}
@@ -403,6 +419,7 @@ func (a *App) OpenFile() (*Document, error) {
 	if err != nil || filePath == "" {
 		return nil, err
 	}
+	_ = a.rememberMacSecurityScopedPath(filePath, false)
 	return a.ReadFile(filePath)
 }
 
@@ -759,6 +776,7 @@ func (a *App) OpenFolder() (*FolderResult, error) {
 	if err != nil || root == "" {
 		return nil, err
 	}
+	_ = a.rememberMacSecurityScopedPath(root, true)
 	folder, err := a.ListFolder(root)
 	if err != nil {
 		return nil, err
@@ -807,6 +825,7 @@ func (a *App) OpenRecentFile(filePath string) (*Document, error) {
 	if strings.TrimSpace(selected) == "" {
 		return nil, errMacDocumentAccessNotGranted
 	}
+	_ = a.rememberMacSecurityScopedPath(selected, false)
 	return a.readDocument(selected, true)
 }
 
@@ -818,6 +837,17 @@ func isDocumentAccessDenied(platform string, err error) bool {
 // without changing its contents. This catches read-only chat-app cache files,
 // restricted locations, and files currently locked against writes.
 func (a *App) CanEditFile(filePath string) bool {
+	editable := false
+	_, foundBookmark, bookmarkErr := a.withMacSecurityScopedPath(filePath, func(accessiblePath string) error {
+		editable = canEditFile(accessiblePath)
+		if !editable {
+			return os.ErrPermission
+		}
+		return nil
+	})
+	if foundBookmark && bookmarkErr == nil {
+		return editable
+	}
 	return canEditFile(filePath)
 }
 
@@ -841,11 +871,18 @@ func (a *App) SaveFile(filePath, content string) (*Document, error) {
 	if strings.TrimSpace(filePath) == "" {
 		return a.SaveAs("", content)
 	}
-	if err := os.WriteFile(filepath.Clean(filePath), []byte(content), 0o644); err != nil {
-		return nil, err
+	resolvedPath, foundBookmark, bookmarkErr := a.writeDocumentWithMacBookmark(filePath, []byte(content))
+	if !foundBookmark || bookmarkErr != nil {
+		if err := os.WriteFile(filepath.Clean(filePath), []byte(content), 0o644); err != nil {
+			if foundBookmark {
+				return nil, joinDocumentAccessErrors(err, bookmarkErr)
+			}
+			return nil, err
+		}
+		resolvedPath = filePath
 	}
 	a.SetDirty(false)
-	return a.readDocument(filePath, true)
+	return a.readDocument(resolvedPath, true)
 }
 
 func (a *App) saveDocumentAs(currentPath, filePath, content string) (*Document, error) {
@@ -895,7 +932,11 @@ func (a *App) SaveAs(currentPath, content string) (*Document, error) {
 	if err != nil || filePath == "" {
 		return nil, err
 	}
-	return a.saveDocumentAs(currentPath, filePath, content)
+	document, err := a.saveDocumentAs(currentPath, filePath, content)
+	if err == nil {
+		_ = a.rememberMacSecurityScopedPath(filePath, false)
+	}
+	return document, err
 }
 
 func (a *App) SetDirty(dirty bool) {
@@ -909,12 +950,36 @@ func (a *App) ListFolder(root string) (*FolderResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	var folder *FolderResult
+	resolvedRoot, foundBookmark, bookmarkErr := a.withMacSecurityScopedPath(absRoot, func(accessibleRoot string) error {
+		var listErr error
+		folder, listErr = a.listFolderAccessible(accessibleRoot)
+		return listErr
+	})
+	if foundBookmark && bookmarkErr == nil {
+		folder.Root = filepath.Clean(resolvedRoot)
+		return folder, nil
+	}
+	folder, err = a.listFolderAccessible(absRoot)
+	if err != nil && foundBookmark {
+		return nil, joinDocumentAccessErrors(err, bookmarkErr)
+	}
+	return folder, err
+}
+
+func (a *App) listFolderAccessible(absRoot string) (*FolderResult, error) {
 	info, err := os.Stat(absRoot)
 	if err != nil {
 		return nil, err
 	}
 	if !info.IsDir() {
 		return nil, fmt.Errorf("resource explorer path is not a directory: %s", absRoot)
+	}
+	// os.Stat can succeed for a privacy-protected directory while listing its
+	// contents still returns EPERM. Probe the root explicitly so callers can
+	// reauthorize instead of silently rendering an empty Explorer.
+	if _, err := os.ReadDir(absRoot); err != nil {
+		return nil, err
 	}
 	files := make([]FolderFile, 0)
 	a.collectMarkdownFiles(absRoot, absRoot, 0, &files)
@@ -969,18 +1034,27 @@ func (a *App) GetPreferences() (Preferences, error) {
 	if err != nil {
 		return prefs, err
 	}
-	prefs.RecentFileStatuses = recentFileStatuses(prefs.RecentFiles)
-	prefs.FavoriteFileStatuses = recentFileStatuses(prefs.FavoriteFiles)
+	prefs.RecentFileStatuses = a.recentFileStatuses(prefs.RecentFiles)
+	prefs.FavoriteFileStatuses = a.recentFileStatuses(prefs.FavoriteFiles)
 	return prefs, nil
 }
 
-func recentFileStatuses(paths []string) []RecentFileStatus {
+func (a *App) recentFileStatuses(paths []string) []RecentFileStatus {
 	statuses := make([]RecentFileStatus, 0, len(paths))
 	for _, filePath := range paths {
-		info, err := os.Stat(filepath.Clean(filePath))
+		exists := false
+		_, foundBookmark, bookmarkErr := a.withMacSecurityScopedPath(filePath, func(accessiblePath string) error {
+			info, err := os.Stat(filepath.Clean(accessiblePath))
+			exists = err == nil && !info.IsDir()
+			return err
+		})
+		if !foundBookmark || bookmarkErr != nil {
+			info, err := os.Stat(filepath.Clean(filePath))
+			exists = err == nil && !info.IsDir()
+		}
 		statuses = append(statuses, RecentFileStatus{
 			Path:   filePath,
-			Exists: err == nil && !info.IsDir(),
+			Exists: exists,
 		})
 	}
 	return statuses
@@ -1130,7 +1204,8 @@ func (a *App) GetInitialFile() (*Document, error) {
 	if filePath == "" {
 		return nil, nil
 	}
-	return a.ReadFile(filePath)
+	_ = a.rememberMacSecurityScopedPath(filePath, false)
+	return a.OpenRecentFile(filePath)
 }
 
 func (a *App) GetStartupMode() string {

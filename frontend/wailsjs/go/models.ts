@@ -1,5 +1,5 @@
 export namespace main {
-
+	
 	export class Document {
 	    path: string;
 	    name: string;
@@ -8,11 +8,11 @@ export namespace main {
 	    modifiedAt: string;
 	    size: number;
 	    replacedPath?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Document(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.path = source["path"];
@@ -28,11 +28,11 @@ export namespace main {
 	    path: string;
 	    name: string;
 	    size: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FeedbackImageSelection(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.path = source["path"];
@@ -46,11 +46,11 @@ export namespace main {
 	    email: string;
 	    phone: string;
 	    imagePaths: string[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FeedbackSubmission(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.category = source["category"];
@@ -64,11 +64,11 @@ export namespace main {
 	    appVersion: string;
 	    os: string;
 	    systemVersion: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FeedbackSystemInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.appVersion = source["appVersion"];
@@ -81,11 +81,11 @@ export namespace main {
 	    name: string;
 	    relativePath: string;
 	    directory: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FolderFile(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.path = source["path"];
@@ -98,18 +98,18 @@ export namespace main {
 	    root: string;
 	    name: string;
 	    files: FolderFile[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FolderResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.root = source["root"];
 	        this.name = source["name"];
 	        this.files = this.convertValues(source["files"], FolderFile);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -131,11 +131,11 @@ export namespace main {
 	export class RecentFileStatus {
 	    path: string;
 	    exists: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new RecentFileStatus(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.path = source["path"];
@@ -157,11 +157,11 @@ export namespace main {
 	    usageAnalytics: boolean;
 	    anonymousInstallId?: string;
 	    lastActiveReport?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Preferences(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.recentFiles = source["recentFiles"];
@@ -179,7 +179,7 @@ export namespace main {
 	        this.anonymousInstallId = source["anonymousInstallId"];
 	        this.lastActiveReport = source["lastActiveReport"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -198,7 +198,7 @@ export namespace main {
 		    return a;
 		}
 	}
-
+	
 	export class UpdateInfo {
 	    checked: boolean;
 	    suppressed: boolean;
@@ -209,11 +209,11 @@ export namespace main {
 	    releaseNotes: string;
 	    releaseUrl: string;
 	    publishedAt: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new UpdateInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.checked = source["checked"];

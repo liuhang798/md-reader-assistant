@@ -2,6 +2,9 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import 'katex/dist/katex.min.css';
 import hljs from 'highlight.js/lib/common';
+import { convertMermaidDiagramsToImages, renderMermaidDiagrams } from './mermaid-diagrams.js';
+import { convertEChartsDiagramsToImages, releaseEChartsDiagrams, renderEChartsDiagrams, validateEChartsSource } from './echarts-diagrams.js';
+import { DIAGRAM_CATEGORIES, diagramTemplateById, diagramTemplateSource, diagramTemplatesForCategory } from './diagram-templates.js';
 import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage, resolveMacColorMode, temporaryMacColorModeAfterToggle } from './appearance.js';
 import { previewWheelZoomDirection } from './font-wheel-zoom.js';
 import { clampFontScale, readFontScaleStorage, recommendedFontScale } from './font-scaling.js';
@@ -38,6 +41,7 @@ let editorLanguage;
 let markdownHighlightStyle;
 let editorDependenciesPromise;
 let editorInitializationPromise;
+let editorModeSwitching = false;
 let suppressEditorChanges = false;
 let externalRefreshInProgress = false;
 let missingCurrentFilePath = '';
@@ -144,7 +148,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限', saveAsRequired: '需要另存为', editPermissionDenied: '当前文件无编辑权限，可能是微信缓存只读或正被其他程序占用。请另存为可编辑副本后再编辑', editPermissionLabel: '编辑权限', editPermissionTitle: '当前文件无法直接编辑', editPermissionDescription: '轻阅无法获得这个文件的写入权限。原文件不会被修改或删除。', currentDocument: '当前文档', possibleReasons: '可能原因', permissionReasonCache: '文件来自微信、企业微信等应用的只读缓存目录', permissionReasonReadOnly: '文件或所在目录被设置为只读，当前账号没有写入权限', permissionReasonLocked: '文件正被其他程序占用或锁定', editPermissionGuide: '建议另存为一个可编辑副本。保存成功后，轻阅会自动打开副本并进入编辑模式。', saveCopyAndEdit: '另存为副本并编辑', saveAsRequiredHint: '原文件可能来自微信缓存、处于只读状态或正被其他程序占用，请另存为后继续编辑', saveAsFallback: '原文件无法直接写入，已为你打开“另存为”',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.4.9', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.5.0', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', officialWebsite: '官方网站', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     usageAnalytics: '参与产品改进计划', usageAnalyticsDescription: '此开关仅控制异常回传。勾选后，软件发生异常时会静默提交已清理的错误日志。无论是否勾选，每天最多提交一次匿名活跃记录；不会上传文档内容、文件名、文件路径或联系方式。', usageAnalyticsEnabled: '已参与产品改进计划', usageAnalyticsDisabled: '已关闭异常自动回传', usageAnalyticsSaveFailed: '无法保存产品改进计划设置',
     feedback: '意见反馈', feedbackShortHint: '建议与异常', feedbackLabel: '帮助我们改进', feedbackTitle: '意见反馈', feedbackIntro: '告诉我们你的建议或遇到的问题。邮箱和手机均为选填，仅用于需要进一步确认时联系你。', feedbackType: '反馈类型', feedbackFeature: '功能建议', feedbackFeatureHint: '希望新增或优化的功能', feedbackBug: '功能异常', feedbackBugHint: '功能无法使用或结果不正确', feedbackDescription: '反馈说明', feedbackDescriptionPlaceholder: '请描述期望效果、操作步骤或异常现象', feedbackEmail: '联系邮箱（选填）', feedbackPhone: '手机号码（选填）', feedbackPhonePlaceholder: '用于必要时联系', feedbackImages: '上传图片（选填）', feedbackImagesHint: '最多 5 张，支持 PNG、JPG、WebP；每张不超过 5 MB', selectImages: '选择图片', removeImage: '移除图片', softwareVersion: '软件版本', systemVersion: '系统版本', feedbackPrivacy: '提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；服务器会记录请求 IP 并解析所在城市，不会上传当前文档。', submitFeedback: '提交反馈', feedbackSubmitting: '正在提交反馈…', feedbackSubmitted: '感谢反馈，我们会认真查看', feedbackSubmitFailed: '反馈提交失败', feedbackImageSelectFailed: '无法选择反馈图片', feedbackNeedDescription: '请至少填写 5 个字的反馈说明',
@@ -154,9 +158,10 @@ const translations = {
     downloadAndUpdate: '下载并更新', downloadingUpdate: '正在下载更新… {percent}%', preparingUpdate: '正在安装更新…', updateFailed: '更新失败，请稍后重试', updateBlockedByUnsavedChanges: '请先保存当前文档再更新',
     formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', formatPainter: '格式刷', formatPainterTitle: '格式刷：复制选中文本的格式，再选中目标文本即可自动应用', formatCopied: '已复制格式，选中目标文本后自动应用', formatApplied: '格式已应用', formatNeedSelection: '请先选中要复制格式的文本', formatCleared: '已取消格式刷', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3', heading4: '标题 4', heading5: '标题 5', heading6: '标题 6',
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', strikethroughTitle: '删除线 (Ctrl+Shift+X)', highlightTitle: '高亮 (Ctrl+Shift+H)', textColorTitle: '文字颜色', textColorMenu: '选择文字颜色', textColorDefault: '默认颜色', textColorOption: '颜色', coloredText: '彩色文字', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', horizontalRule: '分隔线', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
-    moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', formulaBuilder: '学科公式', inlineMath: '行内公式', mathBlock: '块级公式', chemicalFormula: '化学公式', mathGuide: '查看公式教程 ↗', numberedMath: '编号公式', mathExpression: 'LaTeX 公式', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
+    moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', formulaBuilder: '学科公式 🔥', diagramBuilder: '图表生成器 🔥', mermaidFlowchart: 'Mermaid 流程图', mermaidSequence: 'Mermaid 时序图', mermaidGantt: 'Mermaid 甘特图', mermaidDiagram: 'Mermaid 图表', mermaidRenderError: '图表语法有误', mermaidRenderHint: '请检查 Mermaid 源码，文档其他内容不受影响。', dataChart: '数据图表', dataChartRenderError: '数据图表配置有误', dataChartRenderHint: '请检查 ECharts JSON 配置，文档其他内容不受影响。', inlineMath: '行内公式', mathBlock: '块级公式', chemicalFormula: '化学公式', mathGuide: '查看公式教程 ↗', numberedMath: '编号公式', mathExpression: 'LaTeX 公式', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
     markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试', imageDialogHint: '选择本地图片，或粘贴在线图片链接。', imageUrlLabel: '图片链接', imageUrlPlaceholder: 'https:// 或 http:// 链接', imageAltPlaceholder: '可选的图片说明', localImage: '本地图片…', imageUrlInvalid: '请输入有效的 http:// 或 https:// 链接',
     formulaWizardLabel: '学科公式', formulaWizardTitle: '选择并生成公式', formulaWizardHint: '按学科选择常用公式，填写参数后直接插入 Markdown。', formulaSubject: '学科分类', formulaOutput: '插入方式', selectedFormula: '已选公式', equationNumber: '公式编号', formulaPreview: '实时预览', generatedMarkdown: '生成的 Markdown', insertFormula: '插入公式', formulaModeInline: '行内公式', formulaModeBlock: '块级公式', formulaModeNumbered: '编号公式', formulaInvalid: '请填写有效的公式内容',
+    diagramWizardLabel: 'MERMAID 图表', diagramWizardTitle: '选择并生成图表', diagramWizardHint: '按用途选择常用图表，编辑源码并实时预览后插入 Markdown。', diagramCategory: '图表分类', selectedDiagram: '已选图表', diagramSource: '图表源码', diagramPreview: '实时预览', insertDiagram: '插入图表', diagramInvalid: '请输入有效的 Mermaid 图表源码',
     resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度', resizeEditor: '拖动调整预览宽度'
   },
   en: {
@@ -182,7 +187,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.', saveAsRequired: 'Save As required', editPermissionDenied: 'This file cannot be edited because it may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', editPermissionLabel: 'EDIT PERMISSION', editPermissionTitle: 'This file cannot be edited directly', editPermissionDescription: 'Quillite cannot obtain write access to this file. The original will not be changed or deleted.', currentDocument: 'Current document', possibleReasons: 'Possible reasons', permissionReasonCache: 'The file comes from a read-only WeChat, WeCom, or other application cache', permissionReasonReadOnly: 'The file or its folder is read-only, or your account lacks write permission', permissionReasonLocked: 'Another program currently has the file open or locked', editPermissionGuide: 'Save a writable copy instead. Quillite will open the copy and enter editing mode automatically after it is saved.', saveCopyAndEdit: 'Save Copy & Edit', saveAsRequiredHint: 'The source may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', saveAsFallback: 'The source cannot be written. Save As has been opened for you.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.4.9', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.5.0', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', officialWebsite: 'Official website', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     usageAnalytics: 'Join the product improvement program', usageAnalyticsDescription: 'This switch controls error reporting only. When enabled, sanitized error logs are submitted silently after failures. One anonymous daily-active event is submitted at most once per day regardless of this setting; document content, file names, paths, and contact details are never uploaded.', usageAnalyticsEnabled: 'Product improvement program enabled', usageAnalyticsDisabled: 'Automatic error reporting disabled', usageAnalyticsSaveFailed: 'Unable to save the product improvement setting',
     feedback: 'Feedback', feedbackShortHint: 'Ideas & issues', feedbackLabel: 'HELP US IMPROVE', feedbackTitle: 'Send Feedback', feedbackIntro: 'Tell us what you would like improved or what went wrong. Email and phone are optional and used only if we need to follow up.', feedbackType: 'Feedback type', feedbackFeature: 'Feature suggestion', feedbackFeatureHint: 'A new feature or an improvement', feedbackBug: 'Functional issue', feedbackBugHint: 'Something does not work as expected', feedbackDescription: 'Description', feedbackDescriptionPlaceholder: 'Describe the expected result, steps, or issue', feedbackEmail: 'Email (optional)', feedbackPhone: 'Phone (optional)', feedbackPhonePlaceholder: 'Only for necessary follow-up', feedbackImages: 'Images (optional)', feedbackImagesHint: 'Up to 5 PNG, JPG, or WebP images; 5 MB each', selectImages: 'Choose images', removeImage: 'Remove image', softwareVersion: 'App version', systemVersion: 'System version', feedbackPrivacy: 'Submitting sends this feedback, optional contact details, selected images, and version information to the Quillite website server. The server records the request IP and resolves its city. Your current document is never uploaded.', submitFeedback: 'Submit feedback', feedbackSubmitting: 'Submitting feedback…', feedbackSubmitted: 'Thank you. We will review your feedback.', feedbackSubmitFailed: 'Unable to submit feedback', feedbackImageSelectFailed: 'Unable to choose feedback images', feedbackNeedDescription: 'Enter at least 5 characters',
@@ -192,9 +197,10 @@ const translations = {
     downloadAndUpdate: 'Download & Update', downloadingUpdate: 'Downloading update… {percent}%', preparingUpdate: 'Installing update…', updateFailed: 'Update failed. Please try again.', updateBlockedByUnsavedChanges: 'Save the current document before updating',
     formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', formatPainter: 'Format painter', formatPainterTitle: 'Format painter: copy the selected text format, then select the target text to apply automatically', formatCopied: 'Format copied. Select the target text to apply automatically.', formatApplied: 'Format applied', formatNeedSelection: 'Select the text whose format you want to copy first', formatCleared: 'Format painter cancelled', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3', heading4: 'Heading 4', heading5: 'Heading 5', heading6: 'Heading 6',
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', strikethroughTitle: 'Strikethrough (Ctrl+Shift+X)', highlightTitle: 'Highlight (Ctrl+Shift+H)', textColorTitle: 'Text color', textColorMenu: 'Choose text color', textColorDefault: 'Default', textColorOption: 'Color', coloredText: 'colored text', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', horizontalRule: 'Horizontal rule', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
-    moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', formulaBuilder: 'Academic formulas', inlineMath: 'Inline formula', mathBlock: 'Display formula', chemicalFormula: 'Chemical formula', mathGuide: 'Formula guide ↗', numberedMath: 'Numbered formula', mathExpression: 'LaTeX expression', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
+    moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', formulaBuilder: 'Academic formulas 🔥', diagramBuilder: 'Diagram builder 🔥', mermaidFlowchart: 'Mermaid flowchart', mermaidSequence: 'Mermaid sequence diagram', mermaidGantt: 'Mermaid Gantt chart', mermaidDiagram: 'Mermaid diagram', mermaidRenderError: 'Invalid diagram syntax', mermaidRenderHint: 'Check the Mermaid source. The rest of the document is unaffected.', dataChart: 'Data chart', dataChartRenderError: 'Invalid data chart configuration', dataChartRenderHint: 'Check the ECharts JSON. The rest of the document is unaffected.', inlineMath: 'Inline formula', mathBlock: 'Display formula', chemicalFormula: 'Chemical formula', mathGuide: 'Formula guide ↗', numberedMath: 'Numbered formula', mathExpression: 'LaTeX expression', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
     markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.', imageDialogHint: 'Pick a local image or paste an online image link.', imageUrlLabel: 'Image URL', imageUrlPlaceholder: 'https:// or http:// link', imageAltPlaceholder: 'Optional image description', localImage: 'Local image…', imageUrlInvalid: 'Enter a valid http:// or https:// link',
     formulaWizardLabel: 'ACADEMIC FORMULAS', formulaWizardTitle: 'Choose and build a formula', formulaWizardHint: 'Choose a common formula by subject, fill in its values, and insert the generated Markdown.', formulaSubject: 'Subjects', formulaOutput: 'Insert as', selectedFormula: 'Selected formula', equationNumber: 'Equation number', formulaPreview: 'Live preview', generatedMarkdown: 'Generated Markdown', insertFormula: 'Insert formula', formulaModeInline: 'Inline', formulaModeBlock: 'Display', formulaModeNumbered: 'Numbered', formulaInvalid: 'Enter valid formula content',
+    diagramWizardLabel: 'MERMAID DIAGRAMS', diagramWizardTitle: 'Choose and build a diagram', diagramWizardHint: 'Choose a common diagram by use case, edit its source, preview it, and insert it into Markdown.', diagramCategory: 'Diagram categories', selectedDiagram: 'Selected diagram', diagramSource: 'Diagram source', diagramPreview: 'Live preview', insertDiagram: 'Insert diagram', diagramInvalid: 'Enter valid Mermaid diagram source',
     resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline', resizeEditor: 'Drag to resize the preview'
   }
 };
@@ -275,7 +281,7 @@ const els = {
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'), previewLocateHint: $('#previewLocateHint'),
   exitEditButton: $('#exitEditButton'), codeLangMenu: $('#codeLangMenu'), textColorMenu: $('#textColorMenu'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), feedbackDialog: $('#feedbackDialog'), feedbackForm: $('#feedbackForm'), feedbackImageList: $('#feedbackImageList'), updateDialog: $('#updateDialog'), editPermissionDialog: $('#editPermissionDialog'), editPermissionFileName: $('#editPermissionFileName'), pdfTutorialDialog: $('#pdfTutorialDialog'), usageAnalyticsToggle: $('#usageAnalyticsToggle'),
-  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'), formulaDialog: $('#formulaDialog'), formulaDisciplineTabs: $('#formulaDisciplineTabs'), formulaTemplateList: $('#formulaTemplateList'), formulaBuilderPanel: $('#formulaBuilderPanel'), formulaOutputModes: $('#formulaOutputModes'), formulaFields: $('#formulaFields'), formulaPreview: $('#formulaPreview'), formulaMarkdownSource: $('#formulaMarkdownSource'),
+  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'), formulaDialog: $('#formulaDialog'), formulaDisciplineTabs: $('#formulaDisciplineTabs'), formulaTemplateList: $('#formulaTemplateList'), formulaBuilderPanel: $('#formulaBuilderPanel'), formulaOutputModes: $('#formulaOutputModes'), formulaFields: $('#formulaFields'), formulaPreview: $('#formulaPreview'), formulaMarkdownSource: $('#formulaMarkdownSource'), diagramDialog: $('#diagramDialog'), diagramCategoryTabs: $('#diagramCategoryTabs'), diagramTemplateList: $('#diagramTemplateList'), diagramBuilderPanel: $('#diagramBuilderPanel'), diagramSource: $('#diagramSource'), diagramPreview: $('#diagramPreview'),
   editorUndoButton: $('#editorUndoButton')
 };
 
@@ -295,6 +301,13 @@ marked.use({
       return `<img src="${safeHref}" data-markdown-src="${safeHref}" alt="${escapeHtml(text || '')}"${safeTitle}>`;
     },
     code({ text, lang }) {
+      const normalizedLanguage = (lang || '').trim().toLowerCase();
+      if (normalizedLanguage === 'mermaid') {
+        return `<div class="mermaid-diagram" data-mermaid-source="${escapeHtml(encodeURIComponent(text))}" aria-label="${escapeHtml(t('mermaidDiagram'))}"><div class="mermaid-loading">${escapeHtml(t('mermaidDiagram'))}</div></div>`;
+      }
+      if (normalizedLanguage === 'echarts') {
+        return `<div class="echarts-diagram" data-echarts-source="${escapeHtml(encodeURIComponent(text))}" aria-label="${escapeHtml(t('dataChart'))}"><div class="echarts-loading">${escapeHtml(t('dataChart'))}</div></div>`;
+      }
       const valid = lang && hljs.getLanguage(lang);
       const highlighted = valid ? hljs.highlight(text, { language: lang }).value : hljs.highlightAuto(text).value;
       const label = lang || 'code';
@@ -612,6 +625,11 @@ function runFormatCommand(command) {
   if (command === 'superscript') return wrapSelection('<sup>', '</sup>', t('superscript'));
   if (command === 'subscript') return wrapSelection('<sub>', '</sub>', t('subscript'));
   if (command === 'formula-builder') { openFormulaDialog(); return true; }
+  if (command === 'diagram-builder') { openDiagramDialog(); return true; }
+  if (command.startsWith('mermaid-')) {
+    openDiagramDialog({ 'mermaid-flowchart': 'flowchart', 'mermaid-sequence': 'sequence', 'mermaid-gantt': 'gantt' }[command] || 'flowchart');
+    return true;
+  }
   if (command === 'keyboard-key') return wrapSelection('<kbd>', '</kbd>', state.language === 'en' ? 'Key' : '按键');
   if (command === 'comment') return wrapSelection('<!-- ', ' -->', state.language === 'en' ? 'comment' : '注释');
   if (command === 'autolink') return wrapSelection('<', '>', 'https://example.com');
@@ -1123,6 +1141,167 @@ function insertGeneratedFormula() {
   replaceSelection(markdownSource, markdownSource.length, 0);
 }
 
+const diagramWizardState = {
+  category: 'all',
+  templateId: 'flowchart',
+  valuesByTemplate: new Map()
+};
+let diagramPreviewTimer = 0;
+
+function diagramLocale() {
+  return state.language === 'en' ? 'en' : 'zh';
+}
+
+function rememberDiagramSource() {
+  if (!els.diagramSource) return;
+  diagramWizardState.valuesByTemplate.set(diagramWizardState.templateId, els.diagramSource.value);
+}
+
+function renderDiagramCategoryTabs() {
+  const locale = diagramLocale();
+  els.diagramCategoryTabs.replaceChildren();
+  for (const category of DIAGRAM_CATEGORIES) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.diagramCategory = category.id;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', String(category.id === diagramWizardState.category));
+    button.classList.toggle('active', category.id === diagramWizardState.category);
+    button.textContent = category.name[locale];
+    els.diagramCategoryTabs.append(button);
+  }
+}
+
+function renderDiagramTemplateList() {
+  const locale = diagramLocale();
+  els.diagramTemplateList.replaceChildren();
+  for (const template of diagramTemplatesForCategory(diagramWizardState.category)) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.diagramTemplate = template.id;
+    button.classList.toggle('active', template.id === diagramWizardState.templateId);
+    button.setAttribute('aria-pressed', String(template.id === diagramWizardState.templateId));
+    const label = document.createElement('span');
+    label.textContent = template.name[locale];
+    const kind = document.createElement('code');
+    kind.textContent = template.engine === 'echarts' ? 'ECharts' : 'Mermaid';
+    button.append(label, kind);
+    els.diagramTemplateList.append(button);
+  }
+}
+
+function scheduleDiagramPreview(immediate = false) {
+  clearTimeout(diagramPreviewTimer);
+  diagramPreviewTimer = window.setTimeout(updateDiagramPreview, immediate ? 0 : 260);
+}
+
+async function updateDiagramPreview() {
+  const source = els.diagramSource.value.trim();
+  const template = diagramTemplateById(diagramWizardState.templateId);
+  els.diagramPreview.replaceChildren();
+  if (!source) {
+    els.diagramPreview.textContent = t('diagramInvalid');
+    return;
+  }
+  const diagram = document.createElement('div');
+  const isECharts = template.engine === 'echarts';
+  diagram.className = isECharts ? 'echarts-diagram' : 'mermaid-diagram';
+  diagram.dataset[isECharts ? 'echartsSource' : 'mermaidSource'] = encodeURIComponent(source);
+  diagram.setAttribute('aria-label', t(isECharts ? 'dataChart' : 'mermaidDiagram'));
+  const loading = document.createElement('div');
+  loading.className = isECharts ? 'echarts-loading' : 'mermaid-loading';
+  loading.textContent = t(isECharts ? 'dataChart' : 'mermaidDiagram');
+  diagram.append(loading);
+  els.diagramPreview.append(diagram);
+  if (isECharts) {
+    await renderEChartsDiagrams(els.diagramPreview, {
+      errorTitle: t('dataChartRenderError'),
+      errorHint: t('dataChartRenderHint')
+    });
+  } else {
+    await renderMermaidDiagrams(els.diagramPreview, {
+      errorTitle: t('mermaidRenderError'),
+      errorHint: t('mermaidRenderHint')
+    });
+  }
+}
+
+function renderDiagramBuilder() {
+  const locale = diagramLocale();
+  const template = diagramTemplateById(diagramWizardState.templateId);
+  $('#diagramTemplateName').textContent = template.name[locale];
+  $('#diagramTemplateDescription').textContent = template.description[locale];
+  els.diagramSource.value = diagramWizardState.valuesByTemplate.get(template.id) ?? diagramTemplateSource(template, locale);
+  renderDiagramTemplateList();
+  scheduleDiagramPreview(true);
+}
+
+function chooseDiagramTemplate(templateId) {
+  const template = diagramTemplateById(templateId);
+  if (!template) return;
+  rememberDiagramSource();
+  diagramWizardState.templateId = template.id;
+  renderDiagramBuilder();
+  els.diagramBuilderPanel.scrollTop = 0;
+  requestAnimationFrame(() => els.diagramSource.focus());
+}
+
+function chooseDiagramCategory(categoryId) {
+  if (!DIAGRAM_CATEGORIES.some(category => category.id === categoryId)) return;
+  rememberDiagramSource();
+  diagramWizardState.category = categoryId;
+  const templates = diagramTemplatesForCategory(categoryId);
+  if (!templates.some(template => template.id === diagramWizardState.templateId)) {
+    diagramWizardState.templateId = templates[0]?.id || 'flowchart';
+  }
+  renderDiagramCategoryTabs();
+  renderDiagramBuilder();
+  els.diagramBuilderPanel.scrollTop = 0;
+}
+
+function openDiagramDialog(preferredTemplateId = 'flowchart') {
+  if (!state.currentFile || !codeEditor) return;
+  const template = diagramTemplateById(preferredTemplateId);
+  diagramWizardState.category = 'all';
+  diagramWizardState.templateId = template.id;
+  diagramWizardState.valuesByTemplate = new Map();
+  renderDiagramCategoryTabs();
+  renderDiagramBuilder();
+  els.diagramBuilderPanel.scrollTop = 0;
+  els.diagramDialog.classList.remove('hidden');
+  document.body.classList.add('dialog-open');
+  requestAnimationFrame(() => els.diagramTemplateList.querySelector('.active')?.focus());
+}
+
+function closeDiagramDialog() {
+  if (els.diagramDialog.classList.contains('hidden')) return;
+  clearTimeout(diagramPreviewTimer);
+  els.diagramDialog.classList.add('hidden');
+  document.body.classList.remove('dialog-open');
+  focusCodeEditor();
+}
+
+function insertGeneratedDiagram() {
+  const source = els.diagramSource.value.trim();
+  const template = diagramTemplateById(diagramWizardState.templateId);
+  if (!source) {
+    showToast(t('diagramInvalid'), 'warning');
+    els.diagramSource.focus();
+    return;
+  }
+  if (template.engine === 'echarts') {
+    const validation = validateEChartsSource(source);
+    if (!validation.valid) {
+      showToast(`${t('dataChartRenderError')}：${validation.error}`, 'warning');
+      els.diagramSource.focus();
+      return;
+    }
+  }
+  closeDiagramDialog();
+  const markdownSource = `\n\n\`\`\`${template.engine === 'echarts' ? 'echarts' : 'mermaid'}\n${source}\n\`\`\`\n\n`;
+  replaceSelection(markdownSource, 13, source.length);
+}
+
 function openTableDialog() {
   if (!state.currentFile) return;
   els.tableDialog.classList.remove('hidden');
@@ -1212,7 +1391,7 @@ async function initializeCodeEditor() {
     const saveKeymap = keymap.of([
     { key: 'Mod-s', run: () => { saveDocument(false); return true; } },
     { key: 'Mod-Shift-s', run: () => { saveDocument(true); return true; } },
-    { key: 'Mod-e', run: () => { toggleEditor(false); return true; } },
+    { key: 'Mod-e', run: () => { toggleEditor(false); return true; }, stopPropagation: true },
     { key: 'Mod-f', run: view => openSearchPanel(view) },
     { key: 'Mod-b', run: () => runFormatCommand('bold') },
     { key: 'Mod-i', run: () => runFormatCommand('italic') },
@@ -1290,7 +1469,8 @@ async function initializeCodeEditor() {
         state.currentFile.content = update.state.doc.toString();
         setDirty(state.currentFile.content !== state.savedContent);
         clearTimeout(renderEditorPreview.timer);
-        renderEditorPreview.timer = setTimeout(() => renderEditorPreview(state.currentFile.content), 90);
+        const previewDelay = /(^|\n)\s*```(?:mermaid|echarts)\s*(\n|$)/i.test(state.currentFile.content) ? 220 : 90;
+        renderEditorPreview.timer = setTimeout(() => renderEditorPreview(state.currentFile.content), previewDelay);
       }
       if (update.docChanged || update.selectionSet) {
         updateEditorPosition();
@@ -2189,16 +2369,100 @@ function maybeDiscardChanges() {
   return window.confirm(t('discardConfirm'));
 }
 
+function mermaidPreviewThemeKey() {
+  const root = document.documentElement;
+  return `${root.dataset.colorMode || 'light'}|${root.dataset.accent || 'green'}`;
+}
+
+function reusableMermaidDiagrams(container, themeKey) {
+  const reusable = new Map();
+  container.querySelectorAll('.mermaid-diagram[data-mermaid-rendered="true"]').forEach(diagram => {
+    if (diagram.dataset.mermaidUiTheme !== themeKey) return;
+    const source = diagram.dataset.mermaidSource || '';
+    if (!source || !diagram.querySelector('svg')) return;
+    const matches = reusable.get(source) || [];
+    matches.push({
+      html: diagram.innerHTML,
+      type: diagram.dataset.mermaidType || ''
+    });
+    reusable.set(source, matches);
+  });
+  return reusable;
+}
+
+function restoreReusableMermaidDiagrams(container, reusable, themeKey) {
+  container.querySelectorAll('.mermaid-diagram').forEach(diagram => {
+    diagram.dataset.mermaidUiTheme = themeKey;
+    const matches = reusable.get(diagram.dataset.mermaidSource || '');
+    const snapshot = matches?.shift();
+    if (!snapshot) return;
+    diagram.innerHTML = snapshot.html;
+    diagram.dataset.mermaidRendered = 'true';
+    if (snapshot.type) diagram.dataset.mermaidType = snapshot.type;
+  });
+}
+
+function reusableEChartsDiagrams(container, themeKey) {
+  const reusable = new Map();
+  container.querySelectorAll('.echarts-diagram[data-echarts-rendered="true"]').forEach(diagram => {
+    if (diagram.dataset.echartsUiTheme !== themeKey) return;
+    const source = diagram.dataset.echartsSource || '';
+    if (!source || !diagram.querySelector('svg')) return;
+    const matches = reusable.get(source) || [];
+    matches.push({ html: diagram.innerHTML, height: diagram.style.height });
+    reusable.set(source, matches);
+  });
+  return reusable;
+}
+
+function restoreReusableEChartsDiagrams(container, reusable, themeKey) {
+  container.querySelectorAll('.echarts-diagram').forEach(diagram => {
+    diagram.dataset.echartsUiTheme = themeKey;
+    const matches = reusable.get(diagram.dataset.echartsSource || '');
+    const snapshot = matches?.shift();
+    if (!snapshot) return;
+    diagram.innerHTML = snapshot.html;
+    diagram.style.height = snapshot.height;
+    diagram.dataset.echartsRendered = 'true';
+  });
+}
+
 function renderMarkdownTo(container, doc, content) {
   if (isPlainTextFile(doc.path)) {
     container.innerHTML = `<div class="plain-text">${escapeHtml(content)}</div>`;
-    return;
+    return Promise.resolve();
   }
+  // Rebuilding the preview used to discard every finished Mermaid SVG. On a
+  // long diagram document this replaced all charts with short placeholders,
+  // so the scroll position jumped to an earlier section while Mermaid slowly
+  // rendered everything again. Reuse unchanged, already-sanitised SVGs in
+  // their original order; only the diagram currently being edited is redrawn.
+  const mermaidThemeKey = mermaidPreviewThemeKey();
+  const reusableMermaid = reusableMermaidDiagrams(container, mermaidThemeKey);
+  const reusableECharts = reusableEChartsDiagrams(container, mermaidThemeKey);
   const prepared = prepareFootnotes(content);
   let html = marked.parse(prepared.markdown);
   html += renderFootnoteSection(prepared.notes, text => marked.parseInline(text), t('footnotes'));
   html = DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'rel', 'data-md-color'] });
+  // The reusable snapshots above are plain SVG strings. Release the live
+  // ECharts instances and ResizeObservers before replacing the preview DOM,
+  // otherwise repeated editing of a chart-heavy document gradually retains
+  // detached observers and makes typing/scrolling feel sluggish.
+  releaseEChartsDiagrams(container);
   container.innerHTML = html;
+  restoreReusableMermaidDiagrams(container, reusableMermaid, mermaidThemeKey);
+  restoreReusableEChartsDiagrams(container, reusableECharts, mermaidThemeKey);
+  const diagramRender = Promise.all([
+    renderMermaidDiagrams(container, {
+      diagramLabel: t('mermaidDiagram'),
+      errorTitle: t('mermaidRenderError'),
+      errorHint: t('mermaidRenderHint')
+    }).catch(error => reportSilentError(error, 'preview.render-mermaid')),
+    renderEChartsDiagrams(container, {
+      errorTitle: t('dataChartRenderError'),
+      errorHint: t('dataChartRenderHint')
+    }).catch(error => reportSilentError(error, 'preview.render-echarts'))
+  ]);
   container.querySelectorAll('[data-md-color]').forEach(element => {
     const color = element.dataset.mdColor;
     const value = textColorValue(color);
@@ -2228,6 +2492,7 @@ function renderMarkdownTo(container, doc, content) {
   });
   bindDocumentActions(container);
   injectPreviewLineNumbers(container, prepared);
+  return diagramRender;
 }
 
 // 为渲染后的每个顶层块元素注入 data-line（该块在源文档中的起始行号，1-based）。
@@ -2249,9 +2514,23 @@ function injectPreviewLineNumbers(container, prepared) {
 
 function renderEditorPreview(content = state.currentFile?.content || '') {
   if (!state.currentFile) return;
+  const generation = (renderEditorPreview.generation || 0) + 1;
+  renderEditorPreview.generation = generation;
   try {
-    renderMarkdownTo(els.editorPreview, state.currentFile, content);
+    const mermaidRender = renderMarkdownTo(els.editorPreview, state.currentFile, content);
     scrollPreviewToCursor(true);
+    // Mermaid first appears as a short placeholder and later expands into its
+    // final SVG. Positioning only before that asynchronous layout completes
+    // leaves long diagram documents one or more sections above the cursor.
+    // Correct after the latest render settles; two frames let the WebView
+    // commit the SVG's final dimensions before measuring the target block.
+    Promise.resolve(mermaidRender).then(() => {
+      if (generation !== renderEditorPreview.generation || !state.editing || !codeEditor) return;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (generation !== renderEditorPreview.generation || !state.editing) return;
+        scrollPreviewToCursor(true, 'auto');
+      }));
+    });
   } catch (error) {
     reportSilentError(error, 'preview.render-editor');
     els.editorPreview.innerHTML = `<p class="preview-error">${t('previewError')}</p>`;
@@ -2428,7 +2707,7 @@ function updateEditorPosition() {
 // 根据编辑器光标行号，把左侧预览滚动到对应的块元素（编辑/预览滚动同步）。
 // 只取“最后一个起始行 <= 光标行的块”，光标在同一行内移动时不重复滚动；
 // force 用于预览重新渲染后强制校正一次。
-function scrollPreviewToCursor(force = false) {
+function scrollPreviewToCursor(force = false, behavior = 'smooth') {
   if (!codeEditor || !state.editing) return;
   const scroller = $('.editor-preview-scroll');
   const preview = els.editorPreview;
@@ -2446,7 +2725,7 @@ function scrollPreviewToCursor(force = false) {
   const scrollerRect = scroller.getBoundingClientRect();
   const top = Math.max(0, scroller.scrollTop + rect.top - scrollerRect.top - 12);
   if (Math.abs(top - scroller.scrollTop) < 48) return;
-  scroller.scrollTo({ top, behavior: 'smooth' });
+  scroller.scrollTo({ top, behavior });
 }
 
 function previewBlockAtPointer(event) {
@@ -2523,54 +2802,63 @@ async function savePermissionCopyAndEdit() {
 }
 
 async function toggleEditor(forceEditing) {
-  if (!state.currentFile) return;
+  if (!state.currentFile || editorModeSwitching) return;
   const nextEditing = typeof forceEditing === 'boolean' ? forceEditing : !state.editing;
-  if (nextEditing) {
-    let canEdit = false;
-    try {
-      canEdit = await window.quilliteMarkdown.canEditFile(state.currentFile.path);
-    } catch (error) {
-      reportSilentError(error, 'document.check-write-permission');
-      console.warn('Unable to verify document write permission:', error);
+  if (nextEditing === state.editing) return;
+  const requestedPath = state.currentFile.path;
+  editorModeSwitching = true;
+  els.editButton.disabled = true;
+  try {
+    if (nextEditing) {
+      let canEdit = false;
+      try {
+        canEdit = await window.quilliteMarkdown.canEditFile(requestedPath);
+      } catch (error) {
+        reportSilentError(error, 'document.check-write-permission');
+        console.warn('Unable to verify document write permission:', error);
+      }
+      if (!canEdit) {
+        state.saveAsRequired = true;
+        els.editorSaveState.textContent = t('saveAsRequired');
+        openEditPermissionDialog();
+        return;
+      }
+      try {
+        await initializeCodeEditor();
+      } catch (error) {
+        reportSilentError(error, 'editor.initialize');
+        console.error('Unable to load the Markdown editor:', error);
+        showToast(t('previewError'), 'error');
+        return;
+      }
+      if (!state.currentFile || !sameDocumentPath(state.currentFile.path, requestedPath)) return;
     }
-    if (!canEdit) {
-      state.saveAsRequired = true;
-      els.editorSaveState.textContent = t('saveAsRequired');
-      openEditPermissionDialog();
-      return;
+    state.editing = nextEditing;
+    if (state.editing) {
+      if (editorContent() !== state.currentFile.content) replaceEditorContent(state.currentFile.content, true);
+      renderEditorPreview(state.currentFile.content);
+      els.documentView.classList.add('hidden');
+      els.editorView.classList.remove('hidden');
+      els.tocPanel.classList.add('hidden');
+      updatePaneResizerVisibility();
+      els.backToTop.classList.remove('visible');
+      els.editButton.classList.add('active');
+      els.editButtonLabel.textContent = t('preview');
+      focusCodeEditor();
+      updateEditorPosition();
+    } else {
+      state.currentFile.content = editorContent();
+      renderCurrentDocument();
+      els.editorView.classList.add('hidden');
+      els.documentView.classList.remove('hidden');
+      els.editButton.classList.remove('active');
+      els.editButtonLabel.textContent = t('edit');
+      updatePaneResizerVisibility();
+      $('.reader-pane').scrollTo({ top: 0 });
     }
-    try {
-      await initializeCodeEditor();
-    } catch (error) {
-      reportSilentError(error, 'editor.initialize');
-      console.error('Unable to load the Markdown editor:', error);
-      showToast(t('previewError'), 'error');
-      return;
-    }
-    if (!state.currentFile) return;
-  }
-  state.editing = nextEditing;
-  if (state.editing) {
-    if (editorContent() !== state.currentFile.content) replaceEditorContent(state.currentFile.content, true);
-    renderEditorPreview(state.currentFile.content);
-    els.documentView.classList.add('hidden');
-    els.editorView.classList.remove('hidden');
-    els.tocPanel.classList.add('hidden');
-    updatePaneResizerVisibility();
-    els.backToTop.classList.remove('visible');
-    els.editButton.classList.add('active');
-    els.editButtonLabel.textContent = t('preview');
-    focusCodeEditor();
-    updateEditorPosition();
-  } else {
-    state.currentFile.content = editorContent();
-    renderCurrentDocument();
-    els.editorView.classList.add('hidden');
-    els.documentView.classList.remove('hidden');
-    els.editButton.classList.remove('active');
-    els.editButtonLabel.textContent = t('edit');
-    updatePaneResizerVisibility();
-    $('.reader-pane').scrollTo({ top: 0 });
+  } finally {
+    editorModeSwitching = false;
+    els.editButton.disabled = !state.currentFile;
   }
 }
 
@@ -2649,8 +2937,19 @@ async function waitForPreviewImages(container, timeout = 3000) {
   ]);
 }
 
-function cleanRenderedHTMLForExport(container) {
+async function cleanRenderedHTMLForExport(container) {
+  await renderMermaidDiagrams(container, {
+    diagramLabel: t('mermaidDiagram'),
+    errorTitle: t('mermaidRenderError'),
+    errorHint: t('mermaidRenderHint')
+  });
+  await renderEChartsDiagrams(container, {
+    errorTitle: t('dataChartRenderError'),
+    errorHint: t('dataChartRenderHint')
+  });
   const clone = container.cloneNode(true);
+  await convertMermaidDiagramsToImages(clone, t('mermaidDiagram'));
+  await convertEChartsDiagramsToImages(clone, t('dataChart'));
   clone.querySelectorAll('.math-inline, .math-block').forEach(formula => {
     const annotation = formula.querySelector('annotation[encoding="application/x-tex"]');
     if (!formula.hasAttribute('data-math-source') && annotation?.textContent?.trim()) {
@@ -2700,7 +2999,7 @@ async function exportWordDocument() {
     const output = await window.quilliteMarkdown.exportDOCX(
       state.currentFile.path,
       state.currentFile.name,
-      cleanRenderedHTMLForExport(container)
+      await cleanRenderedHTMLForExport(container)
     );
     if (output) showToast(t('wordExported'), 'success');
   } catch (error) {
@@ -2725,7 +3024,7 @@ async function exportHTMLDocument() {
     const output = await window.quilliteMarkdown.exportHTML(
       state.currentFile.path,
       state.currentFile.name,
-      cleanRenderedHTMLForExport(container),
+      await cleanRenderedHTMLForExport(container),
       state.colorMode,
       ACCENT_THEMES[state.accentTheme].color
     );
@@ -2756,8 +3055,21 @@ function closePDFTutorial(restoreFocus = true) {
 
 async function confirmPDFExport() {
   closePDFTutorial(false);
+  await printCurrentDocument();
+}
+
+async function printCurrentDocument() {
   if (state.editing) toggleEditor(false);
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  await renderMermaidDiagrams(els.content, {
+    diagramLabel: t('mermaidDiagram'),
+    errorTitle: t('mermaidRenderError'),
+    errorHint: t('mermaidRenderHint')
+  });
+  await renderEChartsDiagrams(els.content, {
+    errorTitle: t('dataChartRenderError'),
+    errorHint: t('dataChartRenderHint')
+  });
   window.quilliteMarkdown.print();
 }
 
@@ -2781,8 +3093,7 @@ function runDocumentHeaderAction(action) {
   if (action === 'export-html') exportHTMLDocument();
   if (action === 'export-pdf') exportPDFDocument();
   if (action === 'print') {
-    if (state.editing) toggleEditor(false);
-    window.quilliteMarkdown.print();
+    printCurrentDocument();
   }
 }
 
@@ -3253,9 +3564,9 @@ async function openFeedback() {
   try {
     state.feedbackSystemInfo = await window.quilliteMarkdown.getFeedbackSystemInfo();
   } catch {
-    state.feedbackSystemInfo = { appVersion: '2.4.9', os: 'windows', systemVersion: '—' };
+    state.feedbackSystemInfo = { appVersion: '2.5.0', os: 'windows', systemVersion: '—' };
   }
-  $('#feedbackAppVersion').textContent = state.feedbackSystemInfo?.appVersion || '2.4.9';
+  $('#feedbackAppVersion').textContent = state.feedbackSystemInfo?.appVersion || '2.5.0';
   $('#feedbackSystemVersion').textContent = state.feedbackSystemInfo?.systemVersion || '—';
   requestAnimationFrame(() => $('#feedbackMessage').focus());
 }
@@ -3311,7 +3622,7 @@ async function submitFeedbackForm(event) {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.4.9';
+  $('#currentVersion').textContent = info.currentVersion || '2.5.0';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -3652,6 +3963,30 @@ els.formulaMarkdownSource.addEventListener('keydown', event => {
 els.formulaFields.addEventListener('keydown', event => {
   if (event.key === 'Enter' && !event.isComposing) insertGeneratedFormula();
 });
+$('#closeDiagramDialog').addEventListener('click', closeDiagramDialog);
+$('#cancelDiagram').addEventListener('click', closeDiagramDialog);
+$('#insertDiagram').addEventListener('click', insertGeneratedDiagram);
+els.diagramDialog.addEventListener('click', event => {
+  if (event.target === els.diagramDialog) closeDiagramDialog();
+});
+els.diagramCategoryTabs.addEventListener('click', event => {
+  const button = event.target.closest('[data-diagram-category]');
+  if (button) chooseDiagramCategory(button.dataset.diagramCategory);
+});
+els.diagramTemplateList.addEventListener('click', event => {
+  const button = event.target.closest('[data-diagram-template]');
+  if (button) chooseDiagramTemplate(button.dataset.diagramTemplate);
+});
+els.diagramSource.addEventListener('input', () => {
+  rememberDiagramSource();
+  scheduleDiagramPreview();
+});
+els.diagramSource.addEventListener('keydown', event => {
+  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) {
+    event.preventDefault();
+    insertGeneratedDiagram();
+  }
+});
 $('#headingSelect').addEventListener('change', event => {
   formatSelectedLines('heading', event.target.value);
   event.target.value = '';
@@ -3725,8 +4060,7 @@ els.moreMenu.addEventListener('click', event => {
     showToast(t('defaultAppHint'), 'info', 5200);
   }
   if (action === 'print') {
-    if (state.editing) toggleEditor(false);
-    window.quilliteMarkdown.print();
+    printCurrentDocument();
   }
   if (action === 'export-word') exportWordDocument();
   if (action === 'export-html') exportHTMLDocument();
@@ -3773,6 +4107,7 @@ $('.editor-preview-scroll').addEventListener('scroll', hidePreviewLocateHint, { 
 els.editorPreview.addEventListener('contextmenu', locateEditorFromPreview);
 
 document.addEventListener('keydown', event => {
+  if (event.defaultPrevented) return;
   const primaryModifier = event.ctrlKey || event.metaKey;
   if (event.key === 'Escape' && cancelPinnedPointerReorder()) event.preventDefault();
   else if (primaryModifier && event.key.toLowerCase() === 'n') { event.preventDefault(); newFile(); }
@@ -3782,7 +4117,7 @@ document.addEventListener('keydown', event => {
   else if (primaryModifier && event.key.toLowerCase() === 'e') { event.preventDefault(); toggleEditor(); }
   else if (primaryModifier && event.key.toLowerCase() === 'o') { event.preventDefault(); openFile(); }
   else if (primaryModifier && event.key.toLowerCase() === 'f') { event.preventDefault(); openSearch(); }
-  else if (primaryModifier && event.key.toLowerCase() === 'p') { event.preventDefault(); window.quilliteMarkdown.print(); }
+  else if (primaryModifier && event.key.toLowerCase() === 'p') { event.preventDefault(); printCurrentDocument(); }
   else if (primaryModifier && (event.key === '+' || event.key === '=')) { event.preventDefault(); setFontScale(state.fontScale + .08); }
   else if (primaryModifier && event.key === '-') { event.preventDefault(); setFontScale(state.fontScale - .08); }
   else if (primaryModifier && event.key === '0') { event.preventDefault(); setFontScale(1); }
@@ -3791,6 +4126,7 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Escape' && !els.codeLangMenu.classList.contains('hidden')) { els.codeLangMenu.classList.add('hidden'); focusCodeEditor(); }
   else if (event.key === 'Escape' && !els.accentMenu.classList.contains('hidden')) { closeAccentMenu(); $('#accentButton').focus(); }
   else if (event.key === 'Escape' && !els.documentActionsMenu.classList.contains('hidden')) { closeDocumentActionsMenu(); els.documentActionsMoreButton.focus(); }
+  else if (event.key === 'Escape' && !els.diagramDialog.classList.contains('hidden')) closeDiagramDialog();
   else if (event.key === 'Escape' && !els.formulaDialog.classList.contains('hidden')) closeFormulaDialog();
   else if (event.key === 'Escape' && !els.tableDialog.classList.contains('hidden')) closeTableDialog();
   else if (event.key === 'Escape' && !els.imageDialog.classList.contains('hidden')) closeImageDialog();
@@ -3834,11 +4170,12 @@ window.addEventListener('focus', () => {
   scheduleMacWindowModeSync();
   refreshCurrentFileFromDisk();
 });
+window.quilliteMarkdown.onOpenFile(doc => {
+  if (!doc?.path || !maybeDiscardChanges()) return;
+  setSidebarMode('recent');
+  displayDocument(doc);
+});
 initialize();
 setInterval(() => {
   if (state.editing && state.dirty && state.currentFile?.path && !state.saving) saveDocument(false, { auto: true, silent: true });
 }, 10000);
-window.quilliteMarkdown.onOpenFile(doc => {
-  setSidebarMode('recent');
-  displayDocument(doc);
-});

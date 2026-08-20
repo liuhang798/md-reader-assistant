@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
+	"github.com/wailsapp/wails/v2/pkg/options"
 )
 
 func TestDocumentAccessDeniedRecoveryIsLimitedToMacOSPermissions(t *testing.T) {
@@ -1171,6 +1172,23 @@ func TestFileOpenBeforeFrontendReadyBecomesInitialDocument(t *testing.T) {
 	}
 }
 
+func TestSecondInstanceFileOpenBeforeFrontendReadyBecomesInitialDocument(t *testing.T) {
+	app := testApp(t)
+	filePath := filepath.Join(t.TempDir(), "opened-from-explorer.md")
+	if err := os.WriteFile(filePath, []byte("# Opened from Explorer"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	app.onSecondInstanceLaunch(options.SecondInstanceData{Args: []string{filePath}})
+	doc, err := app.GetInitialFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc == nil || doc.Path != filePath || doc.Content != "# Opened from Explorer" {
+		t.Fatalf("queued Windows file-association document was not opened: %#v", doc)
+	}
+}
+
 func TestHideWindowOnCloseOnlyOnMacOS(t *testing.T) {
 	if !hideWindowOnClose("darwin") {
 		t.Fatal("macOS close button should hide the window")
@@ -1347,6 +1365,23 @@ func TestWindowsInstallerIsSimplifiedChineseOnly(t *testing.T) {
 		if strings.Contains(installer, forbidden) {
 			t.Errorf("Windows installer must not contain English/multilingual setup rule %q", forbidden)
 		}
+	}
+}
+
+func TestWindowsInstallerDefaultsToPerUserNonElevatedInstallation(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("build", "windows", "installer", "project.nsi"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	installer := string(data)
+	includeIndex := strings.Index(installer, `!include "wails_tools.nsh"`)
+	userScopeIndex := strings.Index(installer, `!define WAILS_INSTALL_SCOPE "user"`)
+	userLevelIndex := strings.Index(installer, `!define REQUEST_EXECUTION_LEVEL "user"`)
+	if includeIndex < 0 || userScopeIndex < 0 || userLevelIndex < 0 || userScopeIndex > includeIndex || userLevelIndex > includeIndex {
+		t.Fatal("Windows installer must default to a per-user, non-elevated install before loading Wails installer tools")
+	}
+	if strings.Contains(installer[:includeIndex], `!define REQUEST_EXECUTION_LEVEL "admin"`) {
+		t.Fatal("Windows installer must not launch the application at a higher integrity level than Explorer")
 	}
 }
 
@@ -1711,4 +1746,45 @@ func icoSizesAndLargestPNG(data []byte) ([]int, []byte, error) {
 		return nil, nil, errors.New("ICO has no 256px image")
 	}
 	return sizes, largest, nil
+}
+
+func TestSelectMacSecurityBookmarkPrefersExactFileThenDeepestFolder(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "Documents")
+	project := filepath.Join(root, "Project")
+	document := filepath.Join(project, "notes", "README.md")
+	bookmarks := map[string]macSecurityBookmarkEntry{
+		root: {
+			ScopePath: root,
+			Data:      "root-bookmark",
+			Directory: true,
+		},
+		project: {
+			ScopePath: project,
+			Data:      "project-bookmark",
+			Directory: true,
+		},
+	}
+
+	selected, ok := selectMacSecurityBookmark(bookmarks, document)
+	if !ok || selected.Data != "project-bookmark" {
+		t.Fatalf("selected bookmark = %#v, %v; want deepest project folder", selected, ok)
+	}
+
+	bookmarks[document] = macSecurityBookmarkEntry{ScopePath: document, Data: "file-bookmark"}
+	selected, ok = selectMacSecurityBookmark(bookmarks, document)
+	if !ok || selected.Data != "file-bookmark" {
+		t.Fatalf("selected bookmark = %#v, %v; want exact file bookmark", selected, ok)
+	}
+}
+
+func TestSelectMacSecurityBookmarkRejectsSiblingPrefix(t *testing.T) {
+	base := t.TempDir()
+	root := filepath.Join(base, "Project")
+	sibling := filepath.Join(base, "Project-copy", "README.md")
+	bookmarks := map[string]macSecurityBookmarkEntry{
+		root: {ScopePath: root, Data: "project-bookmark", Directory: true},
+	}
+	if selected, ok := selectMacSecurityBookmark(bookmarks, sibling); ok {
+		t.Fatalf("unexpected sibling bookmark match: %#v", selected)
+	}
 }

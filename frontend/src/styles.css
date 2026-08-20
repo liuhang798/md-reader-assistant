@@ -379,6 +379,46 @@ body[data-doc-width="full"] .document-view { padding-left: 44px; padding-right: 
 .markdown-body h6 { font-size: calc(13px * var(--font-scale)); margin: 1.4em 0 .35em; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .markdown-body p { margin: 0 0 1.25em; }
 .markdown-body mark.markdown-highlight { padding: .08em .22em; border-radius: 3px; color: inherit; background: color-mix(in srgb, #f2cf4a 58%, var(--paper)); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.mermaid-diagram { position: relative; width: 100%; margin: 1.35em 0; padding: 18px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--panel) 58%, var(--paper)); text-align: center; }
+.mermaid-diagram svg { display: block; width: 100%; max-width: none; height: auto; margin: auto; }
+.mermaid-diagram[data-mermaid-type="gantt"] svg { width: max(100%, 1280px); }
+.mermaid-diagram[data-mermaid-type="journey"] svg,
+.mermaid-diagram[data-mermaid-type="gitgraph"] svg,
+.mermaid-diagram[data-mermaid-type="timeline"] svg,
+.mermaid-diagram[data-mermaid-type="packet-beta"] svg,
+.mermaid-diagram[data-mermaid-type="architecture-beta"] svg { width: max(100%, 980px); }
+.mermaid-diagram[data-mermaid-type="c4context"] svg { width: max(100%, 1400px); }
+.mermaid-diagram[data-mermaid-type="sequencediagram"] svg,
+.mermaid-diagram[data-mermaid-type="flowchart"] svg,
+.mermaid-diagram[data-mermaid-type="erdiagram"] svg { width: max(100%, 680px); }
+.mermaid-diagram svg text, .mermaid-diagram svg tspan { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif !important; font-weight: 400 !important; stroke: none !important; stroke-width: 0 !important; }
+.echarts-diagram { position: relative; width: 100%; min-height: 300px; margin: 1.35em 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; color: var(--text); background: color-mix(in srgb, var(--panel) 58%, var(--paper)); }
+.echarts-diagram svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  /* The app-wide SVG rule is for toolbar icons. ECharts creates invisible
+     layout paths around labels; inheriting the icon stroke turns those
+     helpers into visible rectangles around axis names and legends. */
+  stroke: none;
+  stroke-width: 0;
+  stroke-linecap: initial;
+  stroke-linejoin: initial;
+}
+.echarts-diagram svg text, .echarts-diagram svg tspan { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif !important; font-weight: 400 !important; font-synthesis: none; stroke: none !important; stroke-width: 0 !important; }
+.echarts-loading { display: grid; min-height: 300px; place-items: center; color: var(--muted); }
+.echarts-diagram.echarts-error { height: auto !important; min-height: 0; padding: 18px; }
+.mermaid-export-image, .echarts-export-image { display: block; width: 100%; max-width: 100%; height: auto; margin: auto; }
+.mermaid-loading { min-height: 100px; display: grid; place-items: center; color: var(--muted); font-size: .9em; }
+.mermaid-rendering { min-height: 138px; }
+.mermaid-rendering::after { content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: mermaid-spin .8s linear infinite; }
+.mermaid-error { display: grid; gap: 7px; text-align: left; border-color: color-mix(in srgb, #d94a4a 42%, var(--line)); background: color-mix(in srgb, #d94a4a 5%, var(--paper)); }
+.mermaid-error strong { color: #c83f3f; }
+.mermaid-error span { color: var(--muted); }
+.mermaid-error pre { margin: 4px 0 0; white-space: pre-wrap; color: var(--muted); }
+.mermaid-export-image { display: block; max-width: 100%; height: auto; margin: auto; }
+@keyframes mermaid-spin { to { transform: rotate(360deg); } }
 .markdown-body [data-md-color="red"] { color: var(--md-color-red); }
 .markdown-body [data-md-color="default"] { color: var(--text); }
 .markdown-body [data-md-color="orange"] { color: var(--md-color-orange); }
@@ -870,6 +910,23 @@ html[data-platform="darwin"] .pdf-tutorial-macos { display: block; }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
+.diagram-dialog { width: min(1480px, calc(100vw - 32px)); height: min(940px, calc(100vh - 24px)); padding: 26px 28px 22px; }
+.diagram-dialog .formula-dialog-header { min-height: 68px; }
+.diagram-dialog-layout { grid-template-columns: 290px minmax(0, 1fr); margin-top: 14px; }
+.diagram-dialog #diagramBuilderPanel { display: grid; grid-template-columns: minmax(340px, .9fr) minmax(460px, 1.1fr); grid-template-rows: auto auto minmax(0, 1fr); gap: 0 14px; overflow: hidden; padding: 18px; }
+.diagram-dialog #diagramBuilderPanel .formula-builder-heading,
+.diagram-dialog #diagramBuilderPanel .diagram-template-description { grid-column: 1 / -1; }
+.diagram-template-description { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.diagram-source-card, .diagram-preview-card { min-width: 0; min-height: 0; margin-top: 13px; }
+.diagram-source-card { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.diagram-source-card textarea { height: 100%; min-height: 0; resize: none; color: var(--text); font-size: 13px; line-height: 1.6; }
+.diagram-preview-card { display: grid; grid-template-rows: auto minmax(0, 1fr); margin-bottom: 0; }
+.diagram-preview { display: grid; place-items: center; min-width: 0; min-height: 0; margin-top: 9px; padding: 12px; overflow: auto; border-radius: 8px; color: var(--muted); background: var(--paper-strong); }
+.diagram-preview .mermaid-diagram { width: 100%; margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.diagram-preview .mermaid-diagram svg { display: block; max-width: 100%; margin: auto; }
+.diagram-preview .echarts-diagram { width: 100%; min-height: 360px; margin: 0; border: 0; background: transparent; box-shadow: none; }
+.diagram-preview .mermaid-error { width: 100%; }
+.diagram-dialog .formula-dialog-actions { margin-top: 14px; }
 .formula-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .formula-dialog-actions .large-button { min-width: 98px; }
 body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; }
@@ -903,6 +960,16 @@ body.dialog-open .titlebar, body.dialog-open .app-shell { pointer-events: none; 
   .toc-panel, .toc-resizer { display: none; }
   .document-view { max-width: min(var(--doc-width), 790px); }
   .back-to-top { right: 24px; }
+}
+@media (max-width: 1180px) {
+  .diagram-dialog #diagramBuilderPanel { grid-template-columns: minmax(300px, .95fr) minmax(360px, 1.05fr); }
+}
+@media (max-width: 980px) {
+  .diagram-dialog { width: calc(100vw - 20px); height: calc(100vh - 20px); padding: 22px 20px 18px; }
+  .diagram-dialog-layout { grid-template-columns: 235px minmax(0, 1fr); }
+  .diagram-dialog #diagramBuilderPanel { display: block; overflow: auto; }
+  .diagram-source-card textarea { min-height: 230px; resize: vertical; }
+  .diagram-preview { min-height: 280px; }
 }
 @media (max-width: 900px) {
   .sidebar { width: 220px; flex-basis: 220px; }

@@ -6,7 +6,7 @@
 
 - 项目名称：轻阅 Markdown / Quillite Markdown
 - 仓库：`https://github.com/liuhang798/quillite-markdown`
-- 当前版本：`2.4.9`
+- 当前版本：`2.5.0`
 - 开源协议：MIT
 - 产品定位：极度轻量、美观、跨平台的 Markdown 阅读与编辑工具
 - 支持平台：Windows x64、macOS Universal、Linux x64
@@ -23,7 +23,7 @@
 | 后端 | Go 1.25 | 文件读写、最近记录、草稿、图片读取、系统操作、更新检查 |
 | 前端 | 原生 HTML、CSS、JavaScript | 页面结构、交互、状态管理、双语界面 |
 | 构建 | Vite 7 | 前端打包，输出到 `frontend/dist` |
-| 编辑器 | CodeMirror 6 | Markdown 编辑、语法高亮、撤回历史、快捷键 |
+| 编辑器 | CodeMirror 6 | Markdown 编辑、语法高亮、学科公式与 22 类 Mermaid 图表生成器、撤回历史、快捷键 |
 | Markdown | marked | Markdown 转 HTML |
 | 科学公式 | KaTeX + mhchem | 本地渲染 LaTeX 行内/块级公式、化学式与公式编号 |
 | 安全清理 | DOMPurify | 清理渲染后的 HTML |
@@ -212,7 +212,7 @@ Wails 会将 `App` 的公开方法暴露给前端。主要接口按领域分组�
 3. Go 读取文件并立即写入最近记录。
 4. 前端 `displayDocument` 同步当前文件、最近列表、阅读页和编辑器基线。
 
-macOS 的用户主动点击最近/收藏/资源记录通过 `OpenRecentFile` 打开：先直接读取；若受 Documents、Desktop、Downloads 等系统隐私保护而返回权限错误，则调用已定位到原文件的系统打开窗口恢复用户授权。后台自动刷新仍使用 `ReadFile`，不得在非用户操作时弹出授权窗口。
+macOS 会把用户通过系统文件／文件夹窗口、Finder 或文件关联明确授权的路径保存为原生 Security-Scoped Bookmark，数据独立保存在用户配置目录的 `mac-security-bookmarks.json`。读取、保存、写权限检测、最近状态检查与资源浏览器恢复都必须在匹配的文件或最具体父目录书签作用域内执行，并严格配对 `startAccessingSecurityScopedResource`／`stopAccessingSecurityScopedResource`；过期书签应在访问期间刷新。用户主动点击最近／收藏／资源记录通过 `OpenRecentFile` 打开：先静默解析书签并读取；只有旧记录、书签失效或未签名更新改变应用身份时，才调用已定位到原文件的系统打开窗口恢复授权。后台自动刷新仍使用 `ReadFile`，不得在非用户操作时弹出授权窗口。
 
 ### 编辑与自动保存
 

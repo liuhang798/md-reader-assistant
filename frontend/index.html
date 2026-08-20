@@ -228,7 +228,8 @@
               <option value="underline" data-i18n="underline">下划线</option>
               <option value="superscript" data-i18n="superscript">上标</option>
               <option value="subscript" data-i18n="subscript">下标</option>
-              <option value="formula-builder" data-i18n="formulaBuilder">学科公式</option>
+              <option value="formula-builder" data-i18n="formulaBuilder">学科公式 🔥</option>
+              <option value="diagram-builder" data-i18n="diagramBuilder">图表生成器 🔥</option>
               <option value="hard-break" data-i18n="hardBreak">强制换行</option>
               <option value="footnote" data-i18n="footnote">脚注</option>
               <option value="reference-link" data-i18n="referenceLink">引用式链接</option>
@@ -304,7 +305,7 @@
     <hr>
     <button data-action="feedback"><span class="menu-label" data-i18n="feedback">意见反馈</span> <span data-i18n="feedbackShortHint">建议与异常</span></button>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span></button>
-    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.4.9</span></button>
+    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.5.0</span></button>
   </div>
 
   <div id="codeLangMenu" class="popover code-lang-menu hidden no-drag" role="menu" aria-labelledby="codeLangMenuLabel">
@@ -389,7 +390,7 @@
         <div>
           <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
           <h2 id="aboutTitle" data-i18n="appName">轻阅 Markdown</h2>
-          <span class="about-version" data-i18n="aboutVersion">版本 2.4.9</span>
+          <span class="about-version" data-i18n="aboutVersion">版本 2.5.0</span>
         </div>
       </div>
       <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。</p>
@@ -445,7 +446,7 @@
           <button id="selectFeedbackImages" class="large-button secondary" type="button" data-i18n="selectImages">选择图片</button>
         </div>
         <div id="feedbackImageList" class="feedback-image-list"></div>
-        <div class="feedback-system-info"><span><small data-i18n="softwareVersion">软件版本</small><strong id="feedbackAppVersion">2.4.9</strong></span><span><small data-i18n="systemVersion">系统版本</small><strong id="feedbackSystemVersion">—</strong></span></div>
+        <div class="feedback-system-info"><span><small data-i18n="softwareVersion">软件版本</small><strong id="feedbackAppVersion">2.5.0</strong></span><span><small data-i18n="systemVersion">系统版本</small><strong id="feedbackSystemVersion">—</strong></span></div>
         <p class="feedback-privacy" data-i18n="feedbackPrivacy">提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；服务器会记录请求 IP 并解析所在城市，不会上传当前文档。</p>
         <p id="feedbackMessageStatus" class="feedback-status" role="status"></p>
         <div class="feedback-actions"><button id="cancelFeedback" class="large-button secondary" type="button" data-i18n="cancel">取消</button><button id="submitFeedback" class="large-button primary" type="submit" data-i18n="submitFeedback">提交反馈</button></div>
@@ -467,9 +468,9 @@
         </div>
       </div>
       <div class="update-versions" aria-label="Version change">
-        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.4.9</strong></span>
+        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.5.0</strong></span>
         <svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
-        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.4.9</strong></span>
+        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.5.0</strong></span>
       </div>
       <div class="release-notes-panel">
         <strong data-i18n="releaseNotes">更新说明</strong>
@@ -651,6 +652,47 @@
       <div class="formula-dialog-actions">
         <button id="cancelFormula" class="large-button secondary" type="button" data-i18n="cancel">取消</button>
         <button id="insertFormula" class="large-button primary" type="button" data-i18n="insertFormula">插入公式</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="diagramDialog" class="dialog-backdrop hidden no-drag" role="dialog" aria-modal="true" aria-labelledby="diagramDialogTitle">
+    <section class="formula-dialog diagram-dialog">
+      <button id="closeDiagramDialog" class="about-close" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <header class="formula-dialog-header">
+        <div>
+          <span class="eyebrow" data-i18n="diagramWizardLabel">MERMAID 图表</span>
+          <h2 id="diagramDialogTitle" data-i18n="diagramWizardTitle">选择并生成图表</h2>
+          <p data-i18n="diagramWizardHint">按用途选择常用图表，编辑源码并实时预览后插入 Markdown。</p>
+        </div>
+      </header>
+      <div class="formula-dialog-layout diagram-dialog-layout">
+        <aside class="formula-template-panel" aria-label="图表模板">
+          <div class="formula-catalog-heading" data-i18n="diagramCategory">图表分类</div>
+          <div id="diagramCategoryTabs" class="formula-discipline-tabs" role="tablist" aria-label="图表分类"></div>
+          <div id="diagramTemplateList" class="formula-template-list"></div>
+        </aside>
+        <main id="diagramBuilderPanel" class="formula-builder-panel">
+          <div class="formula-builder-heading">
+            <div><span data-i18n="selectedDiagram">已选图表</span><strong id="diagramTemplateName">流程图</strong></div>
+            <code>Mermaid</code>
+          </div>
+          <p id="diagramTemplateDescription" class="diagram-template-description"></p>
+          <section class="formula-source-card diagram-source-card">
+            <span data-i18n="diagramSource">图表源码</span>
+            <textarea id="diagramSource" rows="12" spellcheck="false" data-i18n-aria-label="diagramSource" aria-label="图表源码"></textarea>
+          </section>
+          <section class="formula-preview-card diagram-preview-card" aria-live="polite">
+            <span data-i18n="diagramPreview">实时预览</span>
+            <div id="diagramPreview" class="diagram-preview"></div>
+          </section>
+        </main>
+      </div>
+      <div class="formula-dialog-actions">
+        <button id="cancelDiagram" class="large-button secondary" type="button" data-i18n="cancel">取消</button>
+        <button id="insertDiagram" class="large-button primary" type="button" data-i18n="insertDiagram">插入图表</button>
       </div>
     </section>
   </div>

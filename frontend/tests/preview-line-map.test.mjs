@@ -57,6 +57,27 @@ test('fenced code is a single block and hides inner markdown', () => {
   assertAligned('Before.\n\n```js\n# not heading\n- not list\n```\n\nAfter.\n', [1, 3, 8]);
 });
 
+test('a longer outer fence is not closed by a shorter Mermaid example fence', () => {
+  const source = [
+    '````markdown',
+    '```mermaid',
+    'flowchart LR',
+    '  A --> B',
+    '```',
+    '````',
+    '',
+    '## Following section',
+    '',
+    'Paragraph.',
+    '',
+    '```mermaid',
+    'flowchart TD',
+    '  C --> D',
+    '```',
+  ].join('\n');
+  assertAligned(source, [1, 8, 10, 12]);
+});
+
 test('Typora-style display formulas map to one preview block', () => {
   const source = '$$\na + b\n= c\n$$\n\nAfter\n\n\\[\nx^2 + y^2\n\\]';
   assert.deepEqual(scanMarkdownBlockStartLines(source), [1, 6, 8]);
