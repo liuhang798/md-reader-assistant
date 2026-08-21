@@ -224,7 +224,7 @@ gitGraph
     commit id: "补充测试"
     checkout main
     merge develop
-    commit id: "发布新版本" tag: "v2.5.0"
+    commit id: "发布新版本" tag: "v2.5.1"
 ```
 
 ## 十三、思维导图（Mindmap）

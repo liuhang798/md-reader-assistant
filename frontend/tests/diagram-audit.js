@@ -2,6 +2,20 @@ import { DIAGRAM_TEMPLATES, diagramTemplateSource } from '../src/diagram-templat
 import { convertMermaidDiagramsToImages, renderMermaidDiagrams } from '../src/mermaid-diagrams.js';
 import { convertEChartsDiagramsToImages, renderEChartsDiagrams } from '../src/echarts-diagrams.js';
 
+const search = new URLSearchParams(location.search);
+const colorMode = search.get('mode') === 'dark' ? 'dark' : 'light';
+const CARTESIAN_GRID_TEMPLATES = new Set([
+  'bar-chart', 'line-chart', 'stacked-bar-chart', 'area-chart',
+  'scatter-chart', 'diverging-bar-chart', 'combo-chart', 'heatmap-chart',
+  'boxplot-chart', 'bubble-chart', 'waterfall-chart'
+]);
+document.documentElement.dataset.colorMode = colorMode;
+const modeAuditLink = document.querySelector('#modeAuditLink');
+const exportAuditLink = document.querySelector('#exportAuditLink');
+modeAuditLink.textContent = colorMode === 'dark' ? '日间审计' : '夜间审计';
+modeAuditLink.href = `?mode=${colorMode === 'dark' ? 'light' : 'dark'}`;
+exportAuditLink.href = `?mode=${colorMode}&export=1`;
+
 const charts = document.querySelector('#charts');
 const summary = document.querySelector('#summary');
 
@@ -101,6 +115,28 @@ function auditEChartsSVG(svg, templateId = '') {
       issues.push(`图表文字超出画布: ${text.textContent.trim()}`);
     }
   }
+  for (const guide of svg.querySelectorAll('path, line, polyline')) {
+    const style = getComputedStyle(guide);
+    if (!style.strokeDasharray || style.strokeDasharray === 'none' || style.strokeDasharray === '0px') continue;
+    const effectiveOpacity = Number.parseFloat(style.opacity || '1') * Number.parseFloat(style.strokeOpacity || '1');
+    if (style.stroke === 'none' || style.stroke === 'transparent' || !Number.isFinite(effectiveOpacity) || effectiveOpacity < .55) {
+      issues.push('虚线或辅助线对比度不足');
+      break;
+    }
+  }
+  if (CARTESIAN_GRID_TEMPLATES.has(templateId)) {
+    const segments = [...svg.querySelectorAll('path[stroke-dasharray]')]
+      .map(node => node.getAttribute('d') || '')
+      .map(value => value.match(/^M([\d.-]+) ([\d.-]+)L([\d.-]+) ([\d.-]+)$/u))
+      .filter(Boolean)
+      .map(match => ({
+        horizontal: Math.abs(Number(match[2]) - Number(match[4])) < 1,
+        vertical: Math.abs(Number(match[1]) - Number(match[3])) < 1
+      }));
+    if (!segments.some(item => item.horizontal) || !segments.some(item => item.vertical)) {
+      issues.push('笛卡尔图表缺少横向或纵向虚线网格');
+    }
+  }
   if (templateId === 'heatmap-chart') {
     const gradient = [...svg.querySelectorAll('path[fill^="url("]')]
       .map(node => node.getBoundingClientRect())
@@ -149,6 +185,7 @@ const report = [...document.querySelectorAll('.audit-card')].map(card => {
 });
 
 window.__diagramAuditReport = report;
+window.__diagramAuditMode = colorMode;
 const failures = report.filter(item => item.status === 'fail');
 let exportSummary = '';
 if (document.documentElement.dataset.exportAudit === 'true' || new URLSearchParams(location.search).has('export')) {

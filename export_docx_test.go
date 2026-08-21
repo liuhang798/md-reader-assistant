@@ -6,12 +6,30 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
+	"image"
+	"image/png"
 	"io"
 	"os"
 	"strings"
 	"syscall"
 	"testing"
 )
+
+func TestImageSizeEMUPreservesWideChartAspectRatio(t *testing.T) {
+	var data bytes.Buffer
+	if err := png.Encode(&data, image.NewRGBA(image.Rect(0, 0, 2000, 840))); err != nil {
+		t.Fatalf("encode chart PNG: %v", err)
+	}
+	width, height := imageSizeEMU(data.Bytes())
+	if width != 5669280 {
+		t.Fatalf("wide chart should be constrained to the Word content width: %d", width)
+	}
+	wantRatio := 2000.0 / 840.0
+	gotRatio := float64(width) / float64(height)
+	if delta := gotRatio - wantRatio; delta < -0.01 || delta > 0.01 {
+		t.Fatalf("chart aspect ratio changed during Word sizing: got %.4f want %.4f", gotRatio, wantRatio)
+	}
+}
 
 func TestClassifyExportWriteErrorRecognizesWindowsFileLocks(t *testing.T) {
 	for _, errno := range []syscall.Errno{syscall.Errno(32), syscall.Errno(33)} {

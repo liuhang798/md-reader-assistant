@@ -123,8 +123,14 @@ test('pinned recents support menu toggles, pointer and keyboard reordering, and 
   assert.match(renderer, /const PIN_DRAG_THRESHOLD = 6/);
   assert.match(renderer, /const PIN_AUTO_SCROLL_EDGE = 44/);
   assert.match(renderer, /const PIN_AUTO_SCROLL_MAX_SPEED = 18/);
-  assert.match(renderer, /handle\.setPointerCapture\?\.\(event\.pointerId\)/);
-  assert.match(renderer, /handle\.closest\('\[data-pinned-list\]'\)/);
+  assert.match(renderer, /const captureTarget = els\.fileList/);
+  assert.match(renderer, /drag\.captureTarget\.setPointerCapture\?\.\(event\.pointerId\)/);
+  assert.match(renderer, /window\.removeEventListener\('pointermove', handlePinnedPointerMove\)/);
+  assert.match(renderer, /drag\.captureTarget\.hasPointerCapture\?\.\(drag\.pointerId\)/);
+  assert.match(renderer, /const container = row\.closest\('\[data-pinned-list\]'\)/);
+  assert.match(renderer, /row\.addEventListener\('pointerdown', beginPinnedPointerReorder\)/);
+  assert.match(renderer, /suppressPinnedFileClickPath = drag\.filePath/);
+  assert.match(renderer, /sameDocumentPath\(suppressPinnedFileClickPath, filePath\)/);
   assert.match(renderer, /drag\.container\.insertBefore\(drag\.row, insertionPoint \|\| null\)/);
   assert.match(renderer, /const visibleTop = Math\.max\(listRect\.top, pinnedRect\.top\)/);
   assert.match(renderer, /const visibleBottom = Math\.min\(listRect\.bottom, pinnedRect\.bottom\)/);
@@ -150,6 +156,9 @@ test('pinned recents support menu toggles, pointer and keyboard reordering, and 
   assert.match(renderer, /pinRecentSaveFailed: '置顶状态保存失败/);
   assert.match(renderer, /pinRecentSaveFailed: 'Could not save the pinned state/);
   assert.match(styles, /\.pin-drag-handle \{[^}]*opacity: 0;/);
+  assert.match(styles, /\.file-row\.pinned \{ display: block; \}/);
+  assert.match(styles, /\.file-row\.pinned \.file-item \{[^}]*padding-right: 32px;[^}]*cursor: grab;/);
+  assert.match(styles, /\.pin-drag-handle \{[^}]*position: absolute;[^}]*right: 4px;[^}]*top: 50%;[^}]*pointer-events: none;/);
   assert.match(styles, /@media \(hover: none\) \{ \.pin-drag-handle \{ opacity: \.7; \} \}/);
   assert.match(styles, /\.pin-insertion-position::before/);
 });
@@ -208,10 +217,11 @@ test('plain text files render without Markdown parsing and edit without Markdown
   assert.match(styles, /\.plain-text \{[^}]*font-size: calc\(15px \* var\(--font-scale\)\);/);
 });
 
-test('inserting an image supports online links with an optional description', () => {
+test('images support links, asset imports, drag and paste, and display scaling', () => {
   assert.match(html, /id="imageDialog"/);
   assert.match(html, /id="imageUrl"/);
   assert.match(html, /id="imageAltInput"/);
+  assert.match(html, /id="imageWidth" type="range" min="10" max="100" step="5"/);
   assert.match(html, /id="pickLocalImage"/);
   assert.match(html, /id="confirmImage"/);
   assert.match(html, /img-src 'self' data: file: https: http:/);
@@ -219,13 +229,21 @@ test('inserting an image supports online links with an optional description', ()
   assert.match(renderer, /function closeImageDialog\(\)/);
   assert.match(renderer, /function insertImageFromUrl\(\)/);
   assert.match(renderer, /if \(!\/\^https\?:\\\/\\\/\\S\+\$\/i\.test\(url\)\)/);
-  assert.match(renderer, /const markdownPath = \/\[\\s\(\)\]\/\.test\(url\) \? `<\$\{url\.replaceAll\('>', '%3E'\)\}>` : url;/);
+  assert.match(renderer, /function imageMarkdown\(imagePath, description, width = preferredImageWidth\(\)\)/);
+  assert.match(renderer, /width="\$\{normalizedWidth\}%">`/);
   assert.match(renderer, /function insertLocalImage\(\)/);
   assert.match(renderer, /window\.quilliteMarkdown\.selectImage\(state\.currentFile\.path\)/);
-  assert.match(renderer, /els\.imageAltInput\.value\.trim\(\)\.replaceAll\('\[', '\\\\\['\)\.replaceAll\('\]', '\\\\\]'\) \|\| selectedImageAlt\(\) \|\| t\('imageAlt'\)/);
+  assert.match(renderer, /async function importAndInsertImage\(sourcePath, description = ''\)/);
+  assert.match(renderer, /window\.quilliteMarkdown\.importImage\(state\.currentFile\.path, sourcePath\)/);
+  assert.match(renderer, /window\.quilliteMarkdown\.savePastedImage\(state\.currentFile\.path, await fileAsDataURL\(file\)\)/);
+  assert.match(renderer, /codeEditor\.contentDOM\.addEventListener\('paste', handleEditorImagePaste\)/);
+  assert.match(renderer, /if \(state\.editing && IMAGE_FILE_PATTERN\.test\(filePath\)\)/);
   assert.match(renderer, /\$\('#pickLocalImage'\)\.addEventListener\('click', \(\) => \{ closeImageDialog\(\); insertLocalImage\(\); \}\)/);
   assert.match(renderer, /els\.imageUrl\.addEventListener\('keydown', event => \{\s*if \(event\.key === 'Enter'\) insertImageFromUrl\(\);/);
+  assert.match(mainSource, /importImage: \(filePath, sourcePath\) => desktopRuntime \? Backend\.ImportImage\(filePath, sourcePath\)/);
+  assert.match(mainSource, /savePastedImage: \(filePath, dataURL\) => desktopRuntime \? Backend\.SavePastedImage\(filePath, dataURL\)/);
   assert.match(styles, /\.image-dialog-fields input:focus \{ border-color: var\(--accent\);/);
+  assert.match(styles, /\.image-width-field input\[type="range"\] \{ height: 24px; padding: 0; border: 0; accent-color: var\(--accent-strong\);/);
 });
 
 test('the update dialog offers in-app download and apply with progress', () => {
@@ -279,6 +297,7 @@ test('Word, HTML, and PDF export are available from the document menu', () => {
 });
 
 test('reader header exposes responsive Word, HTML, and PDF export actions', () => {
+  assert.match(html, /id="closePreviewButton" class="text-button close-preview-button"/);
   assert.match(html, /id="documentSaveAsButton"[^>]*data-document-action="save-as"[^>]*data-i18n="saveAs"/);
   assert.match(html, /id="documentExportWordButton"[^>]*data-document-action="export-word"[^>]*data-i18n="exportWord"/);
   assert.match(html, /id="documentExportHTMLButton"[^>]*data-document-action="export-html"[^>]*data-i18n="exportHTML"/);
@@ -286,6 +305,7 @@ test('reader header exposes responsive Word, HTML, and PDF export actions', () =
   assert.match(html, /id="documentActionsMoreButton"[^>]*aria-haspopup="menu"[^>]*data-i18n="moreDocumentActions"/);
   assert.match(html, /id="documentActionsMenu"[^>]*role="menu"[\s\S]*data-document-action="save-as"[\s\S]*data-document-action="export-word"[\s\S]*data-document-action="export-html"[\s\S]*data-document-action="export-pdf"[\s\S]*data-document-action="print"/);
   assert.match(styles, /\.document-meta \{[^}]*container-type: inline-size;/);
+  assert.match(styles, /\.text-button\.close-preview-button \{ color: var\(--accent-strong\); \}/);
   assert.match(styles, /@container \(max-width: 720px\) \{[\s\S]*\.document-actions > \.document-action-collapsible \{ display: none; \}[\s\S]*\.document-actions-more \{ display: block; \}/);
   assert.match(renderer, /function runDocumentHeaderAction\(action\)[\s\S]*action === 'save-as'[\s\S]*saveLibraryDocumentAs\(state\.currentFile\.path\)[\s\S]*action === 'export-word'\) exportWordDocument\(\)[\s\S]*action === 'export-html'\) exportHTMLDocument\(\)[\s\S]*action === 'export-pdf'\) exportPDFDocument\(\)[\s\S]*action === 'print'/);
   assert.match(renderer, /els\.documentActions\.addEventListener\('click', event =>[\s\S]*documentActionsMenu\.classList\.toggle\('hidden', !opening\)[\s\S]*runDocumentHeaderAction\(actionButton\.dataset\.documentAction\)/);

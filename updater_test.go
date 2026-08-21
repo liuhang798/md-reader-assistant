@@ -16,6 +16,7 @@ func TestPickUpdateAsset(t *testing.T) {
 		{Name: "quillite-markdown-2.3.11-linux-amd64.deb"},
 		{Name: "quillite-markdown-2.3.11-macos-universal.dmg"},
 		{Name: "quillite-markdown-2.3.11-macos-universal.bin"},
+		{Name: "quillite-markdown-2.3.11-macos-universal.zip"},
 		{Name: "quillite-markdown-2.3.11-windows-amd64.exe"},
 		{Name: "quillite-markdown-2.3.11-windows-amd64.bin"},
 	}
@@ -24,8 +25,8 @@ func TestPickUpdateAsset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("darwin: %v", err)
 	}
-	if darwin.Name != "quillite-markdown-2.3.11-macos-universal.bin" {
-		t.Fatalf("darwin picked %q, want the .bin executable", darwin.Name)
+	if darwin.Name != "quillite-markdown-2.3.11-macos-universal.zip" {
+		t.Fatalf("darwin picked %q, want the complete .app archive", darwin.Name)
 	}
 
 	windows, err := pickUpdateAsset(assets, "windows")
@@ -41,6 +42,9 @@ func TestPickUpdateAsset(t *testing.T) {
 	}
 	if _, err := pickUpdateAsset(nil, "darwin"); err == nil {
 		t.Fatal("a release without the expected asset must fail")
+	}
+	if _, err := pickUpdateAsset([]updateReleaseAsset{{Name: "quillite-markdown-2.3.11-macos-universal.bin"}}, "darwin"); err == nil {
+		t.Fatal("macOS must reject legacy raw-binary updates because they invalidate the application signature")
 	}
 }
 

@@ -97,6 +97,14 @@
         <button id="explorerTab" class="sidebar-tab" type="button" role="tab" aria-selected="false" data-i18n="resourceExplorer" data-i18n-title="explorerTabTitle" title="打开资源浏览器；再次点击可更改文件夹">资源浏览器</button>
       </div>
       <div id="fileList" class="file-list"></div>
+      <section class="reference-library" aria-labelledby="referenceLibraryLabel">
+        <span id="referenceLibraryLabel" class="reference-library-label" data-i18n="referenceDocuments">参考文档</span>
+        <div class="reference-library-actions">
+          <button type="button" data-reference-document="charts" data-i18n="chartExamples" data-i18n-title="chartExamplesTitle" title="查看全部图表格式范例">图表范例</button>
+          <button type="button" data-reference-document="formulas" data-i18n="formulaExamples" data-i18n-title="formulaExamplesTitle" title="查看全部学科公式范例">公式范例</button>
+          <button type="button" data-reference-document="formats" data-i18n="formatExamples" data-i18n-title="formatExamplesTitle" title="查看全部 Markdown 文本格式范例">格式范例</button>
+        </div>
+      </section>
       <button id="folderCta" class="folder-cta">
         <span class="cta-icon"><svg viewBox="0 0 24 24"><path d="M3.5 18.5V7a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v9.5H3.5Z"/></svg></span>
         <span><strong data-i18n="openDocumentFolder">打开文档文件夹</strong><small data-i18n="browseMarkdown">集中浏览你的 Markdown</small></span>
@@ -111,23 +119,95 @@
 
     <section class="reader-pane">
       <div id="welcome" class="welcome">
-        <div class="welcome-visual">
-          <div class="paper paper-back"></div>
-          <div class="paper paper-front">
-            <span></span><span></span><span></span><span></span>
-          </div>
-          <div class="leaf-float">
-            <svg viewBox="0 0 40 40"><path d="M34 6C20 5 9 11 6 24c-.7 3.2-.2 6 1.2 8.2C14 21 22.2 16 30 13 21.5 17.5 15 23.2 9.8 32.8c5.8 1.8 11.8-.8 16.2-5.2C31.8 21.7 33.5 14.1 34 6Z"/></svg>
-          </div>
+        <div class="welcome-shell">
+          <section class="welcome-hero">
+            <div class="welcome-visual" aria-hidden="true">
+              <div class="paper paper-back"></div>
+              <div class="paper paper-front">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <div class="leaf-float">
+                <svg viewBox="0 0 40 40"><path d="M34 6C20 5 9 11 6 24c-.7 3.2-.2 6 1.2 8.2C14 21 22.2 16 30 13 21.5 17.5 15 23.2 9.8 32.8c5.8 1.8 11.8-.8 16.2-5.2C31.8 21.7 33.5 14.1 34 6Z"/></svg>
+              </div>
+            </div>
+            <div class="welcome-hero-copy">
+              <span class="eyebrow">MD READER &amp; EDITOR</span>
+              <h1 data-i18n="welcomeTitle">阅读与编辑，都更简单</h1>
+              <p data-i18n-html="welcomeDescription">一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。</p>
+              <div class="welcome-actions">
+                <button id="welcomeOpenFile" class="large-button primary" data-i18n="openMarkdown">打开 Markdown 文档</button>
+                <button id="welcomeOpenFolder" class="large-button secondary" data-i18n="openFolder">打开文件夹</button>
+              </div>
+              <div class="drop-hint"><kbd data-shortcut="O">Ctrl + O</kbd><span data-i18n="quickOpenHint">快速打开，也可以将文件拖到这里</span></div>
+            </div>
+          </section>
+
+          <section class="welcome-section" aria-labelledby="welcomeExamplesTitle">
+            <div class="welcome-section-heading">
+              <div>
+                <span class="eyebrow" data-i18n="homeQuickStart">快速上手</span>
+                <h2 id="welcomeExamplesTitle" data-i18n="homeExamplesTitle">从完整案例开始</h2>
+              </div>
+              <p data-i18n="homeExamplesDescription">打开内置案例，直接查看所有图表、学科公式和 Markdown 排版格式。</p>
+            </div>
+            <div class="welcome-reference-grid">
+              <button type="button" class="welcome-reference-card" data-reference-document="charts" data-home-reference-document="charts">
+                <span class="welcome-reference-icon">01</span>
+                <span><strong data-i18n="chartExamples">图表范例</strong><small data-i18n="chartExamplesDescription">覆盖 Mermaid 与数据图表</small></span>
+                <i aria-hidden="true">→</i>
+              </button>
+              <button type="button" class="welcome-reference-card" data-reference-document="formulas" data-home-reference-document="formulas">
+                <span class="welcome-reference-icon">02</span>
+                <span><strong data-i18n="formulaExamples">公式范例</strong><small data-i18n="formulaExamplesDescription">覆盖全部学科公式</small></span>
+                <i aria-hidden="true">→</i>
+              </button>
+              <button type="button" class="welcome-reference-card" data-reference-document="formats" data-home-reference-document="formats">
+                <span class="welcome-reference-icon">03</span>
+                <span><strong data-i18n="formatExamples">格式范例</strong><small data-i18n="formatExamplesDescription">覆盖所有文本与排版格式</small></span>
+                <i aria-hidden="true">→</i>
+              </button>
+            </div>
+          </section>
+
+          <section class="welcome-section welcome-shortcuts" aria-labelledby="welcomeShortcutsTitle">
+            <div class="welcome-section-heading">
+              <div>
+                <span class="eyebrow" data-i18n="homeShortcutEyebrow">效率指南</span>
+                <h2 id="welcomeShortcutsTitle" data-i18n="homeShortcutsTitle">功能快捷键</h2>
+              </div>
+              <p id="welcomeShortcutsDescription" data-i18n="homeShortcutsDescription">下列快捷键在对应页面生效。</p>
+            </div>
+            <div class="welcome-shortcut-grid">
+              <section class="welcome-shortcut-card">
+                <h3 data-i18n="shortcutFiles">文档与文件</h3>
+                <div class="shortcut-row"><span data-i18n="shortcutNew">新建文档</span><kbd data-shortcut="N">Ctrl + N</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutOpen">打开文档</span><kbd data-shortcut="O">Ctrl + O</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutOpenFolder">打开文件夹</span><kbd data-shortcut="Shift + O">Ctrl + Shift + O</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutSave">保存文档</span><kbd data-shortcut="S">Ctrl + S</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutSaveAs">另存为</span><kbd data-shortcut="Shift + S">Ctrl + Shift + S</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutPrint">打印文档</span><kbd data-shortcut="P">Ctrl + P</kbd></div>
+              </section>
+              <section class="welcome-shortcut-card">
+                <h3 data-i18n="shortcutReading">阅读与编辑</h3>
+                <div class="shortcut-row"><span data-i18n="shortcutEditPreview">切换编辑/预览</span><kbd data-shortcut="E">Ctrl + E</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutSearch">查找内容</span><kbd data-shortcut="F">Ctrl + F</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutZoomIn">放大文字</span><kbd data-shortcut="+">Ctrl + +</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutZoomOut">缩小文字</span><kbd data-shortcut="−">Ctrl + −</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutZoomReset">恢复字号</span><kbd data-shortcut="0">Ctrl + 0</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutUndo">撤回</span><kbd data-shortcut="Z">Ctrl + Z</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutRedo">重做</span><kbd data-shortcut="Shift + Z">Ctrl + Shift + Z</kbd></div>
+              </section>
+              <section class="welcome-shortcut-card">
+                <h3 data-i18n="shortcutFormatting">文字格式</h3>
+                <div class="shortcut-row"><span data-i18n="shortcutBold">加粗</span><kbd data-shortcut="B">Ctrl + B</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutItalic">斜体</span><kbd data-shortcut="I">Ctrl + I</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutLink">插入链接</span><kbd data-shortcut="K">Ctrl + K</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutStrike">删除线</span><kbd data-shortcut="Shift + X">Ctrl + Shift + X</kbd></div>
+                <div class="shortcut-row"><span data-i18n="shortcutHighlight">高亮</span><kbd data-shortcut="Shift + H">Ctrl + Shift + H</kbd></div>
+              </section>
+            </div>
+          </section>
         </div>
-        <span class="eyebrow">MD READER &amp; EDITOR</span>
-        <h1 data-i18n="welcomeTitle">阅读与编辑，都更简单</h1>
-        <p data-i18n-html="welcomeDescription">一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。</p>
-        <div class="welcome-actions">
-          <button id="welcomeOpenFile" class="large-button primary" data-i18n="openMarkdown">打开 Markdown 文档</button>
-          <button id="welcomeOpenFolder" class="large-button secondary" data-i18n="openFolder">打开文件夹</button>
-        </div>
-        <div class="drop-hint"><kbd>Ctrl</kbd><span>+</span><kbd>O</kbd><span data-i18n="quickOpenHint">快速打开，也可以将文件拖到这里</span></div>
       </div>
 
       <div id="documentView" class="document-view hidden">
@@ -135,6 +215,7 @@
           <div class="breadcrumb" id="breadcrumb"></div>
           <div id="documentActions" class="document-actions">
             <button id="revealButton" class="text-button" data-i18n="revealFile" data-i18n-title="revealFileTitle" title="在资源管理器中显示">定位文件</button>
+            <button id="closePreviewButton" class="text-button close-preview-button" data-i18n="closePreview" data-i18n-title="closePreviewTitle" title="关闭当前预览并返回首页">关闭预览</button>
             <button id="documentSaveAsButton" class="text-button document-action-collapsible" data-document-action="save-as" data-i18n="saveAs">另存为</button>
             <button id="documentExportWordButton" class="text-button document-action-collapsible" data-document-action="export-word" data-i18n="exportWord">导出 Word</button>
             <button id="documentExportHTMLButton" class="text-button document-action-collapsible" data-document-action="export-html" data-i18n="exportHTML">导出 HTML</button>
@@ -305,7 +386,7 @@
     <hr>
     <button data-action="feedback"><span class="menu-label" data-i18n="feedback">意见反馈</span> <span data-i18n="feedbackShortHint">建议与异常</span></button>
     <button data-action="check-update"><span class="menu-label" data-i18n="checkForUpdates">检查更新</span></button>
-    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.5.0</span></button>
+    <button data-action="about"><span class="menu-label" data-i18n="about">关于</span> <span>2.5.1</span></button>
   </div>
 
   <div id="codeLangMenu" class="popover code-lang-menu hidden no-drag" role="menu" aria-labelledby="codeLangMenuLabel">
@@ -390,7 +471,7 @@
         <div>
           <span class="eyebrow" data-i18n="aboutProductLabel">MARKDOWN 阅读与编辑器</span>
           <h2 id="aboutTitle" data-i18n="appName">轻阅 Markdown</h2>
-          <span class="about-version" data-i18n="aboutVersion">版本 2.5.0</span>
+          <span class="about-version" data-i18n="aboutVersion">版本 2.5.1</span>
         </div>
       </div>
       <p class="about-description" data-i18n="aboutDescription">一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。</p>
@@ -446,7 +527,7 @@
           <button id="selectFeedbackImages" class="large-button secondary" type="button" data-i18n="selectImages">选择图片</button>
         </div>
         <div id="feedbackImageList" class="feedback-image-list"></div>
-        <div class="feedback-system-info"><span><small data-i18n="softwareVersion">软件版本</small><strong id="feedbackAppVersion">2.5.0</strong></span><span><small data-i18n="systemVersion">系统版本</small><strong id="feedbackSystemVersion">—</strong></span></div>
+        <div class="feedback-system-info"><span><small data-i18n="softwareVersion">软件版本</small><strong id="feedbackAppVersion">2.5.1</strong></span><span><small data-i18n="systemVersion">系统版本</small><strong id="feedbackSystemVersion">—</strong></span></div>
         <p class="feedback-privacy" data-i18n="feedbackPrivacy">提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；服务器会记录请求 IP 并解析所在城市，不会上传当前文档。</p>
         <p id="feedbackMessageStatus" class="feedback-status" role="status"></p>
         <div class="feedback-actions"><button id="cancelFeedback" class="large-button secondary" type="button" data-i18n="cancel">取消</button><button id="submitFeedback" class="large-button primary" type="submit" data-i18n="submitFeedback">提交反馈</button></div>
@@ -468,9 +549,9 @@
         </div>
       </div>
       <div class="update-versions" aria-label="Version change">
-        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.5.0</strong></span>
+        <span><small data-i18n="currentVersion">当前版本</small><strong id="currentVersion">2.5.1</strong></span>
         <svg viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
-        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.5.0</strong></span>
+        <span class="latest"><small data-i18n="latestVersion">最新版本</small><strong id="latestVersion">2.5.1</strong></span>
       </div>
       <div class="release-notes-panel">
         <strong data-i18n="releaseNotes">更新说明</strong>
@@ -593,6 +674,7 @@
       <div class="image-dialog-fields">
         <label><span data-i18n="imageUrlLabel">图片链接</span><input id="imageUrl" type="text" data-i18n-placeholder="imageUrlPlaceholder" placeholder="https://…"></label>
         <label><span data-i18n="imageAlt">图片说明</span><input id="imageAltInput" type="text" data-i18n-placeholder="imageAltPlaceholder" placeholder="可选的图片说明"></label>
+        <label class="image-width-field"><span data-i18n="imageWidth">显示宽度</span><div><input id="imageWidth" type="range" min="10" max="100" step="5" value="100"><output id="imageWidthValue" for="imageWidth">100%</output></div><small data-i18n="imageWidthHint">拖拽和粘贴图片也会使用此宽度</small></label>
       </div>
       <div class="table-dialog-actions image-dialog-actions">
         <button id="pickLocalImage" class="large-button secondary" type="button" data-i18n="localImage">本地图片…</button>
@@ -667,6 +749,7 @@
           <h2 id="diagramDialogTitle" data-i18n="diagramWizardTitle">选择并生成图表</h2>
           <p data-i18n="diagramWizardHint">按用途选择常用图表，编辑源码并实时预览后插入 Markdown。</p>
         </div>
+        <button id="openDiagramGuide" class="formula-guide-link" type="button"><span data-i18n="diagramGuide">查看图表教程 ↗</span></button>
       </header>
       <div class="formula-dialog-layout diagram-dialog-layout">
         <aside class="formula-template-panel" aria-label="图表模板">

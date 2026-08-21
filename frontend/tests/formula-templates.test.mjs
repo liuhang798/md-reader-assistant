@@ -32,21 +32,30 @@ test('every formula template has a unique id and renders its defaults without a 
     assert.ok(!ids.has(template.id), `duplicate formula id: ${template.id}`);
     ids.add(template.id);
     assert.ok(template.fields.length > 0, `${template.id} has no editable fields`);
+    for (const field of template.fields) {
+      assert.ok(field.label.zh && field.label.en, `${template.id}.${field.key} is missing a localized label`);
+      assert.notEqual(field.value, undefined, `${template.id}.${field.key} is missing a default value`);
+      assert.notEqual(field.placeholder, undefined, `${template.id}.${field.key} is missing a placeholder`);
+    }
 
     const expression = buildFormulaExpression(template);
     assert.ok(expression, `${template.id} generated an empty expression`);
+    assert.ok(!expression.includes('undefined'), `${template.id} leaked an undefined field into the formula`);
 
     const inline = renderLatex(expression, false);
     assert.match(inline, /class="katex"/, `${template.id} inline mode did not render with KaTeX`);
     assert.doesNotMatch(inline, /katex-error/, `${template.id} inline mode is invalid`);
+    assert.doesNotMatch(inline, /#cc0000/, `${template.id} inline mode contains an unsupported KaTeX command`);
 
     const rendered = renderLatex(expression, true);
     assert.match(rendered, /class="katex"/, `${template.id} display mode did not render with KaTeX`);
     assert.doesNotMatch(rendered, /katex-error/, `${template.id} display mode is invalid`);
+    assert.doesNotMatch(rendered, /#cc0000/, `${template.id} display mode contains an unsupported KaTeX command`);
 
     const numbered = renderLatex(formulaPreviewExpression('numbered', expression, '1'), true);
     assert.match(numbered, /class="katex"/, `${template.id} numbered mode did not render`);
     assert.doesNotMatch(numbered, /katex-error/, `${template.id} numbered mode is invalid`);
+    assert.doesNotMatch(numbered, /#cc0000/, `${template.id} numbered mode contains an unsupported KaTeX command`);
   }
 });
 
@@ -62,6 +71,10 @@ test('common formula templates generate valid LaTeX from user values', () => {
   assert.equal(
     buildFormulaExpression(formulaTemplateById('reaction'), { reactants: '2H2 + O2', products: '2H2O' }),
     '\\ce{2H2 + O2 -> 2H2O}',
+  );
+  assert.equal(
+    buildFormulaExpression(formulaTemplateById('eigenvalue')),
+    '\\det\\left(A-\\lambda\\,I\\right)=0',
   );
 });
 

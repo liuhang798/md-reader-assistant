@@ -24,6 +24,8 @@ export function GetPreferences():Promise<main.Preferences>;
 
 export function GetStartupMode():Promise<string>;
 
+export function ImportImage(arg1:string,arg2:string):Promise<string>;
+
 export function ListFolder(arg1:string):Promise<main.FolderResult>;
 
 export function NeedsLanguageSelection():Promise<boolean>;
@@ -39,6 +41,8 @@ export function OpenFile():Promise<main.Document>;
 export function OpenFolder():Promise<main.FolderResult>;
 
 export function OpenRecentFile(arg1:string):Promise<main.Document>;
+
+export function OpenReferenceDocument(arg1:string):Promise<main.Document>;
 
 export function Print():Promise<void>;
 
@@ -59,6 +63,8 @@ export function RequestQuit():Promise<boolean>;
 export function SaveAs(arg1:string,arg2:string):Promise<main.Document>;
 
 export function SaveFile(arg1:string,arg2:string):Promise<main.Document>;
+
+export function SavePastedImage(arg1:string,arg2:string):Promise<string>;
 
 export function SelectFeedbackImages():Promise<Array<main.FeedbackImageSelection>>;
 

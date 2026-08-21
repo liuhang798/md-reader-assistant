@@ -58,17 +58,14 @@ The macOS installer image carries a metadata no-index marker. On launch, the ins
 
 Documents and folders opened through macOS system panels, Finder, or file associations are persisted as native security-scoped bookmarks. Recent, Favorites, and Explorer silently restore read and edit access after relaunch and refresh stale bookmarks automatically. A preselected system panel is needed only for legacy records or when an unsigned update changes the app identity.
 
-## What's new in 2.5.0
+## What's new in 2.5.1
 
-- Expanded Diagram Builder to 37 offline templates: 22 Mermaid structural diagrams and 15 ECharts data charts, with editable source, live preview, and consistent Word/HTML/PDF export.
-- Added 15 data-chart templates including bar, line, scatter, combo, heatmap, box plot, bubble, gauge, doughnut, funnel, waterfall, and word cloud.
-- Added native macOS security-scoped bookmark persistence so Recent, Favorites, and Explorer can silently restore authorized documents and folders after relaunch.
-- Fixed preview jumps and source-position drift in diagram-heavy documents, overlapping C4/ER/state labels, and export inconsistencies; bilingual real-browser audits now cover all 37 templates.
-- Added parameter entry, inline/display/numbered insertion, live preview, and editable generated Markdown. Numbered formulas keep the equation number aligned at the far right.
-- Added Typora-style LaTeX, mhchem chemistry, and `\tag{…}` equation numbers with consistent preview, source positioning, PDF printing, and Word export.
-- Fixed raw LaTeX appearing beside rendered equations in WPS/Word and standalone HTML exports. Both formats now keep one equation consistent with the app preview, while HTML also preserves themes, code, tables, and images.
-- Added a direct link to the official bilingual formula guide with copy-ready mathematics, physics, and chemistry examples.
-- Improved handling of recent documents moved, deleted, or removed from chat caches, and added controlled IP/city visibility to authenticated feedback details.
+- Added complete built-in examples for charts, academic formulas, and Markdown formatting, available from both Home and the library without polluting Recent.
+- Redesigned Home with quick-start examples and a complete shortcut guide. The reader can close the current preview and return home without removing it from Recent.
+- Local images can be selected, dropped, or pasted from the clipboard, are automatically stored in an `assets` directory beside the document, and support 10%–100% display widths.
+- Improved Mermaid and ECharts dark mode, theme switching, Gantt readability, and complex diagrams such as treemaps, mind maps, and Sankey. Wide data-chart exports to Word and HTML no longer crop or distort.
+- Pinned documents now align with ordinary Recent entries, reveal a reorder hint on hover, and can be dragged from anywhere on the card while a normal click still opens the document.
+- macOS in-app updates now validate and atomically replace the complete signed application bundle with rollback protection, preventing raw executable updates from invalidating the code signature.
 
 ## What's new in 2.4.8
 
@@ -84,7 +81,7 @@ Documents and folders opened through macOS system panels, Finder, or file associ
 ## What's new in 2.4.6
 
 - Moved the official website, updates, downloads, telemetry, and feedback to the single hostname `qm.ssssa.cn`, with no dependency on the apex or `www` domains.
-- Restored direct EXE delivery for the Windows installer on the website and GitHub Release; installer-free Windows/macOS updates continue to use dedicated BIN assets.
+- Restored direct EXE delivery for the Windows installer on the website and GitHub Release; installer-free Windows updates use a dedicated BIN asset. macOS updates must download and atomically replace a signature-verified complete `.app` ZIP, never overwrite the bundle with a raw executable, which would trigger `Code Signature Invalid` at launch.
 - Added aggregate update-check and actual-download metrics by release, platform, and source without uploading documents, paths, or device identity.
 
 ## What's new in 2.4.5
@@ -158,6 +155,8 @@ Documents and folders opened through macOS system panels, Finder, or file associ
 - Built-in Academic Formulas, KaTeX typesetting, and mhchem chemistry support: one unified entry groups 79 templates by mathematics, algebra and functions, geometry, calculus, linear algebra, probability and statistics, physics, chemistry, and chemical reactions. Fill in values, choose inline/display/numbered output, and insert ready-to-use Markdown; the guide is available directly inside the dialog. Raw `$…$` / `\(…\)` inline math, `$$…$$` / `\[…\]` display math, `\ce{…}` chemistry, and `\tag{…}` numbering remain fully supported. [Open the formula and chemistry guide](https://qm.ssssa.cn/guides/formulas/).
 - Typora-style Mermaid diagrams render directly from fenced ` ```mermaid ` blocks. More Formats → Diagram Builder offers 22 common templates grouped by use case, with descriptions, fully editable source, live preview, and one-click insertion. Invalid syntax stays isolated to an inline error, Word/HTML exports embed a high-resolution image, and system PDF printing preserves the preview. [Open the Mermaid examples](docs/Mermaid-图表完整案例.md).
 - Diagram Builder also includes 15 offline data charts: bar, line, stacked bar, area, scatter, diverging comparison, bar-and-line combo, funnel, heatmap, box plot, bubble, gauge, doughnut, waterfall, and word cloud. Editable fenced `echarts` JSON stays in the Markdown file, renders locally as SVG, and exports consistently to Word, HTML, and PDF. [Open the data-chart examples](docs/ECharts-数据图表案例.md).
+- Three built-in reference shortcuts—Charts, Formulas, and Formatting—cover all 37 diagram templates, all 79 Academic Formula templates, and the Markdown/HTML formats supported by the editor. Opening a reference does not add it to Recent Reading.
+- Close Preview returns from the reading screen to Home without removing the document from Recent. Home now provides the three complete examples together with a comprehensive shortcut guide for files, reading, editing, and text formatting.
 - Inserting a code block lets you pick a common programming language (JavaScript, Python, Go, Java, C/C++, Rust, HTML, SQL, and more) and writes a language-tagged fenced block with highlighting. An “Exit editing” button in the editor header returns you to the immersive reading view at any time.
 - Undo from the toolbar or with `Ctrl/Cmd + Z`; each document has isolated history that stops at the originally loaded content.
 - `Ctrl/Cmd + F` searches Markdown source in place, highlights matches and scrolls to the selected result; the polished find-and-replace panel follows the selected Chinese or English interface language.

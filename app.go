@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -28,7 +29,7 @@ const (
 	appNameEN       = "Quillite Markdown"
 	legacyAppNameZH = "MD阅读助手"
 	legacyAppNameEN = "MD Reader Assistant"
-	appVersion      = "2.5.0"
+	appVersion      = "2.5.1"
 	maxRecent       = 10
 )
 
@@ -36,9 +37,29 @@ var markdownExtensions = map[string]bool{
 	".md": true, ".markdown": true, ".mdown": true, ".mkd": true, ".txt": true,
 }
 
+var imageExtensions = map[string]bool{
+	".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
+	".webp": true, ".svg": true, ".bmp": true,
+}
+
+const maxImportedImageSize = int64(25 * 1024 * 1024)
+
 var errDraftReplacementInProgress = errors.New("draft replacement is already in progress")
 
 var errMacDocumentAccessNotGranted = errors.New("macOS document access was not granted")
+
+// The built-in examples are generated from the same template registries used
+// by the editor. They are materialised into the user cache on demand so Wails
+// can open them like ordinary Markdown files on every supported platform.
+//
+//go:embed docs/reference/图表案例.MD
+var chartReferenceMarkdown string
+
+//go:embed docs/reference/科学公式案例.MD
+var formulaReferenceMarkdown string
+
+//go:embed docs/reference/常规内容案例.MD
+var formatReferenceMarkdown string
 
 type Document struct {
 	Path         string `json:"path"`
@@ -48,6 +69,7 @@ type Document struct {
 	ModifiedAt   string `json:"modifiedAt"`
 	Size         int64  `json:"size"`
 	ReplacedPath string `json:"replacedPath,omitempty"`
+	ReadOnly     bool   `json:"readOnly,omitempty"`
 }
 
 type FolderFile struct {
@@ -98,6 +120,7 @@ type App struct {
 	initialFile         string
 	frontendReady       bool
 	preferencesOverride string
+	referenceOverride   string
 }
 
 func NewApp() *App {
@@ -262,6 +285,16 @@ func (a *App) readPreferencesUnlocked() (Preferences, error) {
 		prefs.DraftFiles = []string{}
 	}
 	normaliseRecentPreferences(&prefs)
+	// Reference documents are bundled, read-only examples rather than user
+	// library entries. Older releases could leave them in Recent/LastFile, so
+	// remove only the exact materialised reference paths during migration.
+	// A user-created copy outside the reference directory remains an ordinary
+	// editable document, even when it keeps the same filename.
+	if a.removeReferenceDocumentsFromRecent(&prefs) {
+		if err := a.writePreferencesUnlocked(prefs); err != nil {
+			return prefs, err
+		}
+	}
 	return prefs, nil
 }
 
@@ -355,6 +388,9 @@ func normaliseRecentPreferences(prefs *Preferences) {
 
 func (a *App) rememberFile(filePath string) error {
 	cleaned := filepath.Clean(filePath)
+	if a.isReferenceDocumentPath(cleaned) {
+		return nil
+	}
 	_, err := a.updatePreferences(func(prefs *Preferences) {
 		normaliseRecentPreferences(prefs)
 		if index := indexPreferencePath(prefs.RecentFiles, cleaned); index >= 0 {
@@ -421,6 +457,111 @@ func (a *App) OpenFile() (*Document, error) {
 	}
 	_ = a.rememberMacSecurityScopedPath(filePath, false)
 	return a.ReadFile(filePath)
+}
+
+// OpenReferenceDocument opens one of the bundled, generated example files.
+// Built-in references deliberately do not enter Recent so the user's library
+// stays reserved for their own documents.
+func (a *App) OpenReferenceDocument(kind string) (*Document, error) {
+	name, content, err := referenceDocument(kind)
+	if err != nil {
+		return nil, err
+	}
+	directory, err := a.referenceDocumentDirectory()
+	if err != nil {
+		return nil, err
+	}
+	path, err := materialiseReferenceDocument(directory, name, content)
+	if err != nil {
+		return nil, err
+	}
+	doc, err := a.readDocument(path, false)
+	if err != nil {
+		return nil, err
+	}
+	doc.ReadOnly = true
+	return doc, nil
+}
+
+func (a *App) referenceDocumentDirectory() (string, error) {
+	directory := strings.TrimSpace(a.referenceOverride)
+	if directory != "" {
+		return filepath.Abs(filepath.Clean(directory))
+	}
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Abs(filepath.Join(cache, "QuilliteMarkdown", "reference-documents"))
+}
+
+func (a *App) isReferenceDocumentPath(filePath string) bool {
+	directory, err := a.referenceDocumentDirectory()
+	if err != nil {
+		return false
+	}
+	candidate, err := filepath.Abs(filepath.Clean(filePath))
+	if err != nil || !samePreferencePath(filepath.Dir(candidate), directory) {
+		return false
+	}
+	for _, kind := range []string{"charts", "formulas", "formats"} {
+		name, _, referenceErr := referenceDocument(kind)
+		if referenceErr == nil && strings.EqualFold(filepath.Base(candidate), name) {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *App) removeReferenceDocumentsFromRecent(prefs *Preferences) bool {
+	changed := false
+	filter := func(paths []string) []string {
+		filtered := make([]string, 0, len(paths))
+		for _, item := range paths {
+			if a.isReferenceDocumentPath(item) {
+				changed = true
+				continue
+			}
+			filtered = append(filtered, item)
+		}
+		return filtered
+	}
+
+	prefs.RecentFiles = filter(prefs.RecentFiles)
+	prefs.PinnedRecentFiles = filter(prefs.PinnedRecentFiles)
+	if a.isReferenceDocumentPath(prefs.LastFile) {
+		prefs.LastFile = ""
+		changed = true
+	}
+	if changed && prefs.LastFile == "" && len(prefs.RecentFiles) > 0 {
+		prefs.LastFile = prefs.RecentFiles[0]
+	}
+	normaliseRecentPreferences(prefs)
+	return changed
+}
+
+func referenceDocument(kind string) (string, string, error) {
+	switch strings.ToLower(strings.TrimSpace(kind)) {
+	case "charts":
+		return "图表案例.MD", chartReferenceMarkdown, nil
+	case "formulas":
+		return "科学公式案例.MD", formulaReferenceMarkdown, nil
+	case "formats":
+		return "常规内容案例.MD", formatReferenceMarkdown, nil
+	default:
+		return "", "", fmt.Errorf("unknown reference document: %s", kind)
+	}
+}
+
+func materialiseReferenceDocument(directory, name, content string) (string, error) {
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return "", err
+	}
+	path := filepath.Join(directory, name)
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
 // NewFile creates a document without prompting for a location. macOS keeps
@@ -688,8 +829,8 @@ func createNewMarkdownFile(directories []string, baseName string, now time.Time)
 	return "", fmt.Errorf("create Markdown document: %w", lastErr)
 }
 
-// SelectImage returns a Markdown-friendly path. When possible it is relative
-// to the document, keeping the Markdown file portable.
+// SelectImage copies the selected image into the document's assets directory
+// and returns a portable, Markdown-friendly relative path.
 func (a *App) SelectImage(currentFile string) (string, error) {
 	imagePath, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
 		Title: a.text("selectImage"),
@@ -701,13 +842,153 @@ func (a *App) SelectImage(currentFile string) (string, error) {
 	if err != nil || imagePath == "" {
 		return "", err
 	}
-	result := filepath.Clean(imagePath)
-	if strings.TrimSpace(currentFile) != "" {
-		if relative, relativeErr := filepath.Rel(filepath.Dir(filepath.Clean(currentFile)), result); relativeErr == nil {
-			result = relative
-		}
+	_ = a.rememberMacSecurityScopedPath(imagePath, false)
+	return importImageToAssets(currentFile, imagePath)
+}
+
+// ImportImage copies a dropped image into the document's assets directory.
+func (a *App) ImportImage(currentFile, sourcePath string) (string, error) {
+	_ = a.rememberMacSecurityScopedPath(sourcePath, false)
+	return importImageToAssets(currentFile, sourcePath)
+}
+
+// SavePastedImage stores image data received from the clipboard in the same
+// assets directory used by selected and dropped files.
+func (a *App) SavePastedImage(currentFile, dataURL string) (string, error) {
+	metadata, encoded, found := strings.Cut(strings.TrimSpace(dataURL), ",")
+	if !found || !strings.HasPrefix(strings.ToLower(metadata), "data:image/") || !strings.Contains(strings.ToLower(metadata), ";base64") {
+		return "", errors.New("clipboard data is not a base64 image")
 	}
-	return filepath.ToSlash(result), nil
+	if int64(len(encoded)) > maxImportedImageSize*2 {
+		return "", errors.New("clipboard image exceeds the 25 MB limit")
+	}
+	data, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return "", fmt.Errorf("decode clipboard image: %w", err)
+	}
+	if int64(len(data)) > maxImportedImageSize {
+		return "", errors.New("clipboard image exceeds the 25 MB limit")
+	}
+	mimeType := strings.ToLower(strings.TrimSuffix(strings.TrimPrefix(strings.Split(metadata, ";")[0], "data:"), ";base64"))
+	extensionByMIME := map[string]string{
+		"image/png": ".png", "image/jpeg": ".jpg", "image/gif": ".gif",
+		"image/webp": ".webp", "image/bmp": ".bmp",
+	}
+	extension := extensionByMIME[mimeType]
+	if extension == "" {
+		return "", fmt.Errorf("unsupported clipboard image type: %s", mimeType)
+	}
+	name := "image-" + time.Now().Format("20060102-150405.000") + extension
+	return writeImageAsset(currentFile, name, data)
+}
+
+func importImageToAssets(currentFile, sourcePath string) (string, error) {
+	if strings.TrimSpace(sourcePath) == "" {
+		return "", errors.New("image path is empty")
+	}
+	source, err := filepath.Abs(filepath.Clean(sourcePath))
+	if err != nil {
+		return "", err
+	}
+	extension := strings.ToLower(filepath.Ext(source))
+	if !imageExtensions[extension] {
+		return "", errors.New("selected file is not a supported image")
+	}
+	info, err := os.Stat(source)
+	if err != nil {
+		return "", err
+	}
+	if info.IsDir() || info.Size() > maxImportedImageSize {
+		return "", errors.New("image is a directory or exceeds the 25 MB limit")
+	}
+	assetsDirectory, documentDirectory, err := imageAssetsDirectory(currentFile)
+	if err != nil {
+		return "", err
+	}
+	if sameFilesystemPath(filepath.Dir(source), assetsDirectory) {
+		relative, relativeErr := filepath.Rel(documentDirectory, source)
+		if relativeErr != nil {
+			return "", relativeErr
+		}
+		return filepath.ToSlash(relative), nil
+	}
+	data, err := os.ReadFile(source)
+	if err != nil {
+		return "", err
+	}
+	return writeImageAsset(currentFile, filepath.Base(source), data)
+}
+
+func imageAssetsDirectory(currentFile string) (assetsDirectory, documentDirectory string, err error) {
+	if strings.TrimSpace(currentFile) == "" {
+		return "", "", errors.New("document path is empty")
+	}
+	documentPath, err := filepath.Abs(filepath.Clean(currentFile))
+	if err != nil {
+		return "", "", err
+	}
+	documentDirectory = filepath.Dir(documentPath)
+	assetsDirectory = filepath.Join(documentDirectory, "assets")
+	if err := os.MkdirAll(assetsDirectory, 0o755); err != nil {
+		return "", "", fmt.Errorf("create image assets directory: %w", err)
+	}
+	return assetsDirectory, documentDirectory, nil
+}
+
+func sameFilesystemPath(first, second string) bool {
+	first = filepath.Clean(first)
+	second = filepath.Clean(second)
+	if goruntime.GOOS == "windows" {
+		return strings.EqualFold(first, second)
+	}
+	return first == second
+}
+
+func writeImageAsset(currentFile, preferredName string, data []byte) (string, error) {
+	if int64(len(data)) > maxImportedImageSize {
+		return "", errors.New("image exceeds the 25 MB limit")
+	}
+	assetsDirectory, documentDirectory, err := imageAssetsDirectory(currentFile)
+	if err != nil {
+		return "", err
+	}
+	extension := strings.ToLower(filepath.Ext(preferredName))
+	if !imageExtensions[extension] {
+		return "", errors.New("selected file is not a supported image")
+	}
+	baseName := strings.TrimSuffix(filepath.Base(preferredName), filepath.Ext(preferredName))
+	if strings.TrimSpace(baseName) == "" {
+		baseName = "image"
+	}
+	for suffix := 0; suffix < 10000; suffix++ {
+		name := baseName + extension
+		if suffix > 0 {
+			name = fmt.Sprintf("%s-%d%s", baseName, suffix+1, extension)
+		}
+		destination := filepath.Join(assetsDirectory, name)
+		file, openErr := os.OpenFile(destination, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+		if errors.Is(openErr, os.ErrExist) {
+			continue
+		}
+		if openErr != nil {
+			return "", openErr
+		}
+		if _, writeErr := file.Write(data); writeErr != nil {
+			_ = file.Close()
+			_ = os.Remove(destination)
+			return "", writeErr
+		}
+		if closeErr := file.Close(); closeErr != nil {
+			_ = os.Remove(destination)
+			return "", closeErr
+		}
+		relative, relativeErr := filepath.Rel(documentDirectory, destination)
+		if relativeErr != nil {
+			return "", relativeErr
+		}
+		return filepath.ToSlash(relative), nil
+	}
+	return "", errors.New("unable to allocate a unique image asset name")
 }
 
 // ReadImageData reads local images for the WebView. Direct file:// access is
@@ -724,8 +1005,7 @@ func (a *App) ReadImageData(imagePath, documentDirectory string) (string, error)
 	if info.IsDir() {
 		return "", errors.New("image path is a directory")
 	}
-	const maxImageSize = int64(25 * 1024 * 1024)
-	if info.Size() > maxImageSize {
+	if info.Size() > maxImportedImageSize {
 		return "", errors.New("image exceeds the 25 MB preview limit")
 	}
 	data, err := os.ReadFile(resolved)
@@ -870,6 +1150,9 @@ func canEditFile(filePath string) bool {
 func (a *App) SaveFile(filePath, content string) (*Document, error) {
 	if strings.TrimSpace(filePath) == "" {
 		return a.SaveAs("", content)
+	}
+	if a.isReferenceDocumentPath(filePath) {
+		return nil, errors.New("built-in reference documents are read-only; save a copy to edit")
 	}
 	resolvedPath, foundBookmark, bookmarkErr := a.writeDocumentWithMacBookmark(filePath, []byte(content))
 	if !foundBookmark || bookmarkErr != nil {

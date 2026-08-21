@@ -25,7 +25,11 @@ const updateProgressEvent = "update:progress"
 func updateAssetNameForPlatform(goos string) string {
 	switch goos {
 	case "darwin":
-		return "macos-universal.bin"
+		// macOS code signing seals the complete .app bundle. Replacing only
+		// Contents/MacOS/QuilliteMarkdown makes the bundle fail dyld signature
+		// validation on the next launch, so macOS updates must contain the
+		// complete, already-signed application bundle.
+		return "macos-universal.zip"
 	case "windows":
 		return "windows-amd64.bin"
 	default:

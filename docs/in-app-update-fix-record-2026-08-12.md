@@ -27,6 +27,8 @@ MD阅读助手（Wails 2.13 + Go 1.25 + 原生 HTML/CSS/JS）提供"下载并更
 
 Windows 上早期逻辑下载的是 **NSIS 安装包**（`-windows-amd64.exe`），通过 `/S` 静默安装完成升级；后续改为下载**便携 `.bin` 可执行文件**，直接替换正在运行的 exe，使安装版与便携版都能自更新。
 
+> 2026-08-20 更正：上表中的 macOS 裸可执行文件替换方案已经停用。macOS 的代码签名会封装整个 `.app`，只覆盖 `Contents/MacOS/QuilliteMarkdown` 会破坏代码封印，下一次启动由 `dyld` 以 `Namespace CODESIGNING, Code 2, Invalid Page` 终止。新方案发布包含完整、已校验 `.app` 的 ZIP，更新前后均执行严格签名验证，并通过同磁盘换包与失败回滚完成升级。旧客户端需要先手动安装一次新 DMG 才能迁移到安全更新链路。
+
 ## 二、三次实测失败记录
 
 ### 第 1 次：2.3.5 → 2.3.6（旧逻辑：NSIS /S 静默安装）

@@ -46,6 +46,10 @@ export function GetStartupMode() {
   return window['go']['main']['App']['GetStartupMode']();
 }
 
+export function ImportImage(arg1, arg2) {
+  return window['go']['main']['App']['ImportImage'](arg1, arg2);
+}
+
 export function ListFolder(arg1) {
   return window['go']['main']['App']['ListFolder'](arg1);
 }
@@ -76,6 +80,10 @@ export function OpenFolder() {
 
 export function OpenRecentFile(arg1) {
   return window['go']['main']['App']['OpenRecentFile'](arg1);
+}
+
+export function OpenReferenceDocument(arg1) {
+  return window['go']['main']['App']['OpenReferenceDocument'](arg1);
 }
 
 export function Print() {
@@ -116,6 +124,10 @@ export function SaveAs(arg1, arg2) {
 
 export function SaveFile(arg1, arg2) {
   return window['go']['main']['App']['SaveFile'](arg1, arg2);
+}
+
+export function SavePastedImage(arg1, arg2) {
+  return window['go']['main']['App']['SavePastedImage'](arg1, arg2);
 }
 
 export function SelectFeedbackImages() {

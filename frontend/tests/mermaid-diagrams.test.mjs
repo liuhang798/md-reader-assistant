@@ -31,9 +31,14 @@ test('editor offers one localized diagram builder with the full common Mermaid c
   assert.match(index, /value="diagram-builder" data-i18n="diagramBuilder">图表生成器 🔥<\/option>/);
   assert.match(renderer, /diagramBuilder: '图表生成器 🔥'/);
   assert.match(index, /id="diagramDialog"/);
+  assert.match(index, /id="openDiagramGuide"[^>]+formula-guide-link/);
+  assert.match(index, /data-i18n="diagramGuide">查看图表教程 ↗/);
   assert.match(index, /id="diagramSource"/);
   assert.match(index, /id="diagramPreview"/);
   assert.match(renderer, /openDiagramDialog/);
+  assert.match(renderer, /DIAGRAM_GUIDE_URL = 'https:\/\/qm\.ssssa\.cn\/guides\/diagrams\/'/);
+  assert.match(renderer, /openDiagramGuide/);
+  assert.match(renderer, /diagram-guide\.open/);
   assert.match(renderer, /renderMermaidDiagrams\(els\.diagramPreview/);
   assert.match(styles, /\.diagram-dialog[^}]+calc\(100vw - 32px\)[^}]+calc\(100vh - 24px\)/s);
   assert.match(styles, /#diagramBuilderPanel[^}]+grid-template-columns:\s*minmax\(340px,[^}]+minmax\(460px/s);
@@ -69,11 +74,28 @@ test('ECharts catalog supplies all requested data visualizations and an offline 
   assert.match(echartsModule, /renderer:\s*'svg'/);
   assert.match(echartsModule, /import 'echarts-wordcloud'/);
   assert.match(echartsModule, /svgToPNGDataURL/);
+  assert.match(echartsModule, /const PAPER_EXPORT_THEME = Object\.freeze/);
+  assert.match(echartsModule, /prepareOption\(parsed, PAPER_EXPORT_THEME\)/);
+  assert.match(echartsModule, /Math\.max\(1000, Math\.min\(1800/);
+  assert.match(echartsModule, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
+  assert.match(echartsModule, /svgToPNGDataURL\([\s\S]+PAPER_EXPORT_THEME\.paper,[\s\S]+\{ width, height \}/);
+  assert.match(diagramModule, /requestedSize = null/);
+  assert.match(diagramModule, /clone\.setAttribute\('viewBox', `0 0 \$\{sourceWidth\} \$\{sourceHeight\}`\)/);
+  assert.match(diagramModule, /context\.fillRect\(0, 0, width, height\)/);
   assert.match(echartsModule, /visualMap\.itemWidth\s*=\s*visualMap\.itemWidth\s*\|\|\s*12/);
-  assert.match(echartsModule, /visualMap\.itemHeight\s*=\s*visualMap\.itemHeight\s*\|\|\s*150/);
+  assert.match(echartsModule, /const HEATMAP_PALETTE = \['#C9E3F1', '#86C8C0', '#F3E39A', '#EEA06F', '#D85E63'\]/);
+  assert.match(echartsModule, /visualMap\.itemHeight\s*=\s*visualMap\.itemHeight\s*\|\|\s*180/);
+  assert.match(echartsModule, /visualMap\.calculable\s*=\s*true/);
+  assert.match(echartsModule, /visualMap\.handleSize\s*=\s*visualMap\.handleSize\s*\|\|\s*'85%'/);
+  assert.match(echartsModule, /visualMap\.indicatorStyle\s*=\s*\{/);
+  assert.match(echartsModule, /visualMap\.text\s*=\s*visualMap\.text\s*\|\|\s*\[String\(visualMap\.max/);
+  assert.match(echartsModule, /item\.type === 'heatmap'/);
   assert.match(echartsModule, /item\.type === 'boxplot'/);
-  assert.match(echartsModule, /color:\s*'#D8EAF7'/);
-  assert.match(echartsModule, /borderColor:\s*'#2878B5'/);
+  assert.match(echartsModule, /color:\s*dark\s*\?\s*'#294254'\s*:\s*'#D8EAF7'/);
+  assert.match(echartsModule, /borderColor:\s*dark\s*\?\s*'#79A9D1'\s*:\s*'#2878B5'/);
+  assert.match(echartsModule, /const gaugeText = dark \? '#FFFFFF' : text/);
+  assert.match(echartsModule, /item\.axisLabel = \{ \.\.\.normalTextStyle\(item\.axisLabel, gaugeText/);
+  assert.match(echartsModule, /item\.title = \{ \.\.\.normalTextStyle\(item\.title, gaugeText/);
   assert.match(styles, /\.echarts-diagram/);
   assert.match(styles, /\.echarts-diagram svg\s*\{[^}]*stroke:\s*none[^}]*stroke-width:\s*0/s);
   assert.match(styles, /\.echarts-diagram svg text[^}]*stroke:\s*none\s*!important/s);
@@ -96,6 +118,9 @@ test('ECharts example document contains 15 complete and valid runnable chart cas
 test('Mermaid diagrams use safe SVG labels, avoid stale rendering work, and export as embedded images', () => {
   assert.match(styles, /\.mermaid-diagram svg[^}]+max-width:\s*none/s);
   assert.match(styles, /data-mermaid-type="gantt"/);
+  assert.match(styles, /data-mermaid-type="gantt"[^}]+1480px[^}]+min-height:\s*260px/s);
+  assert.match(diagramModule, /gantt:\s*\{[^}]+fontSize:\s*16[^}]+sectionFontSize:\s*15[^}]+barHeight:\s*28/s);
+  assert.match(diagramModule, /type === 'gantt' \? 14 : 12/);
   assert.match(diagramModule, /function mermaidColor\(/);
   assert.match(diagramModule, /getImageData\(0, 0, 1, 1\)/);
   assert.match(diagramModule, /color\('--accent-soft'/);
@@ -106,9 +131,10 @@ test('Mermaid diagrams use safe SVG labels, avoid stale rendering work, and expo
   for (const color of ['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F', '#EDC948']) {
     assert.match(diagramModule, new RegExp(color));
   }
-  assert.match(diagramModule, /Object\.fromEntries\(PIE_COLORS\.map/);
+  assert.match(diagramModule, /const pieColors = dark \? DARK_PIE_COLORS : PIE_COLORS/);
+  assert.match(diagramModule, /Object\.fromEntries\(pieColors\.map/);
   assert.match(diagramModule, /pieSectionTextColor:/);
-  assert.match(diagramModule, /Math\.max\(12, Math\.min\(16, size\)\)/);
+  assert.match(diagramModule, /Math\.max\(minimumSize, Math\.min\(maximumSize, size\)\)/);
   assert.match(diagramModule, /!type\.startsWith\('c4'\)/);
   assert.match(diagramModule, /c4ShapeMargin:\s*120/);
   assert.match(diagramModule, /c4ShapeInRow:\s*3/);
@@ -140,6 +166,15 @@ test('Mermaid diagrams use safe SVG labels, avoid stale rendering work, and expo
   assert.match(diagramModule, /function normalizeJourneyDiagram\(svg\)/);
   assert.match(diagramModule, /type === 'journey'/);
   assert.match(diagramModule, /text\.journey-section/);
+  assert.match(diagramModule, /function normalizeTreemapDiagram\(svg\)/);
+  assert.match(diagramModule, /type === 'treemap-beta'/);
+  assert.match(diagramModule, /\.treemapLeaf/);
+  assert.match(diagramModule, /function normalizeMindmapDiagram\(svg\)/);
+  assert.match(diagramModule, /type === 'mindmap'/);
+  assert.match(diagramModule, /\.mindmapDiagram \.edge/);
+  assert.match(diagramModule, /function normalizeSankeyDiagram\(svg\)/);
+  assert.match(diagramModule, /type === 'sankey-beta'/);
+  assert.match(diagramModule, /mix-blend-mode', 'normal'/);
   assert.match(diagramModule, /function normalizeEdgeLabelBackgrounds\(svg\)/);
   assert.match(diagramModule, /\.edgeLabel rect\.background/);
   assert.match(diagramModule, /box\.style\.setProperty\('stroke', 'none', 'important'\)/);
@@ -172,6 +207,29 @@ test('live preview reuses unchanged Mermaid SVGs so editing does not jump to an 
   assert.match(renderer, /scrollPreviewToCursor\(true, 'auto'\)/);
 });
 
+test('appearance changes rebuild Mermaid and ECharts with explicit dark-mode colours', () => {
+  assert.match(renderer, /function refreshDiagramAppearance\(\)/);
+  assert.match(renderer, /refreshMermaidDiagrams\(container/);
+  assert.match(renderer, /refreshEChartsDiagrams\(container/);
+  assert.match(renderer, /setAccentTheme[\s\S]+refreshDiagramAppearance\(\)/);
+  assert.match(renderer, /setColorMode[\s\S]+refreshDiagramAppearance\(\)/);
+  assert.match(diagramModule, /name:\s*'base'/);
+  assert.match(diagramModule, /darkMode:\s*dark/);
+  assert.match(diagramModule, /C4 keeps fixed #444 relationship colours/);
+  assert.match(diagramModule, /marker\.style\.setProperty\('fill', dark \? muted/);
+  assert.match(diagramModule, /export async function refreshMermaidDiagrams/);
+  assert.match(echartsModule, /option\.darkMode\s*=\s*dark/);
+  assert.match(echartsModule, /const palette\s*=\s*dark\s*\?\s*DARK_CHART_PALETTE\s*:\s*CHART_PALETTE/);
+  assert.match(echartsModule, /dark[\s\S]+grid:\s*'#6C7972'[\s\S]+grid:\s*'#A5B0A9'/);
+  assert.match(echartsModule, /\['xAxis', 'yAxis', 'angleAxis', 'radiusAxis', 'singleAxis', 'parallelAxis'\]/);
+  assert.match(echartsModule, /minorSplitLine[\s\S]+color:\s*minorGridLine/);
+  assert.match(echartsModule, /normalizeGuideLines\(series, text, structure\.guide\)/);
+  assert.match(echartsModule, /show:\s*true,[\s\S]+type:\s*'dashed'[\s\S]+opacity:\s*1/);
+  assert.match(echartsModule, /backgroundColor:\s*paper/);
+  assert.match(echartsModule, /export async function refreshEChartsDiagrams/);
+  assert.match(styles, /data-color-mode="dark"[^}]+\.mermaid-diagram/s);
+});
+
 test('real-render audit covers every localized template and the PNG export path', () => {
   assert.match(auditPage, /id="summary"/);
   assert.match(auditPage, /id="charts"/);
@@ -179,6 +237,7 @@ test('real-render audit covers every localized template and the PNG export path'
   assert.match(auditScript, /for \(const template of DIAGRAM_TEMPLATES\)/);
   assert.match(auditScript, /function auditSVG\(svg, source = ''\)/);
   assert.match(auditScript, /文字超出画布/);
+  assert.match(auditScript, /虚线或辅助线对比度不足/);
   assert.match(auditScript, /文字重叠/);
   assert.match(auditScript, /旅程阶段文字与背景同色/);
   assert.match(auditScript, /连线备注仍有可见边框/);

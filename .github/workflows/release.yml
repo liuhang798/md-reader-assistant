@@ -209,18 +209,20 @@ jobs:
             exit 1
           fi
           ls -lh "${output_path}"
-      - name: Extract raw executable for in-app updates
+      - name: Archive signed application for in-app updates
         shell: bash
         run: |
           app_path="build/bin/轻阅 Markdown.app"
-          binary="${app_path}/Contents/MacOS/QuilliteMarkdown"
-          if [[ ! -x "${binary}" ]]; then
-            echo "Expected macOS executable was not found: ${binary}" >&2
+          if [[ ! -d "${app_path}" ]]; then
+            echo "Expected macOS application bundle was not found: ${app_path}" >&2
             exit 1
           fi
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "${app_path}"
           release_dir="build/bin/release"
-          cp "${binary}" "${release_dir}/quillite-markdown-${APP_VERSION}-macos-universal.bin"
-          ls -lh "${release_dir}/quillite-markdown-${APP_VERSION}-macos-universal.bin"
+          archive="${release_dir}/quillite-markdown-${APP_VERSION}-macos-universal.zip"
+          rm -f "${archive}"
+          /usr/bin/ditto -c -k --sequesterRsrc --keepParent "${app_path}" "${archive}"
+          ls -lh "${archive}"
       - uses: actions/upload-artifact@v4
         with:
           name: quillite-markdown-macos-universal
@@ -323,7 +325,7 @@ jobs:
             mapfile -t existing_assets < <(gh release view "${RELEASE_TAG}" --json assets --jq '.assets[].name')
             for asset in "${existing_assets[@]}"; do
               case "${asset}" in
-                md-reader-assistant-*|MD.*|MD阅读助手-*|MDReaderAssistant-Setup-*|轻阅\ Markdown-*|QuilliteMarkdown-Setup-*)
+                md-reader-assistant-*|MD.*|MD阅读助手-*|MDReaderAssistant-Setup-*|轻阅\ Markdown-*|QuilliteMarkdown-Setup-*|*-macos-universal.bin)
                   gh release delete-asset "${RELEASE_TAG}" "${asset}" --yes
                   ;;
               esac
@@ -376,7 +378,7 @@ jobs:
           upload_asset "$(find release-assets -maxdepth 1 -name '*-windows-amd64.exe' -print -quit)" windows installer
           upload_asset "$(find release-assets -maxdepth 1 -name '*-windows-amd64.bin' -print -quit)" windows update
           upload_asset "$(find release-assets -maxdepth 1 -name '*-macos-universal.dmg' -print -quit)" macos installer
-          upload_asset "$(find release-assets -maxdepth 1 -name '*-macos-universal.bin' -print -quit)" macos update
+          upload_asset "$(find release-assets -maxdepth 1 -name '*-macos-universal.zip' -print -quit)" macos update
           upload_asset "$(find release-assets -maxdepth 1 -name '*-linux-amd64.deb' -print -quit)" linux deb
           upload_asset "$(find release-assets -maxdepth 1 -name '*-linux-x86_64.AppImage' -print -quit)" linux appimage
           jq '.published = true' official-release.json > official-release-published.json

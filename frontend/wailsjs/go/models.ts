@@ -8,6 +8,7 @@ export namespace main {
 	    modifiedAt: string;
 	    size: number;
 	    replacedPath?: string;
+	    readOnly?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Document(source);
@@ -22,6 +23,7 @@ export namespace main {
 	        this.modifiedAt = source["modifiedAt"];
 	        this.size = source["size"];
 	        this.replacedPath = source["replacedPath"];
+	        this.readOnly = source["readOnly"];
 	    }
 	}
 	export class FeedbackImageSelection {

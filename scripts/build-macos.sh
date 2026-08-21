@@ -35,4 +35,11 @@ if [[ "${display_name}" != "轻阅 Markdown" ]]; then
   exit 1
 fi
 
+# Apple Silicon executables and their enclosing application bundle must keep a
+# coherent code signature. The open-source build uses an ad-hoc identity so it
+# does not require a paid Developer ID, but signing the complete bundle is still
+# essential: the in-app updater verifies and replaces this bundle as one unit.
+/usr/bin/codesign --force --deep --sign - --timestamp=none "${target_app}"
+/usr/bin/codesign --verify --deep --strict --verbose=2 "${target_app}"
+
 echo "macOS application ready: ${target_app}"

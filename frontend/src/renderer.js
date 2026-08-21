@@ -2,8 +2,8 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import 'katex/dist/katex.min.css';
 import hljs from 'highlight.js/lib/common';
-import { convertMermaidDiagramsToImages, renderMermaidDiagrams } from './mermaid-diagrams.js';
-import { convertEChartsDiagramsToImages, releaseEChartsDiagrams, renderEChartsDiagrams, validateEChartsSource } from './echarts-diagrams.js';
+import { convertMermaidDiagramsToImages, refreshMermaidDiagrams, renderMermaidDiagrams } from './mermaid-diagrams.js';
+import { convertEChartsDiagramsToImages, refreshEChartsDiagrams, releaseEChartsDiagrams, renderEChartsDiagrams, validateEChartsSource } from './echarts-diagrams.js';
 import { DIAGRAM_CATEGORIES, diagramTemplateById, diagramTemplateSource, diagramTemplatesForCategory } from './diagram-templates.js';
 import { ACCENT_THEMES, normalizeAccentTheme, normalizeColorMode, readAppearanceStorage, resolveMacColorMode, temporaryMacColorModeAfterToggle } from './appearance.js';
 import { previewWheelZoomDirection } from './font-wheel-zoom.js';
@@ -20,6 +20,7 @@ import { buildTocTree, readCollapsedToc, writeCollapsedToc } from './toc-tree.js
 const $ = selector => document.querySelector(selector);
 const DOC_WIDTH_LEVELS = ['narrow', 'medium', 'wide', 'full'];
 const MATH_GUIDE_URL = 'https://qm.ssssa.cn/guides/formulas/';
+const DIAGRAM_GUIDE_URL = 'https://qm.ssssa.cn/guides/diagrams/';
 let codeEditor;
 let editorExtensions = [];
 let basicSetup;
@@ -49,6 +50,8 @@ const PIN_DRAG_THRESHOLD = 6;
 const PIN_AUTO_SCROLL_EDGE = 44;
 const PIN_AUTO_SCROLL_MAX_SPEED = 18;
 let pinnedPointerDrag = null;
+let suppressPinnedFileClickPath = '';
+let suppressPinnedFileClickUntil = 0;
 let pinMutationInProgress = false;
 
 const initialAppearance = readAppearanceStorage(localStorage);
@@ -129,10 +132,12 @@ const translations = {
     appName: '轻阅 Markdown', newFileTitle: '新建 Markdown 文件 (Ctrl+N)', newDocumentButton: '新建文档', openFileTitle: '打开文件 (Ctrl+O)', openDocument: '打开文档', openFolderTitle: '打开文件夹 (Ctrl+Shift+O)',
     toggleEditorTitle: '切换编辑/预览 (Ctrl+E)', edit: '编辑', preview: '预览', saveTitle: '保存 (Ctrl+S)', searchTitle: '在文档中查找 (Ctrl+F)',
     accentThemeTitle: '选择主题颜色', chooseAccentTheme: '选择主题颜色', colorModeTitle: '切换白天/黑夜模式', systemColorModeTitle: '临时切换白天/黑夜模式；系统下次切换时恢复自动跟随', temporaryColorModeChanged: '已临时切换为{mode}模式；系统下次切换时恢复自动跟随', lightModeName: '白天', darkModeName: '黑夜', moreTitle: '更多选项', searchPlaceholder: '在文档中查找…', previous: '上一个', next: '下一个', close: '关闭', toastSuccess: '操作完成', toastInfo: '提示', toastWarning: '请注意', toastError: '操作失败', dismissNotification: '关闭提示',
-    library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', favoriteDocuments: '收藏文档', resourceExplorer: '资源浏览器', recentTab: '最近', favoritesTab: '收藏', explorerTab: '资源', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', openDocumentFolder: '打开文档文件夹',
+    library: '文档库', libraryViews: '文档库视图', recentReading: '最近阅读', favoriteDocuments: '收藏文档', resourceExplorer: '资源浏览器', recentTab: '最近', favoritesTab: '收藏', explorerTab: '资源', explorerTabTitle: '打开资源浏览器；再次点击可更改文件夹', refreshExplorer: '刷新资源浏览器', collapseSidebar: '收起侧栏', expandSidebar: '展开侧栏', referenceDocuments: '参考文档', chartExamples: '图表范例', formulaExamples: '公式范例', formatExamples: '格式范例', chartExamplesTitle: '查看全部图表格式范例', formulaExamplesTitle: '查看全部学科公式范例', formatExamplesTitle: '查看全部 Markdown 文本格式范例', chartExamplesDescription: '覆盖 Mermaid 与数据图表', formulaExamplesDescription: '覆盖全部学科公式', formatExamplesDescription: '覆盖所有文本与排版格式', referenceOpenFailed: '无法打开参考文档', referenceReadOnly: '内置参考文档为只读；如需修改，请先另存为副本', referenceReadOnlyTitle: '内置参考文档（只读）', openDocumentFolder: '打开文档文件夹',
     browseMarkdown: '集中浏览你的 Markdown', welcomeTitle: '阅读与编辑，都更简单',
     welcomeDescription: '一个专注、舒适的 Markdown 阅读与编辑空间。<br>打开文档，沉浸在文字本身。', openMarkdown: '打开 Markdown 文档',
-    openFolder: '打开文件夹', quickOpenHint: '快速打开，也可以将文件拖到这里', revealFile: '定位文件', revealFileTitle: '在资源管理器中显示',
+    openFolder: '打开文件夹', quickOpenHint: '快速打开，也可以将文件拖到这里', revealFile: '定位文件', revealFileTitle: '在资源管理器中显示', closePreview: '关闭预览', closePreviewTitle: '关闭当前预览并返回首页',
+    homeQuickStart: '快速上手', homeExamplesTitle: '从完整案例开始', homeExamplesDescription: '打开内置案例，直接查看所有图表、学科公式和 Markdown 排版格式。', homeShortcutEyebrow: '效率指南', homeShortcutsTitle: '功能快捷键', homeShortcutsDescription: '下列快捷键在对应页面生效。', homeShortcutsDescriptionWindows: '当前为 Windows / Linux 快捷键，使用 Ctrl 组合键。', homeShortcutsDescriptionMac: '当前为 macOS 快捷键，使用 Cmd 组合键。',
+    shortcutFiles: '文档与文件', shortcutReading: '阅读与编辑', shortcutFormatting: '文字格式', shortcutNew: '新建文档', shortcutOpen: '打开文档', shortcutOpenFolder: '打开文件夹', shortcutSave: '保存文档', shortcutSaveAs: '另存为', shortcutPrint: '打印文档', shortcutEditPreview: '切换编辑/预览', shortcutSearch: '查找内容', shortcutZoomIn: '放大文字', shortcutZoomOut: '缩小文字', shortcutZoomReset: '恢复字号', shortcutUndo: '撤回', shortcutRedo: '重做', shortcutBold: '加粗', shortcutItalic: '斜体', shortcutLink: '插入链接', shortcutStrike: '删除线', shortcutHighlight: '高亮',
     print: '打印', printTitle: '打印文档', moreDocumentActions: '更多', readingEnd: '阅读结束', livePreview: '实时预览', readingEffect: '阅读效果', previewLocateHint: '右键定位到右侧编辑器 · 第 {line} 行', markdownEditorLabel: 'MARKDOWN 编辑器',
     untitledDocument: '未命名文档', saved: '已保存', unsaved: '尚未保存', autoSaved: '已自动保存', saveAs: '另存为', exitEdit: '退出编辑', markdownEditorAria: 'Markdown 编辑器',
     codeLang: '选择编程语言', codeNoLang: '无语言（纯文本）',
@@ -148,7 +153,7 @@ const translations = {
     editorPosition: '第 {line} 行，第 {column} 列', saveAsDone: '文档已另存为', saveDone: '文档已保存', saveFailed: '保存失败，请检查文件权限', saveAsRequired: '需要另存为', editPermissionDenied: '当前文件无编辑权限，可能是微信缓存只读或正被其他程序占用。请另存为可编辑副本后再编辑', editPermissionLabel: '编辑权限', editPermissionTitle: '当前文件无法直接编辑', editPermissionDescription: '轻阅无法获得这个文件的写入权限。原文件不会被修改或删除。', currentDocument: '当前文档', possibleReasons: '可能原因', permissionReasonCache: '文件来自微信、企业微信等应用的只读缓存目录', permissionReasonReadOnly: '文件或所在目录被设置为只读，当前账号没有写入权限', permissionReasonLocked: '文件正被其他程序占用或锁定', editPermissionGuide: '建议另存为一个可编辑副本。保存成功后，轻阅会自动打开副本并进入编辑模式。', saveCopyAndEdit: '另存为副本并编辑', saveAsRequiredHint: '原文件可能来自微信缓存、处于只读状态或正被其他程序占用，请另存为后继续编辑', saveAsFallback: '原文件无法直接写入，已为你打开“另存为”',
     folderOpenFailed: '无法打开文件夹中的文档', defaultAppHint: '请在“按文件类型指定默认应用”中选择 .md', dropUnsupported: '请拖入 Markdown 或文本文件',
     languageChanged: '界面语言已切换为简体中文', about: '关于', aboutProductLabel: 'MARKDOWN 阅读与编辑器',
-    aboutVersion: '版本 2.5.0', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
+    aboutVersion: '版本 2.5.1', aboutDescription: '一款专注、美观、跨平台的 Markdown 阅读与编辑工具，支持实时预览、语法高亮、目录导航、最近阅读和文档收藏。',
     authorEmail: '作者邮箱', officialWebsite: '官方网站', openSourceAddress: '开源地址', aboutLicense: '基于 MIT 许可证开源', done: '完成',
     usageAnalytics: '参与产品改进计划', usageAnalyticsDescription: '此开关仅控制异常回传。勾选后，软件发生异常时会静默提交已清理的错误日志。无论是否勾选，每天最多提交一次匿名活跃记录；不会上传文档内容、文件名、文件路径或联系方式。', usageAnalyticsEnabled: '已参与产品改进计划', usageAnalyticsDisabled: '已关闭异常自动回传', usageAnalyticsSaveFailed: '无法保存产品改进计划设置',
     feedback: '意见反馈', feedbackShortHint: '建议与异常', feedbackLabel: '帮助我们改进', feedbackTitle: '意见反馈', feedbackIntro: '告诉我们你的建议或遇到的问题。邮箱和手机均为选填，仅用于需要进一步确认时联系你。', feedbackType: '反馈类型', feedbackFeature: '功能建议', feedbackFeatureHint: '希望新增或优化的功能', feedbackBug: '功能异常', feedbackBugHint: '功能无法使用或结果不正确', feedbackDescription: '反馈说明', feedbackDescriptionPlaceholder: '请描述期望效果、操作步骤或异常现象', feedbackEmail: '联系邮箱（选填）', feedbackPhone: '手机号码（选填）', feedbackPhonePlaceholder: '用于必要时联系', feedbackImages: '上传图片（选填）', feedbackImagesHint: '最多 5 张，支持 PNG、JPG、WebP；每张不超过 5 MB', selectImages: '选择图片', removeImage: '移除图片', softwareVersion: '软件版本', systemVersion: '系统版本', feedbackPrivacy: '提交后，以上反馈内容、联系方式、所选图片及版本信息将发送到轻阅官网服务器；服务器会记录请求 IP 并解析所在城市，不会上传当前文档。', submitFeedback: '提交反馈', feedbackSubmitting: '正在提交反馈…', feedbackSubmitted: '感谢反馈，我们会认真查看', feedbackSubmitFailed: '反馈提交失败', feedbackImageSelectFailed: '无法选择反馈图片', feedbackNeedDescription: '请至少填写 5 个字的反馈说明',
@@ -158,8 +163,8 @@ const translations = {
     downloadAndUpdate: '下载并更新', downloadingUpdate: '正在下载更新… {percent}%', preparingUpdate: '正在安装更新…', updateFailed: '更新失败，请稍后重试', updateBlockedByUnsavedChanges: '请先保存当前文档再更新',
     formatToolbar: 'Markdown 格式工具栏', undoTitle: '撤回 (Ctrl+Z)', formatPainter: '格式刷', formatPainterTitle: '格式刷：复制选中文本的格式，再选中目标文本即可自动应用', formatCopied: '已复制格式，选中目标文本后自动应用', formatApplied: '格式已应用', formatNeedSelection: '请先选中要复制格式的文本', formatCleared: '已取消格式刷', heading: '标题', paragraph: '正文', heading1: '标题 1', heading2: '标题 2', heading3: '标题 3', heading4: '标题 4', heading5: '标题 5', heading6: '标题 6',
     boldTitle: '加粗 (Ctrl+B)', italicTitle: '斜体 (Ctrl+I)', strikethroughTitle: '删除线 (Ctrl+Shift+X)', highlightTitle: '高亮 (Ctrl+Shift+H)', textColorTitle: '文字颜色', textColorMenu: '选择文字颜色', textColorDefault: '默认颜色', textColorOption: '颜色', coloredText: '彩色文字', linkTitle: '插入链接 (Ctrl+K)', inlineCode: '行内代码', codeBlock: '代码块', quote: '引用', unorderedList: '无序列表', orderedList: '有序列表', taskList: '任务列表', horizontalRule: '分隔线', insertTable: '插入表格', insertImage: '插入图片', imageAlt: '图片说明',
-    moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', formulaBuilder: '学科公式 🔥', diagramBuilder: '图表生成器 🔥', mermaidFlowchart: 'Mermaid 流程图', mermaidSequence: 'Mermaid 时序图', mermaidGantt: 'Mermaid 甘特图', mermaidDiagram: 'Mermaid 图表', mermaidRenderError: '图表语法有误', mermaidRenderHint: '请检查 Mermaid 源码，文档其他内容不受影响。', dataChart: '数据图表', dataChartRenderError: '数据图表配置有误', dataChartRenderHint: '请检查 ECharts JSON 配置，文档其他内容不受影响。', inlineMath: '行内公式', mathBlock: '块级公式', chemicalFormula: '化学公式', mathGuide: '查看公式教程 ↗', numberedMath: '编号公式', mathExpression: 'LaTeX 公式', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
-    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法选择图片', languageSaveFailed: '无法保存语言设置，请重试', imageDialogHint: '选择本地图片，或粘贴在线图片链接。', imageUrlLabel: '图片链接', imageUrlPlaceholder: 'https:// 或 http:// 链接', imageAltPlaceholder: '可选的图片说明', localImage: '本地图片…', imageUrlInvalid: '请输入有效的 http:// 或 https:// 链接',
+    moreFormats: '更多格式', toolbarOverflow: '折叠的工具栏格式', extendedFormats: '扩展格式', boldItalic: '粗斜体', underline: '下划线', superscript: '上标', subscript: '下标', formulaBuilder: '学科公式 🔥', diagramBuilder: '图表生成器 🔥', diagramGuide: '查看图表教程 ↗', mermaidFlowchart: 'Mermaid 流程图', mermaidSequence: 'Mermaid 时序图', mermaidGantt: 'Mermaid 甘特图', mermaidDiagram: 'Mermaid 图表', mermaidRenderError: '图表语法有误', mermaidRenderHint: '请检查 Mermaid 源码，文档其他内容不受影响。', dataChart: '数据图表', dataChartRenderError: '数据图表配置有误', dataChartRenderHint: '请检查 ECharts JSON 配置，文档其他内容不受影响。', inlineMath: '行内公式', mathBlock: '块级公式', chemicalFormula: '化学公式', mathGuide: '查看公式教程 ↗', numberedMath: '编号公式', mathExpression: 'LaTeX 公式', hardBreak: '强制换行', footnote: '脚注', referenceLink: '引用式链接', collapsible: '折叠区块', keyboardKey: '键盘按键', autolink: '自动链接', escapeSyntax: '转义符号', htmlBlock: 'HTML 区块', comment: '注释', footnotes: '脚注', footnoteText: '脚注内容', referenceName: '引用名称', collapsibleTitle: '折叠标题',
+    markdownTool: 'MARKDOWN 工具', tableDialogHint: '选择表格的行数和列数，表头占第一行。', rows: '行数', columns: '列数', cancel: '取消', insert: '插入', newFileFailed: '无法新建文档', imageSelectFailed: '无法导入图片', imageImported: '图片已复制到 assets 资源目录', imagePasteFailed: '无法粘贴图片', languageSaveFailed: '无法保存语言设置，请重试', imageDialogHint: '选择本地图片或粘贴在线链接；本地图片会自动复制到 assets 资源目录。', imageUrlLabel: '图片链接', imageUrlPlaceholder: 'https:// 或 http:// 链接', imageAltPlaceholder: '可选的图片说明', imageWidth: '显示宽度', imageWidthHint: '拖拽和粘贴图片也会使用此宽度', localImage: '本地图片…', imageUrlInvalid: '请输入有效的 http:// 或 https:// 链接',
     formulaWizardLabel: '学科公式', formulaWizardTitle: '选择并生成公式', formulaWizardHint: '按学科选择常用公式，填写参数后直接插入 Markdown。', formulaSubject: '学科分类', formulaOutput: '插入方式', selectedFormula: '已选公式', equationNumber: '公式编号', formulaPreview: '实时预览', generatedMarkdown: '生成的 Markdown', insertFormula: '插入公式', formulaModeInline: '行内公式', formulaModeBlock: '块级公式', formulaModeNumbered: '编号公式', formulaInvalid: '请填写有效的公式内容',
     diagramWizardLabel: 'MERMAID 图表', diagramWizardTitle: '选择并生成图表', diagramWizardHint: '按用途选择常用图表，编辑源码并实时预览后插入 Markdown。', diagramCategory: '图表分类', selectedDiagram: '已选图表', diagramSource: '图表源码', diagramPreview: '实时预览', insertDiagram: '插入图表', diagramInvalid: '请输入有效的 Mermaid 图表源码',
     resizeSidebar: '拖动调整文档库宽度', resizeToc: '拖动调整目录宽度', resizeEditor: '拖动调整预览宽度'
@@ -168,10 +173,12 @@ const translations = {
     appName: 'Quillite Markdown', newFileTitle: 'New Markdown file (Ctrl+N)', newDocumentButton: 'New Document', openFileTitle: 'Open file (Ctrl+O)', openDocument: 'Open Document', openFolderTitle: 'Open folder (Ctrl+Shift+O)',
     toggleEditorTitle: 'Toggle editor/preview (Ctrl+E)', edit: 'Edit', preview: 'Preview', saveTitle: 'Save (Ctrl+S)', searchTitle: 'Find in document (Ctrl+F)',
     accentThemeTitle: 'Choose accent color', chooseAccentTheme: 'Choose accent color', colorModeTitle: 'Toggle light/dark mode', systemColorModeTitle: 'Temporarily switch light/dark mode; automatic following resumes at the next system appearance change', temporaryColorModeChanged: 'Temporarily switched to {mode} mode; automatic following resumes at the next system appearance change', lightModeName: 'light', darkModeName: 'dark', moreTitle: 'More options', searchPlaceholder: 'Find in document…', previous: 'Previous', next: 'Next', close: 'Close', toastSuccess: 'Completed', toastInfo: 'Notice', toastWarning: 'Attention', toastError: 'Something went wrong', dismissNotification: 'Dismiss notification',
-    library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', favoriteDocuments: 'Favorites', resourceExplorer: 'Explorer', recentTab: 'Recent', favoritesTab: 'Favorites', explorerTab: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', openDocumentFolder: 'Open Document Folder',
+    library: 'LIBRARY', libraryViews: 'Library views', recentReading: 'Recent', favoriteDocuments: 'Favorites', resourceExplorer: 'Explorer', recentTab: 'Recent', favoritesTab: 'Favorites', explorerTab: 'Explorer', explorerTabTitle: 'Open the explorer; click again to choose another folder', refreshExplorer: 'Refresh explorer', collapseSidebar: 'Collapse sidebar', expandSidebar: 'Expand sidebar', referenceDocuments: 'EXAMPLE DOCUMENTS', chartExamples: 'Charts', formulaExamples: 'Formulas', formatExamples: 'Formatting', chartExamplesTitle: 'Open examples for every supported diagram and chart', formulaExamplesTitle: 'Open examples for every subject formula', formatExamplesTitle: 'Open examples for all supported Markdown formatting', chartExamplesDescription: 'Mermaid and data charts', formulaExamplesDescription: 'Every subject formula', formatExamplesDescription: 'All text and layout formats', referenceOpenFailed: 'Unable to open the example document', referenceReadOnly: 'Built-in examples are read-only. Save a copy before editing.', referenceReadOnlyTitle: 'Built-in example (read-only)', openDocumentFolder: 'Open Document Folder',
     browseMarkdown: 'Browse your Markdown collection', welcomeTitle: 'Reading and editing, made simpler',
     welcomeDescription: 'A calm, focused space for reading and editing Markdown.<br>Open a document and stay with the words.', openMarkdown: 'Open Markdown Document',
-    openFolder: 'Open Folder', quickOpenHint: 'Quick open, or drop a file here', revealFile: 'Show File', revealFileTitle: 'Show in File Explorer',
+    openFolder: 'Open Folder', quickOpenHint: 'Quick open, or drop a file here', revealFile: 'Show File', revealFileTitle: 'Show in File Explorer', closePreview: 'Close Preview', closePreviewTitle: 'Close this preview and return home',
+    homeQuickStart: 'QUICK START', homeExamplesTitle: 'Start with complete examples', homeExamplesDescription: 'Open the built-in examples to explore every chart, subject formula, and Markdown formatting style.', homeShortcutEyebrow: 'PRODUCTIVITY GUIDE', homeShortcutsTitle: 'Keyboard shortcuts', homeShortcutsDescription: 'The following shortcuts apply on their corresponding screens.', homeShortcutsDescriptionWindows: 'Windows / Linux shortcuts are shown. Use the Ctrl modifier.', homeShortcutsDescriptionMac: 'macOS shortcuts are shown. Use the Cmd modifier.',
+    shortcutFiles: 'Documents & files', shortcutReading: 'Reading & editing', shortcutFormatting: 'Text formatting', shortcutNew: 'New document', shortcutOpen: 'Open document', shortcutOpenFolder: 'Open folder', shortcutSave: 'Save document', shortcutSaveAs: 'Save As', shortcutPrint: 'Print document', shortcutEditPreview: 'Toggle edit/preview', shortcutSearch: 'Find content', shortcutZoomIn: 'Increase text size', shortcutZoomOut: 'Decrease text size', shortcutZoomReset: 'Reset text size', shortcutUndo: 'Undo', shortcutRedo: 'Redo', shortcutBold: 'Bold', shortcutItalic: 'Italic', shortcutLink: 'Insert link', shortcutStrike: 'Strikethrough', shortcutHighlight: 'Highlight',
     print: 'Print', printTitle: 'Print document', moreDocumentActions: 'More', readingEnd: 'End of document', livePreview: 'LIVE PREVIEW', readingEffect: 'Rendered document', previewLocateHint: 'Right-click to locate in the editor · Line {line}', markdownEditorLabel: 'MARKDOWN EDITOR',
     untitledDocument: 'Untitled document', saved: 'Saved', unsaved: 'Unsaved', autoSaved: 'Autosaved', saveAs: 'Save As', exitEdit: 'Exit editing', markdownEditorAria: 'Markdown editor',
     codeLang: 'Select a language', codeNoLang: 'No language (plain text)',
@@ -187,7 +194,7 @@ const translations = {
     editorPosition: 'Line {line}, Column {column}', saveAsDone: 'Document saved as a new file', saveDone: 'Document saved', saveFailed: 'Save failed. Check file permissions.', saveAsRequired: 'Save As required', editPermissionDenied: 'This file cannot be edited because it may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', editPermissionLabel: 'EDIT PERMISSION', editPermissionTitle: 'This file cannot be edited directly', editPermissionDescription: 'Quillite cannot obtain write access to this file. The original will not be changed or deleted.', currentDocument: 'Current document', possibleReasons: 'Possible reasons', permissionReasonCache: 'The file comes from a read-only WeChat, WeCom, or other application cache', permissionReasonReadOnly: 'The file or its folder is read-only, or your account lacks write permission', permissionReasonLocked: 'Another program currently has the file open or locked', editPermissionGuide: 'Save a writable copy instead. Quillite will open the copy and enter editing mode automatically after it is saved.', saveCopyAndEdit: 'Save Copy & Edit', saveAsRequiredHint: 'The source may be a read-only app cache or locked by another program. Save a writable copy to continue editing.', saveAsFallback: 'The source cannot be written. Save As has been opened for you.',
     folderOpenFailed: 'Unable to open a document from this folder', defaultAppHint: 'Choose this app for .md under “Choose defaults by file type”.', dropUnsupported: 'Drop a Markdown or text file',
     languageChanged: 'Interface language changed to English', about: 'About', aboutProductLabel: 'MARKDOWN READER & EDITOR',
-    aboutVersion: 'Version 2.5.0', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
+    aboutVersion: 'Version 2.5.1', aboutDescription: 'A focused, beautiful, cross-platform Markdown reader and editor with live preview, syntax highlighting, navigation, recent reading, and document favorites.',
     authorEmail: 'Author email', officialWebsite: 'Official website', openSourceAddress: 'Open-source repository', aboutLicense: 'Open source under the MIT License', done: 'Done',
     usageAnalytics: 'Join the product improvement program', usageAnalyticsDescription: 'This switch controls error reporting only. When enabled, sanitized error logs are submitted silently after failures. One anonymous daily-active event is submitted at most once per day regardless of this setting; document content, file names, paths, and contact details are never uploaded.', usageAnalyticsEnabled: 'Product improvement program enabled', usageAnalyticsDisabled: 'Automatic error reporting disabled', usageAnalyticsSaveFailed: 'Unable to save the product improvement setting',
     feedback: 'Feedback', feedbackShortHint: 'Ideas & issues', feedbackLabel: 'HELP US IMPROVE', feedbackTitle: 'Send Feedback', feedbackIntro: 'Tell us what you would like improved or what went wrong. Email and phone are optional and used only if we need to follow up.', feedbackType: 'Feedback type', feedbackFeature: 'Feature suggestion', feedbackFeatureHint: 'A new feature or an improvement', feedbackBug: 'Functional issue', feedbackBugHint: 'Something does not work as expected', feedbackDescription: 'Description', feedbackDescriptionPlaceholder: 'Describe the expected result, steps, or issue', feedbackEmail: 'Email (optional)', feedbackPhone: 'Phone (optional)', feedbackPhonePlaceholder: 'Only for necessary follow-up', feedbackImages: 'Images (optional)', feedbackImagesHint: 'Up to 5 PNG, JPG, or WebP images; 5 MB each', selectImages: 'Choose images', removeImage: 'Remove image', softwareVersion: 'App version', systemVersion: 'System version', feedbackPrivacy: 'Submitting sends this feedback, optional contact details, selected images, and version information to the Quillite website server. The server records the request IP and resolves its city. Your current document is never uploaded.', submitFeedback: 'Submit feedback', feedbackSubmitting: 'Submitting feedback…', feedbackSubmitted: 'Thank you. We will review your feedback.', feedbackSubmitFailed: 'Unable to submit feedback', feedbackImageSelectFailed: 'Unable to choose feedback images', feedbackNeedDescription: 'Enter at least 5 characters',
@@ -197,8 +204,8 @@ const translations = {
     downloadAndUpdate: 'Download & Update', downloadingUpdate: 'Downloading update… {percent}%', preparingUpdate: 'Installing update…', updateFailed: 'Update failed. Please try again.', updateBlockedByUnsavedChanges: 'Save the current document before updating',
     formatToolbar: 'Markdown formatting toolbar', undoTitle: 'Undo (Ctrl+Z)', formatPainter: 'Format painter', formatPainterTitle: 'Format painter: copy the selected text format, then select the target text to apply automatically', formatCopied: 'Format copied. Select the target text to apply automatically.', formatApplied: 'Format applied', formatNeedSelection: 'Select the text whose format you want to copy first', formatCleared: 'Format painter cancelled', heading: 'Heading', paragraph: 'Paragraph', heading1: 'Heading 1', heading2: 'Heading 2', heading3: 'Heading 3', heading4: 'Heading 4', heading5: 'Heading 5', heading6: 'Heading 6',
     boldTitle: 'Bold (Ctrl+B)', italicTitle: 'Italic (Ctrl+I)', strikethroughTitle: 'Strikethrough (Ctrl+Shift+X)', highlightTitle: 'Highlight (Ctrl+Shift+H)', textColorTitle: 'Text color', textColorMenu: 'Choose text color', textColorDefault: 'Default', textColorOption: 'Color', coloredText: 'colored text', linkTitle: 'Insert link (Ctrl+K)', inlineCode: 'Inline code', codeBlock: 'Code block', quote: 'Quote', unorderedList: 'Bulleted list', orderedList: 'Numbered list', taskList: 'Task list', horizontalRule: 'Horizontal rule', insertTable: 'Insert table', insertImage: 'Insert image', imageAlt: 'Image description',
-    moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', formulaBuilder: 'Academic formulas 🔥', diagramBuilder: 'Diagram builder 🔥', mermaidFlowchart: 'Mermaid flowchart', mermaidSequence: 'Mermaid sequence diagram', mermaidGantt: 'Mermaid Gantt chart', mermaidDiagram: 'Mermaid diagram', mermaidRenderError: 'Invalid diagram syntax', mermaidRenderHint: 'Check the Mermaid source. The rest of the document is unaffected.', dataChart: 'Data chart', dataChartRenderError: 'Invalid data chart configuration', dataChartRenderHint: 'Check the ECharts JSON. The rest of the document is unaffected.', inlineMath: 'Inline formula', mathBlock: 'Display formula', chemicalFormula: 'Chemical formula', mathGuide: 'Formula guide ↗', numberedMath: 'Numbered formula', mathExpression: 'LaTeX expression', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
-    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to choose an image', languageSaveFailed: 'Unable to save the language setting. Please try again.', imageDialogHint: 'Pick a local image or paste an online image link.', imageUrlLabel: 'Image URL', imageUrlPlaceholder: 'https:// or http:// link', imageAltPlaceholder: 'Optional image description', localImage: 'Local image…', imageUrlInvalid: 'Enter a valid http:// or https:// link',
+    moreFormats: 'More formats', toolbarOverflow: 'Collapsed toolbar formats', extendedFormats: 'Extended formats', boldItalic: 'Bold italic', underline: 'Underline', superscript: 'Superscript', subscript: 'Subscript', formulaBuilder: 'Academic formulas 🔥', diagramBuilder: 'Diagram builder 🔥', diagramGuide: 'Diagram guide ↗', mermaidFlowchart: 'Mermaid flowchart', mermaidSequence: 'Mermaid sequence diagram', mermaidGantt: 'Mermaid Gantt chart', mermaidDiagram: 'Mermaid diagram', mermaidRenderError: 'Invalid diagram syntax', mermaidRenderHint: 'Check the Mermaid source. The rest of the document is unaffected.', dataChart: 'Data chart', dataChartRenderError: 'Invalid data chart configuration', dataChartRenderHint: 'Check the ECharts JSON. The rest of the document is unaffected.', inlineMath: 'Inline formula', mathBlock: 'Display formula', chemicalFormula: 'Chemical formula', mathGuide: 'Formula guide ↗', numberedMath: 'Numbered formula', mathExpression: 'LaTeX expression', hardBreak: 'Hard line break', footnote: 'Footnote', referenceLink: 'Reference link', collapsible: 'Collapsible section', keyboardKey: 'Keyboard key', autolink: 'Autolink', escapeSyntax: 'Escape syntax', htmlBlock: 'HTML block', comment: 'Comment', footnotes: 'Footnotes', footnoteText: 'Footnote text', referenceName: 'reference', collapsibleTitle: 'Section title',
+    markdownTool: 'MARKDOWN TOOL', tableDialogHint: 'Choose the number of rows and columns. The first row is the header.', rows: 'Rows', columns: 'Columns', cancel: 'Cancel', insert: 'Insert', newFileFailed: 'Unable to create the document', imageSelectFailed: 'Unable to import the image', imageImported: 'Image copied to the assets folder', imagePasteFailed: 'Unable to paste the image', languageSaveFailed: 'Unable to save the language setting. Please try again.', imageDialogHint: 'Pick a local image or paste an online link. Local images are copied to the assets folder automatically.', imageUrlLabel: 'Image URL', imageUrlPlaceholder: 'https:// or http:// link', imageAltPlaceholder: 'Optional image description', imageWidth: 'Display width', imageWidthHint: 'Dropped and pasted images use this width too', localImage: 'Local image…', imageUrlInvalid: 'Enter a valid http:// or https:// link',
     formulaWizardLabel: 'ACADEMIC FORMULAS', formulaWizardTitle: 'Choose and build a formula', formulaWizardHint: 'Choose a common formula by subject, fill in its values, and insert the generated Markdown.', formulaSubject: 'Subjects', formulaOutput: 'Insert as', selectedFormula: 'Selected formula', equationNumber: 'Equation number', formulaPreview: 'Live preview', generatedMarkdown: 'Generated Markdown', insertFormula: 'Insert formula', formulaModeInline: 'Inline', formulaModeBlock: 'Display', formulaModeNumbered: 'Numbered', formulaInvalid: 'Enter valid formula content',
     diagramWizardLabel: 'MERMAID DIAGRAMS', diagramWizardTitle: 'Choose and build a diagram', diagramWizardHint: 'Choose a common diagram by use case, edit its source, preview it, and insert it into Markdown.', diagramCategory: 'Diagram categories', selectedDiagram: 'Selected diagram', diagramSource: 'Diagram source', diagramPreview: 'Live preview', insertDiagram: 'Insert diagram', diagramInvalid: 'Enter valid Mermaid diagram source',
     resizeSidebar: 'Drag to resize the library', resizeToc: 'Drag to resize the outline', resizeEditor: 'Drag to resize the preview'
@@ -234,6 +241,7 @@ function applyStaticTranslations() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(element => { element.placeholder = t(element.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel)); });
   document.querySelectorAll('[data-i18n-label]').forEach(element => { element.label = t(element.dataset.i18nLabel); });
+  applyPlatformShortcuts();
   document.querySelectorAll('[data-language]').forEach(button => button.classList.toggle('active', button.dataset.language === state.language));
   document.querySelectorAll('[data-accent-option]').forEach(button => {
     const name = ACCENT_THEMES[button.dataset.accentOption]?.[state.language === 'en' ? 'en' : 'zhCN'];
@@ -241,6 +249,16 @@ function applyStaticTranslations() {
     if (label && name) label.textContent = name;
   });
   scheduleFormatToolbarLayout();
+}
+
+function applyPlatformShortcuts() {
+  const isMac = document.documentElement.dataset.platform === 'darwin';
+  const modifier = isMac ? 'Cmd' : 'Ctrl';
+  document.querySelectorAll('[data-shortcut]').forEach(element => {
+    element.textContent = `${modifier} + ${element.dataset.shortcut}`;
+  });
+  const description = $('#welcomeShortcutsDescription');
+  if (description) description.textContent = t(isMac ? 'homeShortcutsDescriptionMac' : 'homeShortcutsDescriptionWindows');
 }
 
 function setLanguage(language, silent = false, persist = true) {
@@ -281,7 +299,7 @@ const els = {
   editorPosition: $('#editorPosition'), editButton: $('#editButton'), editButtonLabel: $('#editButtonLabel'), previewLocateHint: $('#previewLocateHint'),
   exitEditButton: $('#exitEditButton'), codeLangMenu: $('#codeLangMenu'), textColorMenu: $('#textColorMenu'),
   saveButton: $('#saveButton'), backToTop: $('#backToTop'), firstRunLanguageDialog: $('#firstRunLanguageDialog'), aboutDialog: $('#aboutDialog'), feedbackDialog: $('#feedbackDialog'), feedbackForm: $('#feedbackForm'), feedbackImageList: $('#feedbackImageList'), updateDialog: $('#updateDialog'), editPermissionDialog: $('#editPermissionDialog'), editPermissionFileName: $('#editPermissionFileName'), pdfTutorialDialog: $('#pdfTutorialDialog'), usageAnalyticsToggle: $('#usageAnalyticsToggle'),
-  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'), formulaDialog: $('#formulaDialog'), formulaDisciplineTabs: $('#formulaDisciplineTabs'), formulaTemplateList: $('#formulaTemplateList'), formulaBuilderPanel: $('#formulaBuilderPanel'), formulaOutputModes: $('#formulaOutputModes'), formulaFields: $('#formulaFields'), formulaPreview: $('#formulaPreview'), formulaMarkdownSource: $('#formulaMarkdownSource'), diagramDialog: $('#diagramDialog'), diagramCategoryTabs: $('#diagramCategoryTabs'), diagramTemplateList: $('#diagramTemplateList'), diagramBuilderPanel: $('#diagramBuilderPanel'), diagramSource: $('#diagramSource'), diagramPreview: $('#diagramPreview'),
+  recentTab: $('#recentTab'), favoritesTab: $('#favoritesTab'), explorerTab: $('#explorerTab'), refreshExplorer: $('#refreshExplorer'), tableDialog: $('#tableDialog'), imageDialog: $('#imageDialog'), imageUrl: $('#imageUrl'), imageAltInput: $('#imageAltInput'), imageWidth: $('#imageWidth'), imageWidthValue: $('#imageWidthValue'), formulaDialog: $('#formulaDialog'), formulaDisciplineTabs: $('#formulaDisciplineTabs'), formulaTemplateList: $('#formulaTemplateList'), formulaBuilderPanel: $('#formulaBuilderPanel'), formulaOutputModes: $('#formulaOutputModes'), formulaFields: $('#formulaFields'), formulaPreview: $('#formulaPreview'), formulaMarkdownSource: $('#formulaMarkdownSource'), diagramDialog: $('#diagramDialog'), diagramCategoryTabs: $('#diagramCategoryTabs'), diagramTemplateList: $('#diagramTemplateList'), diagramBuilderPanel: $('#diagramBuilderPanel'), diagramSource: $('#diagramSource'), diagramPreview: $('#diagramPreview'),
   editorUndoButton: $('#editorUndoButton')
 };
 
@@ -1329,6 +1347,8 @@ function insertTable() {
 function openImageDialog() {
   if (!state.currentFile) return;
   els.imageUrl.value = '';
+  els.imageWidth.value = String(preferredImageWidth());
+  updateImageWidthLabel();
   const selection = codeEditor.state.selection.main;
   els.imageAltInput.value = codeEditor.state.doc.sliceString(selection.from, selection.to) || '';
   els.imageDialog.classList.remove('hidden');
@@ -1354,14 +1374,42 @@ function insertImage() {
   openImageDialog();
 }
 
+function preferredImageWidth() {
+  const stored = Number(localStorage.getItem('imageWidth') || 100);
+  return Math.max(10, Math.min(100, Math.round(stored / 5) * 5));
+}
+
+function updateImageWidthLabel() {
+  const width = Math.max(10, Math.min(100, Number(els.imageWidth.value) || 100));
+  els.imageWidthValue.textContent = `${width}%`;
+  localStorage.setItem('imageWidth', String(width));
+  return width;
+}
+
+function imageMarkdown(imagePath, description, width = preferredImageWidth()) {
+  const safeDescription = String(description || t('imageAlt')).trim();
+  const normalizedWidth = Math.max(10, Math.min(100, Number(width) || 100));
+  if (normalizedWidth < 100) {
+    return `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(safeDescription)}" width="${normalizedWidth}%">`;
+  }
+  const markdownDescription = safeDescription.replaceAll('[', '\\[').replaceAll(']', '\\]');
+  const markdownPath = /[\s()]/.test(imagePath) ? `<${imagePath.replaceAll('>', '%3E')}>` : imagePath;
+  return `![${markdownDescription}](${markdownPath})`;
+}
+
+function insertImageReference(imagePath, description, width = preferredImageWidth()) {
+  const markdown = imageMarkdown(imagePath, description, width);
+  replaceSelection(markdown, markdown.length, 0);
+}
+
 async function insertLocalImage() {
   if (!state.currentFile) return;
   try {
     const imagePath = await window.quilliteMarkdown.selectImage(state.currentFile.path);
     if (!imagePath) return;
-    const selected = els.imageAltInput.value.trim().replaceAll('[', '\\[').replaceAll(']', '\\]') || selectedImageAlt() || t('imageAlt');
-    const markdownPath = /[\s()]/.test(imagePath) ? `<${imagePath.replaceAll('>', '%3E')}>` : imagePath;
-    replaceSelection(`![${selected}](${markdownPath})`, 2, selected.length);
+    const selected = els.imageAltInput.value.trim() || selectedImageAlt() || t('imageAlt');
+    insertImageReference(imagePath, selected, updateImageWidthLabel());
+    showToast(t('imageImported'), 'success');
   } catch (error) {
     reportSilentError(error, 'image.select');
     console.error(error);
@@ -1377,10 +1425,59 @@ function insertImageFromUrl() {
     els.imageUrl.focus();
     return;
   }
-  const selected = els.imageAltInput.value.trim().replaceAll('[', '\\[').replaceAll(']', '\\]') || selectedImageAlt() || t('imageAlt');
-  const markdownPath = /[\s()]/.test(url) ? `<${url.replaceAll('>', '%3E')}>` : url;
-  replaceSelection(`![${selected}](${markdownPath})`, 2, selected.length);
+  const selected = els.imageAltInput.value.trim() || selectedImageAlt() || t('imageAlt');
+  insertImageReference(url, selected, updateImageWidthLabel());
   closeImageDialog();
+}
+
+function imageDescriptionFromName(name) {
+  return String(name || '').replace(/\.[^.]+$/, '').trim() || t('imageAlt');
+}
+
+async function importAndInsertImage(sourcePath, description = '') {
+  if (!state.editing || !state.currentFile?.path || !sourcePath) return false;
+  try {
+    const imagePath = await window.quilliteMarkdown.importImage(state.currentFile.path, sourcePath);
+    if (!imagePath) return false;
+    insertImageReference(imagePath, description || imageDescriptionFromName(sourcePath.split(/[\\/]/).pop()));
+    showToast(t('imageImported'), 'success');
+    return true;
+  } catch (error) {
+    reportSilentError(error, 'image.import');
+    console.error(error);
+    showToast(t('imageSelectFailed'), 'error');
+    return false;
+  }
+}
+
+function fileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error('Unable to read pasted image'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleEditorImagePaste(event) {
+  if (!state.editing || !state.currentFile?.path) return;
+  const item = [...(event.clipboardData?.items || [])].find(candidate => candidate.kind === 'file' && /^image\//i.test(candidate.type));
+  const file = item?.getAsFile();
+  if (!file) return;
+  event.preventDefault();
+  try {
+    const sourcePath = window.quilliteMarkdown.pathForFile(file);
+    const imagePath = sourcePath
+      ? await window.quilliteMarkdown.importImage(state.currentFile.path, sourcePath)
+      : await window.quilliteMarkdown.savePastedImage(state.currentFile.path, await fileAsDataURL(file));
+    if (!imagePath) throw new Error('Pasted image returned no asset path');
+    insertImageReference(imagePath, imageDescriptionFromName(file.name));
+    showToast(t('imageImported'), 'success');
+  } catch (error) {
+    reportSilentError(error, 'image.paste');
+    console.error(error);
+    showToast(t('imagePasteFailed'), 'error');
+  }
 }
 
 async function initializeCodeEditor() {
@@ -1484,6 +1581,7 @@ async function initializeCodeEditor() {
       state: createEditorState(''),
       parent: els.editor
     });
+    codeEditor.contentDOM.addEventListener('paste', handleEditorImagePaste);
     els.editor.addEventListener('pointerdown', () => {
       if (state.editing && !codeEditor.hasFocus) codeEditor.focus();
     }, true);
@@ -1534,12 +1632,38 @@ function updateThemedLogos() {
   document.querySelectorAll('[data-themed-logo]').forEach(image => { image.src = logo; });
 }
 
+let diagramAppearanceRefreshFrame = 0;
+
+function refreshDiagramAppearance() {
+  cancelAnimationFrame(diagramAppearanceRefreshFrame);
+  diagramAppearanceRefreshFrame = requestAnimationFrame(async () => {
+    const containers = [els.content, els.editorPreview, els.diagramPreview].filter(container => container?.isConnected);
+    const themeKey = mermaidPreviewThemeKey();
+    await Promise.all(containers.flatMap(container => [
+      refreshMermaidDiagrams(container, {
+        diagramLabel: t('mermaidDiagram'),
+        errorTitle: t('mermaidRenderError'),
+        errorHint: t('mermaidRenderHint')
+      }),
+      refreshEChartsDiagrams(container, {
+        errorTitle: t('dataChartRenderError'),
+        errorHint: t('dataChartRenderHint')
+      })
+    ]));
+    containers.forEach(container => {
+      container.querySelectorAll('.mermaid-diagram').forEach(diagram => { diagram.dataset.mermaidUiTheme = themeKey; });
+      container.querySelectorAll('.echarts-diagram').forEach(diagram => { diagram.dataset.echartsUiTheme = themeKey; });
+    });
+  });
+}
+
 function setAccentTheme(accentId) {
   state.accentTheme = normalizeAccentTheme(accentId);
   document.documentElement.dataset.accent = state.accentTheme;
   localStorage.setItem('accentTheme', state.accentTheme);
   updateAccentSelection();
   updateThemedLogos();
+  refreshDiagramAppearance();
 }
 
 function setColorMode(mode, persist = true) {
@@ -1548,6 +1672,7 @@ function setColorMode(mode, persist = true) {
   if (persist) localStorage.setItem('colorMode', state.colorMode);
   $('#colorModeButton').setAttribute('aria-pressed', String(state.colorMode === 'dark'));
   window.quilliteMarkdown.setTheme(state.colorMode === 'dark');
+  refreshDiagramAppearance();
 }
 
 function toggleColorMode() {
@@ -2050,16 +2175,16 @@ function schedulePinnedAutoScroll(drag) {
 }
 
 function cleanupPinnedPointerDrag(drag) {
-  drag.handle.removeEventListener('pointermove', handlePinnedPointerMove);
-  drag.handle.removeEventListener('pointerup', handlePinnedPointerUp);
-  drag.handle.removeEventListener('pointercancel', handlePinnedPointerCancel);
-  drag.handle.removeEventListener('lostpointercapture', handlePinnedLostPointerCapture);
+  window.removeEventListener('pointermove', handlePinnedPointerMove);
+  window.removeEventListener('pointerup', handlePinnedPointerUp);
+  window.removeEventListener('pointercancel', handlePinnedPointerCancel);
+  drag.captureTarget.removeEventListener('lostpointercapture', handlePinnedLostPointerCapture);
   drag.row.classList.remove('dragging', 'pin-insertion-position');
   drag.handle.classList.remove('grabbing');
   drag.container.classList.remove('reordering');
   document.body.classList.remove('reordering-pins');
   cancelAnimationFrame(drag.autoScrollFrame);
-  if (drag.handle.hasPointerCapture?.(drag.pointerId)) drag.handle.releasePointerCapture(drag.pointerId);
+  if (drag.captureTarget.hasPointerCapture?.(drag.pointerId)) drag.captureTarget.releasePointerCapture(drag.pointerId);
 }
 
 function cancelPinnedPointerReorder() {
@@ -2079,6 +2204,7 @@ function handlePinnedPointerMove(event) {
     const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
     if (distance < PIN_DRAG_THRESHOLD) return;
     drag.active = true;
+    drag.captureTarget.setPointerCapture?.(event.pointerId);
     drag.row.classList.add('dragging', 'pin-insertion-position');
     drag.handle.classList.add('grabbing');
     drag.container.classList.add('reordering');
@@ -2096,6 +2222,16 @@ function finishPinnedPointerReorder() {
   const requestedPaths = drag.active ? pinnedPathsFromDOM(drag.container) : drag.snapshot.pinnedRecentFiles;
   pinnedPointerDrag = null;
   cleanupPinnedPointerDrag(drag);
+  if (drag.active) {
+    suppressPinnedFileClickPath = drag.filePath;
+    suppressPinnedFileClickUntil = performance.now() + 350;
+    setTimeout(() => {
+      if (sameDocumentPath(suppressPinnedFileClickPath, drag.filePath) && performance.now() >= suppressPinnedFileClickUntil) {
+        suppressPinnedFileClickPath = '';
+        suppressPinnedFileClickUntil = 0;
+      }
+    }, 400);
+  }
   if (!drag.active || samePathOrder(requestedPaths, drag.snapshot.pinnedRecentFiles)) return;
   const optimistic = reorderPinnedRecentFiles(state.recentFiles, state.pinnedRecentFiles, requestedPaths);
   void persistPinnedMutation({
@@ -2121,31 +2257,29 @@ function handlePinnedLostPointerCapture(event) {
 
 function beginPinnedPointerReorder(event) {
   if (event.button !== 0 || pinMutationInProgress || pinnedPointerDrag) return;
-  const handle = event.currentTarget;
-  const row = handle.closest('.file-row.pinned');
-  const container = handle.closest('[data-pinned-list]');
-  if (!row || !container) return;
-  event.preventDefault();
-  event.stopPropagation();
-  handle.focus();
+  const row = event.currentTarget;
+  const handle = row.querySelector('.pin-drag-handle');
+  const container = row.closest('[data-pinned-list]');
+  if (!handle || !container) return;
+  const captureTarget = els.fileList;
   pinnedPointerDrag = {
     pointerId: event.pointerId,
     startX: event.clientX,
     startY: event.clientY,
     pointerY: event.clientY,
-    filePath: decodeURIComponent(handle.dataset.path),
+    filePath: decodeURIComponent(row.dataset.path),
     handle,
+    captureTarget,
     row,
     container,
     snapshot: recentLibrarySnapshot(),
     active: false,
     autoScrollFrame: 0,
   };
-  handle.setPointerCapture?.(event.pointerId);
-  handle.addEventListener('pointermove', handlePinnedPointerMove);
-  handle.addEventListener('pointerup', handlePinnedPointerUp);
-  handle.addEventListener('pointercancel', handlePinnedPointerCancel);
-  handle.addEventListener('lostpointercapture', handlePinnedLostPointerCapture);
+  window.addEventListener('pointermove', handlePinnedPointerMove);
+  window.addEventListener('pointerup', handlePinnedPointerUp);
+  window.addEventListener('pointercancel', handlePinnedPointerCancel);
+  captureTarget.addEventListener('lostpointercapture', handlePinnedLostPointerCapture);
 }
 
 function handlePinnedKeyboardReorder(event) {
@@ -2184,13 +2318,11 @@ function handlePinnedKeyboardReorder(event) {
 }
 
 function initializePinnedFileInteractions() {
+  els.fileList.querySelectorAll('.file-row.pinned').forEach(row => {
+    row.addEventListener('pointerdown', beginPinnedPointerReorder);
+  });
   els.fileList.querySelectorAll('.pin-drag-handle').forEach(handle => {
-    handle.addEventListener('pointerdown', beginPinnedPointerReorder);
     handle.addEventListener('keydown', handlePinnedKeyboardReorder);
-    handle.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-    });
   });
 }
 
@@ -2205,9 +2337,17 @@ function renderFileList() {
     ? renderRecentFileGroups()
     : state.files.map(file => renderFileRow(file)).join('');
   els.fileList.querySelectorAll('.file-item').forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', event => {
       if (button.dataset.missing === 'true') return;
-      loadFile(decodeURIComponent(button.dataset.path));
+      const filePath = decodeURIComponent(button.dataset.path);
+      if (suppressPinnedFileClickPath && performance.now() < suppressPinnedFileClickUntil && sameDocumentPath(suppressPinnedFileClickPath, filePath)) {
+        suppressPinnedFileClickPath = '';
+        suppressPinnedFileClickUntil = 0;
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      loadFile(filePath);
     });
   });
   els.fileList.querySelectorAll('.file-row').forEach(row => {
@@ -2561,14 +2701,14 @@ function renderCurrentDocument() {
   }
 }
 
-function displayDocument(doc) {
+function displayDocument(doc, { addToLibrary = true } = {}) {
   if (!doc?.path) return;
   state.currentFile = doc;
   missingCurrentFilePath = '';
   state.savedContent = doc.content;
   state.saveAsRequired = false;
   state.saveWarningShown = false;
-  addRecentDocument(doc);
+  if (addToLibrary) addRecentDocument(doc);
   state.editing = false;
   replaceEditorContent(doc.content, true);
   renderEditorPreview(doc.content);
@@ -2576,12 +2716,49 @@ function displayDocument(doc) {
   els.welcome.classList.add('hidden');
   els.editorView.classList.add('hidden');
   els.documentView.classList.remove('hidden');
-  els.editButton.disabled = false;
-  els.saveButton.disabled = false;
+  const readOnly = Boolean(doc.readOnly);
+  els.documentView.classList.toggle('reference-document', readOnly);
+  els.editButton.disabled = readOnly;
+  els.saveButton.disabled = readOnly;
+  els.editButton.title = readOnly ? t('referenceReadOnlyTitle') : t('toggleEditorTitle');
+  els.saveButton.title = readOnly ? t('referenceReadOnlyTitle') : t('saveTitle');
   els.editButton.classList.remove('active');
   els.editButtonLabel.textContent = t('edit');
   renderCurrentDocument();
   setDirty(false);
+  $('.reader-pane').scrollTo({ top: 0 });
+}
+
+function closePreview() {
+  if (!maybeDiscardChanges()) return;
+  closeSearch();
+  closeDocumentActionsMenu();
+  releaseEChartsDiagrams(els.content);
+  state.currentFile = null;
+  state.editing = false;
+  state.savedContent = '';
+  state.saveAsRequired = false;
+  state.saveWarningShown = false;
+  missingCurrentFilePath = '';
+  replaceEditorContent('', true);
+  els.content.replaceChildren();
+  els.breadcrumb.replaceChildren();
+  els.toc.replaceChildren();
+  els.readingTime.textContent = '';
+  els.progressBar.style.width = '0%';
+  els.documentView.classList.add('hidden');
+  els.documentView.classList.remove('reference-document');
+  els.editorView.classList.add('hidden');
+  els.tocPanel.classList.add('hidden');
+  els.welcome.classList.remove('hidden');
+  els.editButton.disabled = true;
+  els.saveButton.disabled = true;
+  els.editButton.classList.remove('active');
+  els.editButtonLabel.textContent = t('edit');
+  els.backToTop.classList.remove('visible');
+  setDirty(false);
+  renderFileList();
+  updatePaneResizerVisibility();
   $('.reader-pane').scrollTo({ top: 0 });
 }
 
@@ -2805,6 +2982,10 @@ async function toggleEditor(forceEditing) {
   if (!state.currentFile || editorModeSwitching) return;
   const nextEditing = typeof forceEditing === 'boolean' ? forceEditing : !state.editing;
   if (nextEditing === state.editing) return;
+  if (nextEditing && state.currentFile.readOnly) {
+    showToast(t('referenceReadOnly'), 'warning');
+    return;
+  }
   const requestedPath = state.currentFile.path;
   editorModeSwitching = true;
   els.editButton.disabled = true;
@@ -2858,12 +3039,16 @@ async function toggleEditor(forceEditing) {
     }
   } finally {
     editorModeSwitching = false;
-    els.editButton.disabled = !state.currentFile;
+    els.editButton.disabled = !state.currentFile || Boolean(state.currentFile.readOnly);
   }
 }
 
 async function saveDocument(saveAs = false, options = {}) {
   if (!state.currentFile || state.saving) return;
+  if (state.currentFile.readOnly && !saveAs) {
+    if (!options.auto) showToast(t('referenceReadOnly'), 'warning');
+    return;
+  }
   if (state.saveAsRequired && options.auto) return;
   if (state.saveAsRequired && !options.auto) saveAs = true;
   const editingContent = state.editing ? editorContent() : state.currentFile.content;
@@ -3135,6 +3320,18 @@ async function openFolder() {
     } catch {
       showToast(t('folderOpenFailed'), 'error');
     }
+  }
+}
+
+async function openReferenceDocument(kind) {
+  if (!maybeDiscardChanges()) return;
+  try {
+    const doc = await window.quilliteMarkdown.openReferenceDocument(kind);
+    if (doc) displayDocument(doc, { addToLibrary: false });
+  } catch (error) {
+    reportSilentError(error, 'document.open-reference');
+    console.error(error);
+    showToast(t('referenceOpenFailed'), 'error');
   }
 }
 
@@ -3564,9 +3761,9 @@ async function openFeedback() {
   try {
     state.feedbackSystemInfo = await window.quilliteMarkdown.getFeedbackSystemInfo();
   } catch {
-    state.feedbackSystemInfo = { appVersion: '2.5.0', os: 'windows', systemVersion: '—' };
+    state.feedbackSystemInfo = { appVersion: '2.5.1', os: 'windows', systemVersion: '—' };
   }
-  $('#feedbackAppVersion').textContent = state.feedbackSystemInfo?.appVersion || '2.5.0';
+  $('#feedbackAppVersion').textContent = state.feedbackSystemInfo?.appVersion || '2.5.1';
   $('#feedbackSystemVersion').textContent = state.feedbackSystemInfo?.systemVersion || '—';
   requestAnimationFrame(() => $('#feedbackMessage').focus());
 }
@@ -3622,7 +3819,7 @@ async function submitFeedbackForm(event) {
 
 function openUpdateDialog(info) {
   state.updateInfo = info;
-  $('#currentVersion').textContent = info.currentVersion || '2.5.0';
+  $('#currentVersion').textContent = info.currentVersion || '2.5.1';
   $('#latestVersion').textContent = info.latestVersion || '';
   $('#updateReleaseName').textContent = info.releaseName || `v${info.latestVersion || ''}`;
   const notesElement = $('#releaseNotes');
@@ -3780,6 +3977,9 @@ els.toast.addEventListener('mouseleave', () => {
 });
 ['#openFileButton', '#welcomeOpenFile'].forEach(id => $(id).addEventListener('click', openFile));
 ['#openFolderButton', '#welcomeOpenFolder', '#folderCta'].forEach(id => $(id).addEventListener('click', openFolder));
+document.querySelectorAll('[data-reference-document]').forEach(button => {
+  button.addEventListener('click', () => openReferenceDocument(button.dataset.referenceDocument));
+});
 $('#accentButton').addEventListener('click', event => {
   event.stopPropagation();
   toggleAccentMenu();
@@ -3822,6 +4022,7 @@ els.searchInput.addEventListener('keydown', event => {
   if (event.key === 'Escape') closeSearch();
 });
 $('#revealButton').addEventListener('click', () => state.currentFile && revealFileInFolder(state.currentFile.path));
+$('#closePreviewButton').addEventListener('click', closePreview);
 els.documentActions.addEventListener('click', event => {
   const moreButton = event.target.closest('#documentActionsMoreButton');
   if (moreButton) {
@@ -3924,6 +4125,7 @@ $('#closeImageDialog').addEventListener('click', closeImageDialog);
 $('#cancelImage').addEventListener('click', closeImageDialog);
 $('#confirmImage').addEventListener('click', insertImageFromUrl);
 $('#pickLocalImage').addEventListener('click', () => { closeImageDialog(); insertLocalImage(); });
+els.imageWidth.addEventListener('input', updateImageWidthLabel);
 els.imageDialog.addEventListener('click', event => {
   if (event.target === els.imageDialog) closeImageDialog();
 });
@@ -3966,6 +4168,9 @@ els.formulaFields.addEventListener('keydown', event => {
 $('#closeDiagramDialog').addEventListener('click', closeDiagramDialog);
 $('#cancelDiagram').addEventListener('click', closeDiagramDialog);
 $('#insertDiagram').addEventListener('click', insertGeneratedDiagram);
+$('#openDiagramGuide').addEventListener('click', () => {
+  Promise.resolve(window.quilliteMarkdown.openExternal(DIAGRAM_GUIDE_URL)).catch(error => reportSilentError(error, 'diagram-guide.open'));
+});
 els.diagramDialog.addEventListener('click', event => {
   if (event.target === els.diagramDialog) closeDiagramDialog();
 });
@@ -4138,6 +4343,7 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'Escape' && !els.searchBar.classList.contains('hidden')) closeSearch();
 });
 
+const IMAGE_FILE_PATTERN = /\.(png|jpe?g|gif|webp|svg|bmp)$/i;
 let dragDepth = 0;
 document.addEventListener('dragenter', event => { event.preventDefault(); dragDepth++; els.dropOverlay.classList.remove('hidden'); });
 document.addEventListener('dragover', event => event.preventDefault());
@@ -4150,7 +4356,11 @@ document.addEventListener('drop', async event => {
   if (!file) return;
   const filePath = window.quilliteMarkdown.pathForFile(file);
   if (!filePath) return;
-  if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
+  if (state.editing && IMAGE_FILE_PATTERN.test(filePath)) {
+    const dropPosition = codeEditor?.posAtCoords({ x: event.clientX, y: event.clientY });
+    if (Number.isInteger(dropPosition)) codeEditor.dispatch({ selection: { anchor: dropPosition } });
+    await importAndInsertImage(filePath, imageDescriptionFromName(file.name));
+  } else if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
   else showToast(t('dropUnsupported'), 'warning');
 });
 
@@ -4159,7 +4369,8 @@ window.quilliteMarkdown.onFileDrop(paths => {
   els.dropOverlay.classList.add('hidden');
   const filePath = paths[0];
   if (!filePath) return;
-  if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
+  if (state.editing && IMAGE_FILE_PATTERN.test(filePath)) importAndInsertImage(filePath);
+  else if (/\.(md|markdown|mdown|mkd|txt)$/i.test(filePath)) loadFile(filePath);
   else showToast(t('dropUnsupported'), 'warning');
 });
 

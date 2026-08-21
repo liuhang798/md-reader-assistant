@@ -4,6 +4,28 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-08-21
+
+### 简体中文
+
+- 修复置顶文档拖动排序时，拖柄占用独立列导致选中边框被拆开，以及部分 WebView 因移动指针捕获节点而中断拖拽的问题；置顶项现在与普通最近文档左侧对齐，鼠标悬停时在卡片右侧显示拖动提示，按住整张卡片任意位置即可排序，普通单击仍会打开文档。
+- 左侧文档库底部新增“图表范例”“公式范例”“格式范例”三个内置参考入口。参考文档由当前 37 种图表模板和 79 种学科公式模板自动生成，并完整展示编辑器支持的常规 Markdown 文本格式；示例不会占用最近阅读记录。
+- 阅读页新增“关闭预览”，可在不移除最近阅读记录的情况下返回软件首页；首页同步新增三份完整案例入口和覆盖文件、阅读、编辑及文字格式的快捷键指南。
+- 新增统一的本地图片资产工作流：通过文件选择、拖放或剪贴板粘贴导入图片时，会自动复制到当前文档旁的 `assets` 目录并使用可移植相对路径；插入时可选择 10%–100% 显示宽度，同名文件会安全生成唯一名称。
+- 完善 Mermaid 与 ECharts 的暗色模式：主题切换后图表会原位重绘，树图、思维导图、桑基图、C4、甘特图、热力图和仪表盘等在明暗主题下均保持可读；图表生成器新增官网教程入口。
+- 修复宽幅 ECharts 在 Word／HTML 导出时被压成方形或裁掉右半部分的问题；导出现在使用稳定的白底画布与真实宽高，Word 图片尺寸计算同步保留原始比例。
+- macOS 应用内更新改为下载、校验并原子替换完整的已签名 `.app` ZIP，失败时保留回滚副本；发布流程不再使用会破坏代码签名的裸可执行文件更新包。
+
+### English
+
+- Fixed pinned-document drag reordering so the handle no longer occupies a separate column that splits the selected outline, and moving a row no longer interrupts the drag in WebViews that release pointer capture when its target node is moved. Pinned items now align with ordinary recent documents, reveal a drag hint on the right when hovered, and can be reordered by dragging anywhere on the card while an ordinary click still opens the document.
+- Added Charts, Formulas, and Formatting example documents above the folder shortcut in the library sidebar. The bundled references are generated from all 37 diagram templates and 79 subject-formula templates, cover the editor's supported Markdown formatting, and do not pollute Recent.
+- Added Close Preview to return home without removing the current document from Recent. The redesigned home screen now includes all three example documents and a comprehensive shortcut guide for files, reading, editing, and text formatting.
+- Added a unified local-image asset workflow. Images selected, dropped, or pasted from the clipboard are copied into an `assets` directory beside the current document and inserted with portable relative paths; users can choose a 10%–100% display width, and duplicate names are resolved safely.
+- Improved Mermaid and ECharts dark mode. Diagrams redraw in place after appearance changes, keeping treemaps, mind maps, Sankey, C4, Gantt, heatmap, gauge, and other charts readable in both modes; Diagram Builder now links directly to the official guide.
+- Fixed wide ECharts exports being forced into a square canvas or losing their right side in Word and HTML. Exports now use stable paper-coloured canvases with explicit dimensions, and Word image sizing preserves the source aspect ratio.
+- Reworked macOS in-app updates to download, validate, and atomically replace a complete signed `.app` ZIP with rollback protection. The release pipeline no longer publishes raw executable updates that invalidate the application code signature.
+
 ## [2.5.0] - 2026-08-20
 
 ### 简体中文
@@ -638,3 +660,4 @@ All notable changes to Quillite Markdown are documented here.
 [2.4.8]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.8
 [2.4.9]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.4.9
 [2.5.0]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.5.0
+[2.5.1]: https://github.com/liuhang798/quillite-markdown/releases/tag/v2.5.1

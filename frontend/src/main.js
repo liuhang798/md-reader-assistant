@@ -29,12 +29,15 @@ window.quilliteMarkdown = {
   openFolder: () => desktopRuntime ? Backend.OpenFolder() : resolved(null),
   readFile: filePath => desktopRuntime ? Backend.ReadFile(filePath) : resolved(null),
   openRecentFile: filePath => desktopRuntime ? Backend.OpenRecentFile(filePath) : resolved(null),
+  openReferenceDocument: kind => desktopRuntime ? Backend.OpenReferenceDocument(kind) : resolved(null),
   canEditFile: filePath => desktopRuntime ? Backend.CanEditFile(filePath) : resolved(true),
   saveFile: (filePath, content) => desktopRuntime ? Backend.SaveFile(filePath, content) : resolved(null),
   saveAs: (filePath, content) => desktopRuntime ? Backend.SaveAs(filePath, content) : resolved(null),
   exportDOCX: (filePath, title, renderedHTML) => desktopRuntime ? Backend.ExportDOCX(filePath, title, renderedHTML) : resolved(''),
   exportHTML: (filePath, title, renderedHTML, colorMode, accentColor) => desktopRuntime ? Backend.ExportHTML(filePath, title, renderedHTML, colorMode, accentColor) : resolved(''),
   selectImage: filePath => desktopRuntime ? Backend.SelectImage(filePath) : resolved(''),
+  importImage: (filePath, sourcePath) => desktopRuntime ? Backend.ImportImage(filePath, sourcePath) : resolved(sourcePath),
+  savePastedImage: (filePath, dataURL) => desktopRuntime ? Backend.SavePastedImage(filePath, dataURL) : resolved(dataURL),
   readImageData: (imagePath, documentDirectory) => desktopRuntime ? Backend.ReadImageData(imagePath, documentDirectory) : resolved(''),
   setDirty: dirty => desktopRuntime ? Backend.SetDirty(dirty) : resolved(),
   listFolder: root => desktopRuntime ? Backend.ListFolder(root) : resolved({ root, files: [] }),
@@ -58,7 +61,7 @@ window.quilliteMarkdown = {
   setLanguage: language => desktopRuntime ? Backend.SetLanguage(language) : resolved(),
   setUsageAnalytics: enabled => desktopRuntime ? Backend.SetUsageAnalytics(enabled) : resolved({ usageAnalytics: enabled }),
   reportErrorLog: (source, message, stack) => desktopRuntime ? Backend.ReportErrorLog(source, message, stack) : resolved(),
-  getFeedbackSystemInfo: () => desktopRuntime ? Backend.GetFeedbackSystemInfo() : resolved({ appVersion: '2.5.0', os: browserPlatform === 'darwin' ? 'macos' : 'windows', systemVersion: navigator.userAgent }),
+  getFeedbackSystemInfo: () => desktopRuntime ? Backend.GetFeedbackSystemInfo() : resolved({ appVersion: '2.5.1', os: browserPlatform === 'darwin' ? 'macos' : 'windows', systemVersion: navigator.userAgent }),
   selectFeedbackImages: () => desktopRuntime ? Backend.SelectFeedbackImages() : resolved([]),
   submitFeedback: input => desktopRuntime ? Backend.SubmitFeedback(input) : resolved(),
   checkForUpdates: force => desktopRuntime
@@ -68,14 +71,14 @@ window.quilliteMarkdown = {
           checked: true,
           available: true,
           currentVersion: '2.4.4',
-          latestVersion: '2.5.0',
-          releaseName: localStorage.getItem('language') === 'en' ? 'Quillite Markdown 2.5.0' : '轻阅 Markdown 2.5.0',
+          latestVersion: '2.5.1',
+          releaseName: localStorage.getItem('language') === 'en' ? 'Quillite Markdown 2.5.1' : '轻阅 Markdown 2.5.1',
           releaseNotes: localStorage.getItem('language') === 'en'
             ? 'Added feedback and website-backed updates\nAdded Word / PDF export and Save As in the reader\nImproved high-resolution displays, outlines, and editing'
             : '新增意见反馈与官网版本更新\n新增 Word / PDF 导出与阅读页另存为\n优化高分辨率显示、目录树与编辑体验',
           releaseUrl: 'https://qm.ssssa.cn/#download'
         }
-      : { checked: true, available: false, currentVersion: '2.5.0', latestVersion: '2.5.0' }),
+      : { checked: true, available: false, currentVersion: '2.5.1', latestVersion: '2.5.1' }),
   snoozeUpdates: days => desktopRuntime ? Backend.SnoozeUpdates(days) : resolved(),
   downloadAndApplyUpdate: () => desktopRuntime ? Backend.DownloadAndApplyUpdate() : resolved(),
   onUpdateProgress: callback => desktopRuntime ? EventsOn('update:progress', callback) : () => {},

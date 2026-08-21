@@ -290,6 +290,61 @@ func TestReadImageDataSupportsRelativeLocalImages(t *testing.T) {
 	}
 }
 
+func TestImportImageCopiesIntoDocumentAssetsWithUniqueNames(t *testing.T) {
+	root := t.TempDir()
+	documentPath := filepath.Join(root, "notes.md")
+	if err := os.WriteFile(documentPath, []byte("# Notes"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sourceDirectory := t.TempDir()
+	sourcePath := filepath.Join(sourceDirectory, "diagram.png")
+	imageData := []byte("test image bytes")
+	if err := os.WriteFile(sourcePath, imageData, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	first, err := importImageToAssets(documentPath, sourcePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := importImageToAssets(documentPath, sourcePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != "assets/diagram.png" || second != "assets/diagram-2.png" {
+		t.Fatalf("unexpected imported image paths: %q, %q", first, second)
+	}
+	for _, relative := range []string{first, second} {
+		copied, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative)))
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if !bytes.Equal(copied, imageData) {
+			t.Fatalf("imported image %q changed content", relative)
+		}
+	}
+}
+
+func TestSavePastedImageWritesClipboardDataIntoAssets(t *testing.T) {
+	root := t.TempDir()
+	documentPath := filepath.Join(root, "notes.md")
+	pngBase64 := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+	relative, err := testApp(t).SavePastedImage(documentPath, "data:image/png;base64,"+pngBase64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(relative, "assets/image-") || filepath.Ext(relative) != ".png" {
+		t.Fatalf("unexpected pasted image path: %q", relative)
+	}
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data) == 0 {
+		t.Fatal("pasted image asset is empty")
+	}
+}
+
 func testApp(t *testing.T) *App {
 	t.Helper()
 	return &App{
@@ -1560,6 +1615,10 @@ func TestMacBundleUsesProductDisplayNameAndCanonicalFilename(t *testing.T) {
 	if !strings.Contains(string(buildScript), `app_name="轻阅 Markdown.app"`) {
 		t.Fatal("macOS build wrapper must normalize the bundle filename to 轻阅 Markdown.app")
 	}
+	if !strings.Contains(string(buildScript), `codesign --force --deep --sign -`) ||
+		!strings.Contains(string(buildScript), `codesign --verify --deep --strict`) {
+		t.Fatal("macOS build wrapper must sign and verify the complete application bundle")
+	}
 
 	workflow, err := os.ReadFile(filepath.Join(".github", "workflows", "release.yml"))
 	if err != nil {
@@ -1572,6 +1631,11 @@ func TestMacBundleUsesProductDisplayNameAndCanonicalFilename(t *testing.T) {
 	}
 	if !strings.Contains(workflowText, `touch "${staging_dir}/.metadata_never_index"`) {
 		t.Fatal("macOS DMG must opt out of metadata indexing so its mounted app is not shown as a duplicate")
+	}
+	if !strings.Contains(workflowText, `macos-universal.zip`) ||
+		!strings.Contains(workflowText, `/usr/bin/ditto -c -k --sequesterRsrc --keepParent`) ||
+		strings.Contains(workflowText, `cp "${binary}" "${release_dir}/quillite-markdown-${APP_VERSION}-macos-universal.bin"`) {
+		t.Fatal("macOS in-app updates must publish the signed complete .app archive, never a raw executable")
 	}
 }
 
@@ -1786,5 +1850,113 @@ func TestSelectMacSecurityBookmarkRejectsSiblingPrefix(t *testing.T) {
 	}
 	if selected, ok := selectMacSecurityBookmark(bookmarks, sibling); ok {
 		t.Fatalf("unexpected sibling bookmark match: %#v", selected)
+	}
+}
+
+func TestOpenReferenceDocumentMaterialisesAllBundledExamples(t *testing.T) {
+	app := testApp(t)
+	app.referenceOverride = t.TempDir()
+
+	tests := []struct {
+		kind string
+		name string
+		want string
+	}{
+		{kind: "charts", name: "图表案例.MD", want: "# 图表案例大全"},
+		{kind: "formulas", name: "科学公式案例.MD", want: "# 科学公式案例大全"},
+		{kind: "formats", name: "常规内容案例.MD", want: "# Markdown 常规内容格式大全"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.kind, func(t *testing.T) {
+			doc, err := app.OpenReferenceDocument(tc.kind)
+			if err != nil {
+				t.Fatalf("OpenReferenceDocument(%q): %v", tc.kind, err)
+			}
+			if doc.Name != tc.name {
+				t.Fatalf("name = %q, want %q", doc.Name, tc.name)
+			}
+			if !strings.Contains(doc.Content, tc.want) {
+				t.Fatalf("content does not contain %q", tc.want)
+			}
+			if !doc.ReadOnly {
+				t.Fatal("built-in reference document must be marked read-only")
+			}
+			if _, err := os.Stat(doc.Path); err != nil {
+				t.Fatalf("materialised document missing: %v", err)
+			}
+			if _, err := app.SaveFile(doc.Path, "changed"); err == nil {
+				t.Fatal("SaveFile should reject writes to a built-in reference document")
+			}
+		})
+	}
+
+	if _, err := app.OpenReferenceDocument("unknown"); err == nil {
+		t.Fatal("unknown reference kind should fail")
+	}
+
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prefs.RecentFiles) != 0 || prefs.LastFile != "" {
+		t.Fatalf("built-in references entered Recent: recent=%#v last=%q", prefs.RecentFiles, prefs.LastFile)
+	}
+}
+
+func TestReferenceDocumentsAreRemovedFromLegacyRecentButSavedCopiesRemain(t *testing.T) {
+	app := testApp(t)
+	app.referenceOverride = t.TempDir()
+
+	name, content, err := referenceDocument("charts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	referencePath, err := materialiseReferenceDocument(app.referenceOverride, name, content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	copyDirectory := t.TempDir()
+	copyPath := filepath.Join(copyDirectory, name)
+	if err := os.WriteFile(copyPath, []byte("# 用户另存的可编辑副本"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	legacy := defaultPreferences()
+	legacy.RecentFiles = []string{referencePath, copyPath}
+	legacy.PinnedRecentFiles = []string{referencePath}
+	legacy.LastFile = referencePath
+	data, err := json.Marshal(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(app.preferencePath(), data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	prefs, err := app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, []string{copyPath}) {
+		t.Fatalf("reference cleanup removed the user copy or retained the built-in file: %#v", prefs.RecentFiles)
+	}
+	if len(prefs.PinnedRecentFiles) != 0 || prefs.LastFile != copyPath {
+		t.Fatalf("reference cleanup left stale state: pins=%#v last=%q", prefs.PinnedRecentFiles, prefs.LastFile)
+	}
+
+	doc, err := app.ReadFile(copyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.ReadOnly {
+		t.Fatal("a user-saved copy outside the built-in directory must remain editable")
+	}
+	prefs, err = app.GetPreferences()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(prefs.RecentFiles, []string{copyPath}) {
+		t.Fatalf("user-saved copy did not remain in Recent: %#v", prefs.RecentFiles)
 	}
 }

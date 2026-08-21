@@ -16,6 +16,11 @@ const PIE_COLORS = [
   '#59A14F', '#EDC948', '#B07AA1', '#FF9DA7',
   '#9C755F', '#BAB0AC', '#17BECF', '#8CD17D'
 ];
+const DARK_PIE_COLORS = [
+  '#79A9D1', '#FFB55A', '#EF7D7F', '#7FC8C2',
+  '#83C978', '#E8CD65', '#C99BC5', '#FFAFBB',
+  '#C8957E', '#B9B6B0', '#55C7D2', '#9CD58F'
+];
 
 function byteToHex(value) {
   return Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
@@ -59,11 +64,16 @@ function diagramTheme() {
   const colorNames = ['--accent-soft', '--text', '--accent', '--muted', '--panel', '--paper', '--line', '--accent-strong'];
   const rawColors = Object.fromEntries(colorNames.map(name => [name, root.getPropertyValue(name).trim()]));
   const color = (name, fallback) => mermaidColor(root.getPropertyValue(name), fallback);
-  const pieVariables = Object.fromEntries(PIE_COLORS.map((value, index) => [`pie${index + 1}`, value]));
+  const pieColors = dark ? DARK_PIE_COLORS : PIE_COLORS;
+  const pieVariables = Object.fromEntries(pieColors.map((value, index) => [`pie${index + 1}`, value]));
   return {
     signature: `${dark ? 'dark' : 'light'}|${colorNames.map(name => rawColors[name]).join('|')}`,
-    name: dark ? 'dark' : 'base',
+    // Mermaid's stock dark theme still contains several fixed black/white
+    // values which bypass themeVariables. Always use the customisable base
+    // theme and provide every neutral colour explicitly for both UI modes.
+    name: 'base',
     variables: {
+      darkMode: dark,
       fontFamily: DIAGRAM_FONT_FAMILY,
       fontSize: '14px',
       primaryColor: color('--accent-soft', dark ? '#203C31' : '#E7F5EE'),
@@ -84,6 +94,29 @@ function diagramTheme() {
       relationLabelColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
       labelTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
       nodeTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      titleColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      actorTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      actorBkg: color('--panel', dark ? '#242C28' : '#F5F8F6'),
+      actorBorder: color('--accent', '#159A63'),
+      actorLineColor: color('--muted', dark ? '#A8ADAA' : '#68716B'),
+      signalColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      signalTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      labelBoxBkgColor: color('--paper', dark ? '#1D2420' : '#FFFFFF'),
+      labelBoxBorderColor: color('--line', dark ? '#39443E' : '#D9E0DB'),
+      labelTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      loopTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      noteBkgColor: color('--panel', dark ? '#242C28' : '#F5F8F6'),
+      noteTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      noteBorderColor: color('--line', dark ? '#39443E' : '#D9E0DB'),
+      classText: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+      fillType0: color('--accent-soft', dark ? '#203C31' : '#E7F5EE'),
+      fillType1: color('--panel', dark ? '#242C28' : '#F5F8F6'),
+      fillType2: color('--paper', dark ? '#1D2420' : '#FFFFFF'),
+      fillType3: color('--accent-soft', dark ? '#203C31' : '#E7F5EE'),
+      fillType4: color('--panel', dark ? '#242C28' : '#F5F8F6'),
+      fillType5: color('--paper', dark ? '#1D2420' : '#FFFFFF'),
+      fillType6: color('--accent-soft', dark ? '#203C31' : '#E7F5EE'),
+      fillType7: color('--panel', dark ? '#242C28' : '#F5F8F6'),
       border1: color('--line', dark ? '#39443E' : '#D9E0DB'),
       border2: color('--accent', '#159A63'),
       taskBkgColor: color('--accent-soft', dark ? '#203C31' : '#E7F5EE'),
@@ -93,7 +126,7 @@ function diagramTheme() {
       gridColor: color('--line', dark ? '#39443E' : '#D9E0DB'),
       todayLineColor: color('--accent', '#159A63'),
       ...pieVariables,
-      pieStrokeColor: dark ? '#1D2420' : '#FFFFFF',
+      pieStrokeColor: color('--paper', dark ? '#1D2420' : '#FFFFFF'),
       pieSectionTextColor: '#111827',
       pieLegendTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924'),
       pieTitleTextColor: color('--text', dark ? '#E7ECE9' : '#1F2924')
@@ -114,7 +147,22 @@ function configureMermaid(mermaid) {
     themeVariables: theme.variables,
     flowchart: { htmlLabels: false, useMaxWidth: true },
     sequence: { useMaxWidth: true },
-    gantt: { useMaxWidth: true },
+    // Gantt charts contain several dense lanes (section, task, date axis and
+    // milestone labels).  Mermaid's compact defaults are difficult to read on
+    // high-DPI displays, so give the chart more vertical breathing room and a
+    // real body-text-sized font.  The stylesheet also provides extra canvas
+    // width so these larger labels do not collide.
+    gantt: {
+      useMaxWidth: true,
+      fontSize: 16,
+      sectionFontSize: 15,
+      barHeight: 28,
+      barGap: 7,
+      topPadding: 64,
+      leftPadding: 120,
+      rightPadding: 90,
+      gridLineStartPadding: 34
+    },
     // Mermaid's C4 renderer places relationship captions at the midpoint
     // between two shapes. Its 50px default margin only leaves a 100px gap,
     // which is narrower than common Chinese captions (and their technology
@@ -191,7 +239,9 @@ function normalizeSVGTypography(svg, type = '') {
     // Keep the exact layout font size for C4 while still normalising its family,
     // weight and accidental SVG stroke.
     if (!type.startsWith('c4') && Number.isFinite(size)) {
-      label.style.fontSize = `${Math.max(12, Math.min(16, size))}px`;
+      const minimumSize = type === 'gantt' ? 14 : 12;
+      const maximumSize = type === 'gantt' ? 17 : 16;
+      label.style.fontSize = `${Math.max(minimumSize, Math.min(maximumSize, size))}px`;
     }
   });
 
@@ -201,7 +251,113 @@ function normalizeSVGTypography(svg, type = '') {
   if (type === 'requirementdiagram') normalizeRequirementDiagram(svg);
   if (type === 'xychart-beta') normalizeXYChart(svg);
   if (type === 'journey') normalizeJourneyDiagram(svg);
+  if (type === 'treemap-beta') normalizeTreemapDiagram(svg);
+  if (type === 'mindmap') normalizeMindmapDiagram(svg);
+  if (type === 'sankey-beta') normalizeSankeyDiagram(svg);
   expandSVGViewBox(svg);
+}
+
+function renderedDiagramColors() {
+  const root = getComputedStyle(document.documentElement);
+  const dark = document.documentElement.dataset.colorMode === 'dark';
+  const color = (name, fallback) => mermaidColor(root.getPropertyValue(name), fallback);
+  return {
+    dark,
+    paper: color('--paper', dark ? '#1D2420' : '#FFFFFF'),
+    panel: color('--panel', dark ? '#242C28' : '#F5F8F6'),
+    text: color('--text', dark ? '#E7ECE9' : '#1F2924'),
+    muted: color('--muted', dark ? '#A7B0AA' : '#68716B'),
+    line: color('--line', dark ? '#445049' : '#D9E0DB'),
+    accent: color('--accent', '#159A63')
+  };
+}
+
+function normalizeTreemapDiagram(svg) {
+  const { dark, paper, panel, text, line } = renderedDiagramColors();
+  const fills = dark
+    ? ['#245C48', '#294E68', '#6B4C25', '#663A43', '#3F5360', '#4C4168']
+    : ['#CDEBDD', '#D5E7F4', '#F6E0BC', '#F3D4D9', '#D9E5EA', '#E4DCF1'];
+
+  // Mermaid derives treemap shades by darkening the application background.
+  // On a dark surface that calculation collapses to 0% lightness and produces
+  // indistinguishable black leaves. Inline categorical colours so every
+  // export keeps the same visible result as the live preview.
+  svg.querySelectorAll('.treemapLeaf').forEach((leaf, index) => {
+    leaf.style.setProperty('fill', fills[index % fills.length], 'important');
+    leaf.style.setProperty('fill-opacity', '1', 'important');
+    leaf.style.setProperty('stroke', dark ? line : paper, 'important');
+    leaf.style.setProperty('stroke-width', '2', 'important');
+  });
+  svg.querySelectorAll('.treemapSection').forEach(section => {
+    section.style.setProperty('fill', panel, 'important');
+    section.style.setProperty('fill-opacity', '1', 'important');
+    section.style.setProperty('stroke', line, 'important');
+  });
+  svg.querySelectorAll('.treemapSectionHeader').forEach(header => {
+    header.style.setProperty('fill', panel, 'important');
+    header.style.setProperty('stroke', line, 'important');
+  });
+  svg.querySelectorAll('.treemapLabel, .treemapValue, .treemapSectionLabel, .treemapSectionValue').forEach(label => {
+    label.style.setProperty('fill', text, 'important');
+    label.style.setProperty('opacity', '1', 'important');
+  });
+}
+
+function normalizeMindmapDiagram(svg) {
+  const { dark, text, muted, line, accent } = renderedDiagramColors();
+  const fills = dark
+    ? ['#245C48', '#294E68', '#5A4629', '#533F62']
+    : ['#D6EFE3', '#DCEBF5', '#F4E5C8', '#E9DDF1'];
+  const borders = dark
+    ? ['#63D2A4', '#79B8E4', '#E0B567', '#C6A0DF']
+    : ['#159A63', '#2878B5', '#A86F16', '#8057A4'];
+
+  // Mermaid's generated HSL branch colours also collapse to black on a dark
+  // base. Colour by top-level branch instead, keeping descendants related.
+  svg.querySelectorAll('.mindmap-node').forEach((node, nodeIndex) => {
+    const sectionClass = [...node.classList].find(name => /^section--?\d+$/u.test(name));
+    const section = Number.parseInt(sectionClass?.replace('section-', '') || String(nodeIndex), 10);
+    const paletteIndex = section < 0 ? 0 : (section + 1) % fills.length;
+    node.querySelectorAll(':scope > .node-bkg, :scope > rect, :scope > circle, :scope > polygon').forEach(shape => {
+      shape.style.setProperty('fill', fills[paletteIndex], 'important');
+      shape.style.setProperty('stroke', borders[paletteIndex], 'important');
+      shape.style.setProperty('stroke-width', '1.5', 'important');
+    });
+    node.querySelectorAll(':scope > line').forEach(decoration => {
+      decoration.style.setProperty('stroke', borders[paletteIndex], 'important');
+      decoration.style.setProperty('stroke-width', '1.5', 'important');
+    });
+    node.querySelectorAll('text, tspan').forEach(label => {
+      label.style.setProperty('fill', text, 'important');
+      label.style.setProperty('color', text, 'important');
+    });
+  });
+  svg.querySelectorAll('.mindmapDiagram .edge').forEach(edge => {
+    edge.style.setProperty('stroke', dark ? muted : line, 'important');
+    edge.style.setProperty('stroke-width', '2', 'important');
+    edge.style.setProperty('fill', 'none', 'important');
+  });
+  svg.querySelectorAll('.mindmapDiagram marker path, .mindmapDiagram .arrowMarkerPath').forEach(marker => {
+    marker.style.setProperty('fill', accent, 'important');
+    marker.style.setProperty('stroke', accent, 'important');
+  });
+}
+
+function normalizeSankeyDiagram(svg) {
+  const { dark, text, paper } = renderedDiagramColors();
+  // Mermaid uses multiply blending for Sankey flows. Multiplying a colour
+  // over a near-black page produces another near-black colour, so disable the
+  // blend in night mode and preserve the generated endpoint gradients.
+  svg.querySelectorAll('.links').forEach(links => links.setAttribute('stroke-opacity', dark ? '0.72' : '0.52'));
+  svg.querySelectorAll('.link').forEach(link => link.style.setProperty('mix-blend-mode', 'normal', 'important'));
+  svg.querySelectorAll('.nodes rect').forEach(node => {
+    node.style.setProperty('stroke', paper, 'important');
+    node.style.setProperty('stroke-width', '1.5', 'important');
+  });
+  svg.querySelectorAll('.node-labels text').forEach(label => {
+    label.style.setProperty('fill', text, 'important');
+    label.style.setProperty('opacity', '1', 'important');
+  });
 }
 
 function normalizeEdgeLabelBackgrounds(svg) {
@@ -285,6 +441,7 @@ function expandSVGViewBox(svg, padding = 10) {
 }
 
 function normalizeC4Diagram(svg) {
+  const { dark, text, muted } = renderedDiagramColors();
   // Mermaid measures C4 stereotypes with guillemets (for example
   // `«person»`) but draws the longer ASCII form (`<<person>>`) into that
   // measured textLength. The browser then compresses the extra characters
@@ -304,6 +461,25 @@ function normalizeC4Diagram(svg) {
       label.setAttribute('text-anchor', 'middle');
     }
     label.style.setProperty('letter-spacing', '0', 'important');
+  });
+
+  // C4 keeps fixed #444 relationship colours even under a dark custom theme.
+  // Leave white node text intact, but make relationship lines, arrowheads and
+  // their captions use a readable neutral foreground.
+  svg.querySelectorAll('line').forEach(connector => {
+    connector.style.setProperty('stroke', dark ? muted : '#55615B', 'important');
+    connector.style.setProperty('opacity', '1', 'important');
+  });
+  svg.querySelectorAll('marker path').forEach(marker => {
+    marker.style.setProperty('fill', dark ? muted : '#55615B', 'important');
+    marker.style.setProperty('stroke', dark ? muted : '#55615B', 'important');
+  });
+  svg.querySelectorAll('text').forEach(label => {
+    const fill = (label.getAttribute('fill') || '').toLowerCase();
+    if (fill === '#444444' || fill === '#000000' || fill === 'black') {
+      label.style.setProperty('fill', text, 'important');
+      label.style.setProperty('opacity', '1', 'important');
+    }
   });
 }
 
@@ -445,16 +621,44 @@ export function renderMermaidDiagrams(container, messages) {
   return renderQueue;
 }
 
-export function svgToPNGDataURL(svg, label = 'diagram') {
+export async function refreshMermaidDiagrams(container, messages) {
+  if (!container) return;
+  const diagrams = [...container.querySelectorAll('.mermaid-diagram')];
+  if (!diagrams.length) return;
+  resolvedColorCache.clear();
+  configuredThemeSignature = '';
+  for (const diagram of diagrams) {
+    const height = Math.ceil(diagram.getBoundingClientRect().height);
+    if (height > 0) diagram.style.minHeight = `${height}px`;
+    delete diagram.dataset.mermaidRendered;
+    diagram.classList.remove('mermaid-error');
+    diagram.replaceChildren();
+  }
+  await renderMermaidDiagrams(container, messages);
+  diagrams.forEach(diagram => { diagram.style.minHeight = ''; });
+}
+
+export function svgToPNGDataURL(svg, label = 'diagram', backgroundColor = 'transparent', requestedSize = null) {
   return new Promise((resolve, reject) => {
     const clone = svg.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     const box = svg.viewBox?.baseVal;
     const bounds = svg.getBoundingClientRect();
-    const sourceWidth = box?.width || bounds.width || 900;
-    const sourceHeight = box?.height || bounds.height || 500;
+    // Detached SVG elements do not have reliable layout bounds in WebView2.
+    // ECharts export supplies the exact renderer dimensions so the PNG keeps
+    // the wide chart aspect ratio instead of silently falling back to 320x320.
+    const requestedWidth = Number(requestedSize?.width);
+    const requestedHeight = Number(requestedSize?.height);
+    const hasRequestedSize = Number.isFinite(requestedWidth) && requestedWidth > 0
+      && Number.isFinite(requestedHeight) && requestedHeight > 0;
+    const sourceWidth = hasRequestedSize ? requestedWidth : (box?.width || bounds.width || 900);
+    const sourceHeight = hasRequestedSize ? requestedHeight : (box?.height || bounds.height || 500);
     const width = Math.max(320, Math.min(1800, Math.ceil(sourceWidth)));
     const height = Math.max(160, Math.min(3200, Math.ceil(sourceHeight * (width / sourceWidth))));
+    if (hasRequestedSize) {
+      clone.setAttribute('viewBox', `0 0 ${sourceWidth} ${sourceHeight}`);
+      clone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    }
     clone.setAttribute('width', String(width));
     clone.setAttribute('height', String(height));
     const svgText = new XMLSerializer().serializeToString(clone);
@@ -476,6 +680,10 @@ export function svgToPNGDataURL(svg, label = 'diagram') {
         canvas.height = height * scale;
         const context = canvas.getContext('2d');
         context.scale(scale, scale);
+        if (backgroundColor && backgroundColor !== 'transparent') {
+          context.fillStyle = backgroundColor;
+          context.fillRect(0, 0, width, height);
+        }
         context.drawImage(image, 0, 0, width, height);
         resolve(canvas.toDataURL('image/png'));
       } catch (error) {

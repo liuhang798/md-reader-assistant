@@ -50,11 +50,11 @@ git push origin main
 创建与 `wails.json` 完全一致的 tag 并推送到 GitHub（`release.yml` 由 push tag 自动触发）：
 
 ```bash
-git tag -a v2.5.0 -m "Quillite Markdown v2.5.0"
-git push origin v2.5.0
+git tag -a v2.5.1 -m "Quillite Markdown v2.5.1"
+git push origin v2.5.1
 ```
 
-The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, uploads them to GitHub Release, then synchronizes the version and all platform assets to the official website. The Windows installer is published directly as an `.exe`; it is not wrapped in a ZIP.
+The `Build and Release` workflow validates the tag/version match, builds Windows, macOS, and Linux packages, uploads them to GitHub Release, then synchronizes the version and all platform assets to the official website. The Windows installer is published directly as an `.exe`; it is not wrapped in a ZIP. The Windows in-app asset is a standalone `.bin`, while the macOS in-app asset is a ZIP containing the complete verified `轻阅 Markdown.app`. Never publish a raw macOS executable for in-app updates: replacing only `Contents/MacOS/QuilliteMarkdown` breaks the application code seal and macOS terminates the next launch with `CODESIGNING / Invalid Page`.
 
 首次启用官网同步时，在官网服务器运行最新版部署脚本并保存其输出的发布令牌，然后到仓库 **Settings → Secrets and variables → Actions** 新建 Secret：
 
@@ -68,7 +68,7 @@ If a platform build fails after the tag and Release have already been created:
 
 1. Fix and push the workflow or source changes to `main`.
 2. Open **Actions → Build and Release → Run workflow**.
-3. Keep the branch set to `main` and enter the existing tag, such as `v2.5.0`.
+3. Keep the branch set to `main` and enter the existing tag, such as `v2.5.1`.
 4. Run the workflow. Successful assets are uploaded to the existing Release and files with the same names are replaced.
 
 The manual tag must exactly match the version in `wails.json`.
@@ -79,5 +79,6 @@ The manual tag must exactly match the version in `wails.json`.
 - Confirm `https://qm.ssssa.cn/#download` displays the new version and all official platform download links.
 - Install the Windows package and check the desktop icon and Markdown file association.
 - Mount the macOS DMG, confirm it contains exactly one `轻阅 Markdown.app` plus the hidden `.metadata_never_index` marker, copy the app into `/Applications`, launch it, and verify the installer image is ejected without leaving a second icon in Spotlight/Launchpad.
-- Verify that the in-app update checker opens the published Release page.
+- Verify the macOS update asset is a `.zip` containing exactly one complete `轻阅 Markdown.app`; run `codesign --verify --deep --strict` against the extracted bundle and confirm no `*-macos-universal.bin` asset is published.
+- Verify the in-app updater downloads the platform-specific asset, replaces the application, and relaunches successfully. Existing macOS clients that still expect the retired raw `.bin` format require one manual DMG installation before they can use future full-bundle updates.
 - Confirm the website admin release list contains the new published version and six platform assets, and that the homepage shows it in the latest three entries.

@@ -6,20 +6,21 @@
   <title>Mermaid diagram audit</title>
   <link rel="stylesheet" href="/src/styles.css" />
   <style>
-    body { margin: 0; background: #f5f7f6; color: #1f2924; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
     main { width: min(1160px, calc(100% - 32px)); margin: 24px auto; }
-    #auditBar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; background: #fff; border: 1px solid #d9e0db; border-radius: 10px; }
-    #exportAuditLink { color: #087f55; }
+    #auditBar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+    #auditLinks { display: flex; align-items: center; gap: 12px; }
+    #auditLinks a { color: var(--accent-strong); }
     #charts { display: grid; gap: 18px; margin-top: 18px; }
-    .audit-card { padding: 16px; background: #fff; border: 1px solid #d9e0db; border-radius: 12px; }
+    .audit-card { padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
     .audit-card h2 { margin: 0 0 10px; font: 600 18px/1.4 "Segoe UI", "Microsoft YaHei", sans-serif; }
-    .audit-card pre { max-height: 160px; overflow: auto; padding: 10px; background: #f5f7f6; border-radius: 8px; }
+    .audit-card pre { max-height: 160px; overflow: auto; padding: 10px; color: var(--text); background: var(--panel); border-radius: 8px; }
     .audit-card[data-audit-status="fail"] { border-color: #d94a4a; }
   </style>
 </head>
 <body>
   <main>
-    <div id="auditBar"><span id="summary">正在渲染全部图表……</span><a id="exportAuditLink" href="?export=1">检查导出</a></div>
+    <div id="auditBar"><span id="summary">正在渲染全部图表……</span><span id="auditLinks"><a id="modeAuditLink" href="?mode=dark">夜间审计</a><a id="exportAuditLink" href="?export=1">检查导出</a></span></div>
     <section id="charts"></section>
   </main>
   <script type="module" src="/tests/diagram-audit.js"></script>

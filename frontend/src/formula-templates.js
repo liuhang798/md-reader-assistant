@@ -243,7 +243,7 @@ export const FORMULA_TEMPLATES = [
     field('matrix', '矩阵', 'Matrix', 'A'),
     field('eigenvalue', '特征值', 'Eigenvalue', '\\lambda'),
     field('identity', '单位矩阵', 'Identity matrix', 'I'),
-  ], values => `\\det\\left(${values.matrix}-${values.eigenvalue}${values.identity}\\right)=0`),
+  ], values => `\\det\\left(${values.matrix}-${values.eigenvalue}\\,${values.identity}\\right)=0`),
   mathTemplate('cases', 'algebra', '分段函数', 'Piecewise function', [
     field('result1', '第一段结果', 'First result', 'x^2'),
     field('condition1', '第一段条件', 'First condition', 'x \\ge 0'),
@@ -358,8 +358,8 @@ export const FORMULA_TEMPLATES = [
     field('products', '生成物', 'Products', '2H2O'),
   ], values => `\\ce{${values.reactants} -> ${values.products}}`),
   chemistryTemplate('reversible', 'chemical-reaction', '可逆反应', 'Reversible reaction', [
-    field('reactants', '反应物', 'N2 + 3H2'),
-    field('products', '生成物', '2NH3'),
+    field('reactants', '反应物', 'Reactants', 'N2 + 3H2'),
+    field('products', '生成物', 'Products', '2NH3'),
     field('condition', '反应条件（可空）', 'Condition (optional)', 'heat', ''),
   ], values => `\\ce{${values.reactants} <=>${values.condition ? `[${values.condition}]` : ''} ${values.products}}`),
   chemistryTemplate('states', 'chemical-reaction', '带物态反应', 'Reaction with states', [
@@ -367,12 +367,12 @@ export const FORMULA_TEMPLATES = [
     field('products', '生成物（含物态）', 'Products with states', 'CaO(s) + CO2(g)'),
   ], values => `\\ce{${values.reactants} -> ${values.products}}`),
   chemistryTemplate('precipitate', 'chemical-reaction', '沉淀反应', 'Precipitation reaction', [
-    field('reactants', '反应物', 'Ag+ + Cl-'),
-    field('product', '沉淀物', 'AgCl v'),
+    field('reactants', '反应物', 'Reactants', 'Ag+ + Cl-'),
+    field('product', '沉淀物', 'Precipitate', 'AgCl v'),
   ], values => `\\ce{${values.reactants} -> ${values.product}}`),
   chemistryTemplate('gas', 'chemical-reaction', '气体生成反应', 'Gas evolution', [
-    field('reactants', '反应物', '2H+ + CO3^2-'),
-    field('products', '生成物', 'H2O + CO2 ^'),
+    field('reactants', '反应物', 'Reactants', '2H+ + CO3^2-'),
+    field('products', '生成物', 'Products', 'H2O + CO2 ^'),
   ], values => `\\ce{${values.reactants} -> ${values.products}}`),
   mathTemplate('equilibrium-constant', 'chemical-reaction', '化学平衡常数', 'Equilibrium constant', [
     field('products', '生成物浓度乘积', 'Product concentrations', '[C]^c[D]^d'),
