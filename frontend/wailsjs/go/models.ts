@@ -205,6 +205,7 @@ export namespace main {
 	    checked: boolean;
 	    suppressed: boolean;
 	    available: boolean;
+	    manualInstallRequired: boolean;
 	    currentVersion: string;
 	    latestVersion: string;
 	    releaseName: string;
@@ -221,6 +222,7 @@ export namespace main {
 	        this.checked = source["checked"];
 	        this.suppressed = source["suppressed"];
 	        this.available = source["available"];
+	        this.manualInstallRequired = source["manualInstallRequired"];
 	        this.currentVersion = source["currentVersion"];
 	        this.latestVersion = source["latestVersion"];
 	        this.releaseName = source["releaseName"];
@@ -231,4 +233,3 @@ export namespace main {
 	}
 
 }
-

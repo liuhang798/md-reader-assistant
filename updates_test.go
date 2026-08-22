@@ -75,3 +75,20 @@ func TestOnlyQMSubdomainIsAcceptedForOfficialDownloads(t *testing.T) {
 		}
 	}
 }
+
+func TestLegacyMacUpdateRequiresOneManualInstall(t *testing.T) {
+	if !requiresManualMacUpdateMigration("darwin", "2.5.0", "2.5.1") {
+		t.Fatal("macOS 2.5.0 must be routed to the one-time DMG migration")
+	}
+	for _, test := range []struct {
+		goos, current, latest string
+	}{
+		{"windows", "2.5.0", "2.5.1"},
+		{"darwin", "2.5.1", "2.5.2"},
+		{"darwin", "2.5.0", "2.5.0"},
+	} {
+		if requiresManualMacUpdateMigration(test.goos, test.current, test.latest) {
+			t.Fatalf("unexpected manual migration for %s %s -> %s", test.goos, test.current, test.latest)
+		}
+	}
+}

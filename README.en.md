@@ -60,6 +60,8 @@ Documents and folders opened through macOS system panels, Finder, or file associ
 
 ## What's new in 2.5.1
 
+> **macOS 2.5.0 migration:** Version 2.5.0 used the retired raw-executable updater and cannot safely upgrade itself to a complete application bundle. Install 2.5.1 or later once from the [official website](https://qm.ssssa.cn/#download); normal in-app updates resume after that one-time migration.
+
 - Added complete built-in examples for charts, academic formulas, and Markdown formatting, available from both Home and the library without polluting Recent.
 - Redesigned Home with quick-start examples and a complete shortcut guide. The reader can close the current preview and return home without removing it from Recent.
 - Local images can be selected, dropped, or pasted from the clipboard, are automatically stored in an `assets` directory beside the document, and support 10%–100% display widths.

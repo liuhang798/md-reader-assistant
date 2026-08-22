@@ -21,15 +21,16 @@ const (
 )
 
 type UpdateInfo struct {
-	Checked        bool   `json:"checked"`
-	Suppressed     bool   `json:"suppressed"`
-	Available      bool   `json:"available"`
-	CurrentVersion string `json:"currentVersion"`
-	LatestVersion  string `json:"latestVersion"`
-	ReleaseName    string `json:"releaseName"`
-	ReleaseNotes   string `json:"releaseNotes"`
-	ReleaseURL     string `json:"releaseUrl"`
-	PublishedAt    string `json:"publishedAt"`
+	Checked               bool   `json:"checked"`
+	Suppressed            bool   `json:"suppressed"`
+	Available             bool   `json:"available"`
+	ManualInstallRequired bool   `json:"manualInstallRequired"`
+	CurrentVersion        string `json:"currentVersion"`
+	LatestVersion         string `json:"latestVersion"`
+	ReleaseName           string `json:"releaseName"`
+	ReleaseNotes          string `json:"releaseNotes"`
+	ReleaseURL            string `json:"releaseUrl"`
+	PublishedAt           string `json:"publishedAt"`
 }
 
 type updateRelease struct {
@@ -179,14 +180,15 @@ func (a *App) CheckForUpdates(force bool) (UpdateInfo, error) {
 
 	latest := normaliseVersion(release.TagName)
 	result = UpdateInfo{
-		Checked:        true,
-		Available:      compareVersions(latest, appVersion) > 0,
-		CurrentVersion: appVersion,
-		LatestVersion:  latest,
-		ReleaseName:    strings.TrimSpace(release.Name),
-		ReleaseNotes:   strings.TrimSpace(release.Body),
-		ReleaseURL:     release.HTMLURL,
-		PublishedAt:    release.PublishedAt,
+		Checked:               true,
+		Available:             compareVersions(latest, appVersion) > 0,
+		ManualInstallRequired: requiresManualMacUpdateMigration(runtime.GOOS, appVersion, latest),
+		CurrentVersion:        appVersion,
+		LatestVersion:         latest,
+		ReleaseName:           strings.TrimSpace(release.Name),
+		ReleaseNotes:          strings.TrimSpace(release.Body),
+		ReleaseURL:             release.HTMLURL,
+		PublishedAt:           release.PublishedAt,
 	}
 	if result.ReleaseName == "" {
 		result.ReleaseName = "v" + latest
@@ -201,6 +203,17 @@ func (a *App) CheckForUpdates(force bool) (UpdateInfo, error) {
 		return result, err
 	}
 	return result, nil
+}
+
+// Version 2.5.0 was the last macOS build that expected a raw executable
+// update. A raw binary replacement invalidates the enclosing .app signature,
+// so it cannot be used as a bridge to the complete-bundle ZIP updater. Those
+// users must install one DMG manually; every later version can self-update by
+// atomically replacing the complete signed application bundle.
+func requiresManualMacUpdateMigration(goos, currentVersion, latestVersion string) bool {
+	return goos == "darwin" &&
+		compareVersions(currentVersion, "2.5.0") <= 0 &&
+		compareVersions(latestVersion, currentVersion) > 0
 }
 
 // SnoozeUpdates suppresses automatic prompts. Manual update checks always

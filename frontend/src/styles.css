@@ -788,6 +788,10 @@ html[lang="en"] #moreMenu .popover-label { font-size: 10.5px; }
 .update-versions svg { width: 22px; height: 22px; color: var(--faint); }
 .release-notes-panel { padding: 16px; border-radius: 13px; background: var(--accent-soft); }
 .release-notes-panel > strong { display: block; margin-bottom: 9px; color: var(--accent-strong); font-size: 12px; }
+.manual-update-notice { margin-top: 14px; padding: 13px 15px; display: grid; gap: 5px; border: 1px solid color-mix(in srgb, #c98224 42%, var(--line)); border-radius: 12px; color: var(--text); background: color-mix(in srgb, #e8a13c 11%, var(--panel)); }
+.manual-update-notice strong { color: #a65f0b; font-size: 12px; }
+.manual-update-notice span { color: var(--muted); font-size: 11px; line-height: 1.6; }
+[data-color-mode="dark"] .manual-update-notice strong { color: #f1b45f; }
 .release-notes-content { max-height: 190px; overflow: auto; color: var(--muted); font-size: 13px; line-height: 1.7; user-select: text; }
 .release-notes-content > :first-child { margin-top: 0; }
 .release-notes-content > :last-child { margin-bottom: 0; }

@@ -4,10 +4,16 @@ All notable changes to Quillite Markdown are documented here.
 
 ## [Unreleased]
 
+### 简体中文
+
+### English
+
 ## [2.5.1] - 2026-08-21
 
 ### 简体中文
 
+- macOS 2.5.0 属于旧版裸可执行文件更新器，无法安全识别 2.5.1 起使用的完整 `.app` ZIP。更新界面现在会明确提示这类用户从官网手动安装一次 DMG，之后恢复应用内自动更新；该已知迁移情况不再作为异常日志重复上报。
+- 发布流程继续强制生成并同步 `macos-universal.zip`，且只允许原子替换签名校验通过的完整应用包，避免为兼容旧格式重新引入 `Code Signature Invalid` 闪退。
 - 修复置顶文档拖动排序时，拖柄占用独立列导致选中边框被拆开，以及部分 WebView 因移动指针捕获节点而中断拖拽的问题；置顶项现在与普通最近文档左侧对齐，鼠标悬停时在卡片右侧显示拖动提示，按住整张卡片任意位置即可排序，普通单击仍会打开文档。
 - 左侧文档库底部新增“图表范例”“公式范例”“格式范例”三个内置参考入口。参考文档由当前 37 种图表模板和 79 种学科公式模板自动生成，并完整展示编辑器支持的常规 Markdown 文本格式；示例不会占用最近阅读记录。
 - 阅读页新增“关闭预览”，可在不移除最近阅读记录的情况下返回软件首页；首页同步新增三份完整案例入口和覆盖文件、阅读、编辑及文字格式的快捷键指南。
@@ -18,6 +24,8 @@ All notable changes to Quillite Markdown are documented here.
 
 ### English
 
+- macOS 2.5.0 used the retired raw-executable updater and cannot safely consume the complete `.app` ZIP introduced in 2.5.1. The update dialog now explains the one-time DMG installation required before normal in-app updates resume, and this known migration case is no longer submitted repeatedly as an error log.
+- The release pipeline continues to require and publish `macos-universal.zip`, and the updater only atomically installs a signature-verified complete application bundle, avoiding the former `Code Signature Invalid` crash.
 - Fixed pinned-document drag reordering so the handle no longer occupies a separate column that splits the selected outline, and moving a row no longer interrupts the drag in WebViews that release pointer capture when its target node is moved. Pinned items now align with ordinary recent documents, reveal a drag hint on the right when hovered, and can be reordered by dragging anywhere on the card while an ordinary click still opens the document.
 - Added Charts, Formulas, and Formatting example documents above the folder shortcut in the library sidebar. The bundled references are generated from all 37 diagram templates and 79 subject-formula templates, cover the editor's supported Markdown formatting, and do not pollute Recent.
 - Added Close Preview to return home without removing the current document from Recent. The redesigned home screen now includes all three example documents and a comprehensive shortcut guide for files, reading, editing, and text formatting.
